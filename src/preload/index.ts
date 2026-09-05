@@ -11,6 +11,7 @@ import type {
 } from '../shared/products'
 import type { StockAdjustInput } from '../shared/stock'
 import type { CheckoutInput, Receipt } from '../shared/sale'
+import type { SaleDetail, SaleList, SaleListFilter } from '../shared/sales'
 import type { SettingsSection, SettingsValues } from '../shared/settings'
 
 export interface ImportResult {
@@ -57,7 +58,10 @@ const api = {
       ipcRenderer.invoke('stock:adjust', input)
   },
   sales: {
-    complete: (input: CheckoutInput): Promise<Receipt> => ipcRenderer.invoke('sales:complete', input)
+    complete: (input: CheckoutInput): Promise<Receipt> => ipcRenderer.invoke('sales:complete', input),
+    list: (filter: SaleListFilter): Promise<SaleList> => ipcRenderer.invoke('sales:list', filter),
+    get: (id: number): Promise<SaleDetail> => ipcRenderer.invoke('sales:get', { id }),
+    cancel: (id: number): Promise<SaleDetail> => ipcRenderer.invoke('sales:cancel', { id })
   },
   suppliers: {
     list: (): Promise<SupplierRow[]> => ipcRenderer.invoke('suppliers:list'),

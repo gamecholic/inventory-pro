@@ -35,7 +35,10 @@ export const channels = [
   'suppliers:delete',
   'products:search',
   'stock:adjust',
-  'sales:complete'
+  'sales:complete',
+  'sales:list',
+  'sales:get',
+  'sales:cancel'
 ] as const
 export type Channel = (typeof channels)[number]
 

@@ -11,6 +11,7 @@ import { SiteHeader } from '@/components/site-header'
 import { useSettings } from '@/hooks/useSettings'
 import { ProductsPage } from '@/pages/products/ProductsPage'
 import { PosPage } from '@/pages/pos/PosPage'
+import { SalesPage } from '@/pages/sales/SalesPage'
 import { SettingsPage } from '@/pages/settings/SettingsPage'
 import { StockPage } from '@/pages/stock/StockPage'
 import { routes } from '@/routes'
@@ -20,6 +21,7 @@ function pageFor(key: string): React.JSX.Element {
   if (key === 'products') return <ProductsPage />
   if (key === 'stock') return <StockPage />
   if (key === 'pos') return <PosPage />
+  if (key === 'sales') return <SalesPage />
   return <Placeholder titleKey={key} />
 }
 

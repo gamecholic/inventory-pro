@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { productInput, type CategoryRow, type ProductInput, type ProductRow } from '@shared/products'
-import { UNITS } from '@shared/units'
+import { UNITS, unitLong, unitShort } from '@shared/units'
 import type { SupplierRow } from '@shared/products'
 import { useCreateProduct, useUpdateProduct } from '@/hooks/useCatalog'
 
@@ -147,8 +147,8 @@ export function ProductFormDialog({
                     </SelectTrigger>
                     <SelectContent>
                       {UNITS.map((u) => (
-                        <SelectItem key={u.value} value={u.value}>
-                          {u.value} — {u.long}
+                        <SelectItem key={u} value={u}>
+                          {unitShort(u, t)} — {unitLong(u, t)}
                         </SelectItem>
                       ))}
                     </SelectContent>

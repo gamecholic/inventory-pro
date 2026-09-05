@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
 import { stockStatus } from '@shared/products'
+import { unitShort } from '@shared/units'
 
 /** `<qty> <unit> (<status>)` — red out, amber low, green in (features §4.3). */
 export function StockBadge({
@@ -19,7 +20,7 @@ export function StockBadge({
   return (
     <span className="flex items-center gap-2">
       <span>
-        {qty} {unit}
+        {qty} {unitShort(unit, t)}
       </span>
       <Badge variant={variant}>{label}</Badge>
     </span>

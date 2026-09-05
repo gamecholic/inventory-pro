@@ -15,6 +15,24 @@ const resources = {
         settings: 'Settings'
       },
       app: { name: 'Inventory Pro', comingSoon: 'Coming soon' },
+      units: {
+        pcs: 'pcs',
+        pcsLong: 'Pieces',
+        kg: 'kg',
+        kgLong: 'Kilograms',
+        g: 'g',
+        gLong: 'Grams',
+        l: 'l',
+        lLong: 'Liters',
+        ml: 'ml',
+        mlLong: 'Milliliters',
+        m: 'm',
+        mLong: 'Meters',
+        box: 'box',
+        boxLong: 'Boxes',
+        unit: 'unit',
+        unitLong: 'Units'
+      },
       products: {
         title: 'Products',
         tabs: { list: 'Product List', categories: 'Categories', suppliers: 'Suppliers' },
@@ -163,6 +181,24 @@ const resources = {
         settings: 'Ayarlar'
       },
       app: { name: 'Inventory Pro', comingSoon: 'Çok yakında' },
+      units: {
+        pcs: 'adet',
+        pcsLong: 'Adet',
+        kg: 'kg',
+        kgLong: 'Kilogram',
+        g: 'g',
+        gLong: 'Gram',
+        l: 'l',
+        lLong: 'Litre',
+        ml: 'ml',
+        mlLong: 'Mililitre',
+        m: 'm',
+        mLong: 'Metre',
+        box: 'kutu',
+        boxLong: 'Kutu',
+        unit: 'birim',
+        unitLong: 'Birim'
+      },
       products: {
         title: 'Ürünler',
         tabs: { list: 'Ürün Listesi', categories: 'Kategoriler', suppliers: 'Tedarikçiler' },

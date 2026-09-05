@@ -1,0 +1,10 @@
+node_modules/
+out/
+dist/
+drizzle/*.db
+*.db
+*.db-journal
+.DS_Store
+Thumbs.db
+playwright-report/
+test-results/

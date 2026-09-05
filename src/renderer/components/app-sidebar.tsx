@@ -18,7 +18,7 @@ export function AppSidebar({ routes }: { routes: readonly AppRoute[] }): React.J
   const location = useLocation()
 
   return (
-    <Sidebar collapsible="none" variant="sidebar">
+    <Sidebar collapsible="icon" variant="sidebar">
       <SidebarHeader className="border-b">
         <SidebarMenu>
           <SidebarMenuItem>

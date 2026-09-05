@@ -31,6 +31,9 @@ export type ProductInput = z.infer<typeof productInput>
 
 export const productId = z.object({ id: z.number().int().positive() })
 
+/** Features §5.1 — left-pane product search (name/barcode/SKU). */
+export const productSearchInput = z.object({ query: z.string().max(200) })
+
 /** Features §4.3 — list filters. Search matches name/barcode/description (Turkish-tolerant). */
 export const productListFilter = z.object({
   search: z.string().max(200).default(''),

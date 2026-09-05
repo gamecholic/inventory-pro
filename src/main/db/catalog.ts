@@ -16,6 +16,7 @@ import {
   type SupplierInput,
   type SupplierRow
 } from '../../shared/products'
+import { computeAdjustment, normalizeReason, stockAdjustInput, type StockAdjustInput } from '../../shared/stock'
 import { toISO } from '../../shared/dates'
 import { getDb } from './client'
 import { categories, products, suppliers } from './schema'
@@ -280,4 +281,72 @@ function getProductRow(id: number) {
     .leftJoin(categories, eq(products.categoryId, categories.id))
     .where(eq(products.id, id))
     .get()
+}
+
+// --- Stock Update (features §5) ---
+
+export const PRODUCT_SEARCH_LIMIT = 50
+
+/** Active products matching name/barcode (Turkish-tolerant), capped. */
+export function searchProducts(query: string, limit: number = PRODUCT_SEARCH_LIMIT): ProductRow[] {
+  const q = normalizeTR(query.trim())
+  const rows = getDb()
+    .select({
+      id: products.id,
+      name: products.name,
+      barcode: products.barcode,
+      categoryId: products.categoryId,
+      categoryName: categories.name,
+      unit: products.unit,
+      sellingPrice: products.sellingPrice,
+      costPrice: products.costPrice,
+      stockQty: products.stockQty,
+      minStock: products.minStock,
+      supplierId: products.supplierId,
+      description: products.description,
+      archivedAt: products.archivedAt,
+      createdAt: products.createdAt,
+      updatedAt: products.updatedAt
+    })
+    .from(products)
+    .leftJoin(categories, eq(products.categoryId, categories.id))
+    .where(isNull(products.archivedAt))
+    .orderBy(products.name)
+    .all() as ProductRow[]
+  if (q.length === 0) return rows.slice(0, limit)
+  return rows.filter((r) => [r.name, r.barcode ?? ''].some((v) => normalizeTR(v).includes(q))).slice(0, limit)
+}
+
+export interface AdjustResult {
+  product: ProductRow
+  reason: string
+}
+
+/**
+ * Apply a stock adjustment in one transaction: quantities, weighted-average
+ * cost on add, optional selling-price change. Returns the updated row.
+ */
+export function adjustStock(input: StockAdjustInput): AdjustResult {
+  const parsed = stockAdjustInput.parse(input)
+  const db = getDb()
+  const current = db.select().from(products).where(eq(products.id, parsed.productId)).get()
+  if (!current) throw new Error('Product not found')
+  if (current.archivedAt) throw new Error('Product is archived')
+
+  const preview = computeAdjustment(
+    { stockQty: current.stockQty, costPrice: current.costPrice },
+    {
+      type: parsed.type,
+      quantity: parsed.quantity,
+      newCostPrice: parsed.type === 'add' ? (parsed.newCostPrice ?? current.costPrice) : null
+    }
+  )
+  const sellingPrice = parsed.newSellingPrice ?? current.sellingPrice
+  const now = toISO(new Date())
+  db.update(products)
+    .set({ stockQty: preview.newQty, costPrice: preview.newCost, sellingPrice, updatedAt: now })
+    .where(eq(products.id, parsed.productId))
+    .run()
+  const product = getProductRow(parsed.productId) as ProductRow
+  return { product, reason: normalizeReason(parsed.reason) }
 }

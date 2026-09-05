@@ -11,6 +11,7 @@ import {
 } from './db/backup'
 import { getSettings, updateSettings, updateSettingsInput } from './db/settingsStore'
 import {
+  adjustStock,
   archiveProduct,
   createCategory,
   createProduct,
@@ -21,15 +22,18 @@ import {
   listProducts,
   listSuppliers,
   restoreProduct,
+  searchProducts,
   updateCategory,
   updateProduct,
   updateSupplier
 } from './db/catalog'
+import { stockAdjustInput } from '../shared/stock'
 import {
   categoryInput,
   productId,
   productInput,
   productListFilter,
+  productSearchInput,
   supplierInput,
   updateCategoryInput,
   updateProductInput,
@@ -133,6 +137,12 @@ export function registerIpc(): void {
     deleteSupplier(idInput.parse(input).id)
     return true
   })
+
+  ipcMain.handle('products:search', (_event, input: unknown) => {
+    const { query } = productSearchInput.parse(input)
+    return searchProducts(query)
+  })
+  ipcMain.handle('stock:adjust', (_event, input: unknown) => adjustStock(stockAdjustInput.parse(input)))
 }
 
 export { defaultBackupPath, writeExcelBackup }

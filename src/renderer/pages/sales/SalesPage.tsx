@@ -3,7 +3,6 @@ import { RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Select,
@@ -21,29 +20,15 @@ import {
   TableRow
 } from '@/components/ui/table'
 import { formatMoney } from '@shared/money'
+import { endOfDay, startOfDay, subDays } from 'date-fns'
 import { formatISO, toISO } from '@shared/dates'
+import type { DateRange } from 'react-day-picker'
+import { DateRangePicker } from '@/components/date-range-picker'
 import { useSales } from '@/hooks/useSales'
 import { useSettings } from '@/hooks/useSettings'
 import { SaleDetailPanel } from './SaleDetailPanel'
 
 const PAYMENTS = ['all', 'cash', 'card', 'split'] as const
-
-const dayStart = (d: Date): Date => {
-  const c = new Date(d)
-  c.setHours(0, 0, 0, 0)
-  return c
-}
-const dayEnd = (d: Date): Date => {
-  const c = new Date(d)
-  c.setHours(23, 59, 59, 999)
-  return c
-}
-const toInput = (d: Date): string =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-const fromInput = (v: string, end: boolean): string => {
-  const [y, m, d] = v.split('-').map(Number)
-  return toISO(end ? dayEnd(new Date(y as number, (m as number) - 1, d)) : dayStart(new Date(y as number, (m as number) - 1, d)))
-}
 
 /** Features §6.1–§6.2 — filters, paginated table, detail side panel. */
 export function SalesPage(): React.JSX.Element {
@@ -52,12 +37,15 @@ export function SalesPage(): React.JSX.Element {
   const currency = settings?.general.currency ?? 'USD'
   const dateFormat = settings?.general.dateFormat ?? 'MM/DD/YYYY'
 
-  const [fromDraft, setFromDraft] = useState(() => toInput(new Date(Date.now() - 29 * 86400000)))
-  const [toDraft, setToDraft] = useState(() => toInput(new Date()))
-  const [applied, setApplied] = useState(() => ({
-    from: toISO(dayStart(new Date(Date.now() - 29 * 86400000))),
-    to: toISO(dayEnd(new Date()))
-  }))
+  // Draft range (picker + presets) commits to the query only via Apply Filter (§6.2).
+  const [draft, setDraft] = useState<DateRange | undefined>(() => {
+    const now = new Date()
+    return { from: startOfDay(subDays(now, 29)), to: now }
+  })
+  const [applied, setApplied] = useState(() => {
+    const now = new Date()
+    return { from: toISO(startOfDay(subDays(now, 29))), to: toISO(endOfDay(now)) }
+  })
   const [payment, setPayment] = useState<'all' | 'cash' | 'card' | 'split'>('all')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -80,17 +68,12 @@ export function SalesPage(): React.JSX.Element {
         </Button>
       </div>
       <div className="mb-4 flex flex-wrap items-end gap-2">
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="salesFrom">{t('sales.from')}</Label>
-          <Input id="salesFrom" type="date" value={fromDraft} onChange={(e) => setFromDraft(e.target.value)} />
-        </div>
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="salesTo">{t('sales.to')}</Label>
-          <Input id="salesTo" type="date" value={toDraft} onChange={(e) => setToDraft(e.target.value)} />
-        </div>
+        <DateRangePicker range={draft} onSelect={setDraft} />
         <Button
+          disabled={!draft?.from || !draft?.to}
           onClick={() => {
-            setApplied({ from: fromInput(fromDraft, false), to: fromInput(toDraft, true) })
+            if (!draft?.from || !draft?.to) return
+            setApplied({ from: toISO(startOfDay(draft.from)), to: toISO(endOfDay(draft.to)) })
             setPage(1)
           }}
         >

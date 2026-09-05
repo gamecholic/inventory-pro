@@ -22,6 +22,16 @@ export const tr = {
         split: 'Parçalı (Nakit + Kart)',
         search: 'Fiş numarası ara...',
         refresh: 'Yenile',
+        pickRange: 'Tarih aralığı seç',
+        presets: {
+          today: 'Bugün',
+          week: 'Bu Hafta',
+          month: 'Bu Ay',
+          year: 'Bu Yıl',
+          lastMonth: 'Son 1 Ay',
+          lastYear: 'Son 1 Yıl',
+          last5Years: 'Son 5 Yıl'
+        },
         colReceipt: 'Fiş #',
         colDate: 'Tarih & Saat',
         colItems: 'Ürünler',

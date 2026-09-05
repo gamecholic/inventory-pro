@@ -1,4 +1,4 @@
-import { format } from 'date-fns'
+import { format, startOfDay, startOfMonth, startOfWeek, startOfYear, subDays, subYears } from 'date-fns'
 
 export type StoreDateFormat = 'MM/DD/YYYY' | 'DD/MM/YYYY' | 'YYYY-MM-DD'
 
@@ -28,4 +28,34 @@ export function todayISO(): string {
   const d = new Date()
   d.setHours(0, 0, 0, 0)
   return d.toISOString()
+}
+
+export type DatePreset =
+  | 'today'
+  | 'week'
+  | 'month'
+  | 'year'
+  | 'lastMonth'
+  | 'lastYear'
+  | 'last5Years'
+
+/** Quick ranges for the sales date filter. Week starts Monday. End is always now. */
+export function presetRange(preset: DatePreset, now: Date = new Date()): { from: Date; to: Date } {
+  const to = now
+  switch (preset) {
+    case 'today':
+      return { from: startOfDay(now), to }
+    case 'week':
+      return { from: startOfWeek(now, { weekStartsOn: 1 }), to }
+    case 'month':
+      return { from: startOfMonth(now), to }
+    case 'year':
+      return { from: startOfYear(now), to }
+    case 'lastMonth':
+      return { from: startOfDay(subDays(now, 30)), to }
+    case 'lastYear':
+      return { from: startOfDay(subYears(now, 1)), to }
+    case 'last5Years':
+      return { from: startOfDay(subYears(now, 5)), to }
+  }
 }

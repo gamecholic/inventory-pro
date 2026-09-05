@@ -22,6 +22,16 @@ export const en = {
         split: 'Split (Cash + Card)',
         search: 'Search receipt number...',
         refresh: 'Refresh',
+        pickRange: 'Pick a date range',
+        presets: {
+          today: 'Today',
+          week: 'This Week',
+          month: 'This Month',
+          year: 'This Year',
+          lastMonth: 'Last 1 Month',
+          lastYear: 'Last 1 Year',
+          last5Years: 'Last 5 Years'
+        },
         colReceipt: 'Receipt #',
         colDate: 'Date & Time',
         colItems: 'Items',

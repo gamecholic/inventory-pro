@@ -44,14 +44,7 @@ export function DateRangePicker({
           {label}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="flex w-auto gap-2 p-2" align="start">
-        <div className="flex min-w-32 flex-col gap-1">
-          {PRESETS.map((p) => (
-            <Button key={p} variant="ghost" size="sm" className="justify-start" onClick={() => onSelect(presetRange(p, today))}>
-              {t(`sales.presets.${p}`)}
-            </Button>
-          ))}
-        </div>
+      <PopoverContent className="w-auto p-2" align="start">
         <Calendar
           mode="range"
           captionLayout="dropdown"
@@ -67,6 +60,19 @@ export function DateRangePicker({
           selected={range}
           onSelect={onSelect}
         />
+        <div className="mt-2 flex max-w-xl flex-wrap gap-1.5 border-t border-border pt-2">
+          {PRESETS.map((p) => (
+            <Button
+              key={p}
+              variant="outline"
+              size="sm"
+              className="rounded-full"
+              onClick={() => onSelect(presetRange(p, today))}
+            >
+              {t(`sales.presets.${p}`)}
+            </Button>
+          ))}
+        </div>
       </PopoverContent>
     </Popover>
   )

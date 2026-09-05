@@ -11,11 +11,19 @@ export function SettingsPage(): React.JSX.Element {
   return (
     <div className="px-4 lg:px-6">
       <Tabs defaultValue="general" className="flex flex-col gap-4">
-        <TabsList className="w-fit">
-          <TabsTrigger value="general">{t('settings.tabs.general')}</TabsTrigger>
-          <TabsTrigger value="business">{t('settings.tabs.business')}</TabsTrigger>
-          <TabsTrigger value="receipt">{t('settings.tabs.receipt')}</TabsTrigger>
-          <TabsTrigger value="database">{t('settings.tabs.database')}</TabsTrigger>
+        <TabsList className="w-fit gap-1 px-1.5">
+          <TabsTrigger value="general" className="px-4">
+            {t('settings.tabs.general')}
+          </TabsTrigger>
+          <TabsTrigger value="business" className="px-4">
+            {t('settings.tabs.business')}
+          </TabsTrigger>
+          <TabsTrigger value="receipt" className="px-4">
+            {t('settings.tabs.receipt')}
+          </TabsTrigger>
+          <TabsTrigger value="database" className="px-4">
+            {t('settings.tabs.database')}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="general">
           <GeneralTab />

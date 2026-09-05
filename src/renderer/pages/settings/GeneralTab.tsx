@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -77,12 +77,12 @@ export function GeneralTab(): React.JSX.Element {
 
   return (
     <div className="flex max-w-2xl flex-col gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('settings.tabs.general')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={onSubmit} className="flex max-w-lg flex-col gap-4">
+      <form onSubmit={onSubmit}>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('settings.tabs.general')}</CardTitle>
+          </CardHeader>
+          <CardContent className="flex max-w-lg flex-col gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="language">{t('settings.language')}</Label>
               <Controller
@@ -194,31 +194,31 @@ export function GeneralTab(): React.JSX.Element {
                 )}
               />
             </div>
-            <div className="flex gap-2">
-              <Button type="submit" disabled={update.isPending}>
-                {t('settings.save')}
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button type="button" variant="destructive" disabled={resetting}>
-                    {t('settings.reset')}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>{t('settings.resetTitle')}</AlertDialogTitle>
-                    <AlertDialogDescription>{t('settings.resetDesc')}</AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>{t('settings.cancel')}</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => void onReset()}>{t('settings.confirm')}</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+          </CardContent>
+          <CardFooter className="gap-2">
+            <Button type="submit" disabled={update.isPending}>
+              {t('settings.save')}
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button type="button" variant="destructive" disabled={resetting}>
+                  {t('settings.reset')}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t('settings.resetTitle')}</AlertDialogTitle>
+                  <AlertDialogDescription>{t('settings.resetDesc')}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t('settings.cancel')}</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => void onReset()}>{t('settings.confirm')}</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </CardFooter>
+        </Card>
+      </form>
     </div>
   )
 }

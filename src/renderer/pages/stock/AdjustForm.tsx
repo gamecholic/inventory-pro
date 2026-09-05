@@ -3,7 +3,7 @@ import type { Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -82,8 +82,9 @@ export function AdjustForm({
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <form onSubmit={onSubmit}>
+      <Card>
+        <CardHeader>
         <CardTitle>
           {t('stock.updateTitle', { name: product.name })}
         </CardTitle>
@@ -99,8 +100,7 @@ export function AdjustForm({
           </span>
         </div>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={onSubmit} className="flex flex-col gap-4">
+      <CardContent className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="adjType">{t('stock.type')}</Label>
@@ -199,16 +199,16 @@ export function AdjustForm({
               </p>
             </div>
           )}
-          <div className="flex gap-2">
-            <Button type="submit" disabled={adjust.isPending}>
-              {t('stock.update')}
-            </Button>
-            <Button type="button" variant="outline" onClick={resetForm}>
-              {t('stock.reset')}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+        </CardContent>
+        <CardFooter className="gap-2">
+          <Button type="submit" disabled={adjust.isPending}>
+            {t('stock.update')}
+          </Button>
+          <Button type="button" variant="outline" onClick={resetForm}>
+            {t('stock.reset')}
+          </Button>
+        </CardFooter>
+      </Card>
+    </form>
   )
 }

@@ -2,7 +2,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
@@ -26,12 +26,12 @@ export function ReceiptTab(): React.JSX.Element {
 
   return (
     <div className="flex max-w-2xl flex-col gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('settings.tabs.receipt')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={onSubmit} className="flex max-w-lg flex-col gap-4">
+      <form onSubmit={onSubmit}>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('settings.tabs.receipt')}</CardTitle>
+          </CardHeader>
+          <CardContent className="flex max-w-lg flex-col gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="rcptHeader">{t('settings.receiptHeader')}</Label>
               <Textarea id="rcptHeader" {...form.register('header')} />
@@ -50,14 +50,14 @@ export function ReceiptTab(): React.JSX.Element {
                 )}
               />
             </div>
-            <div>
-              <Button type="submit" disabled={update.isPending}>
-                {t('settings.save')}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+          </CardContent>
+          <CardFooter>
+            <Button type="submit" disabled={update.isPending}>
+              {t('settings.save')}
+            </Button>
+          </CardFooter>
+        </Card>
+      </form>
     </div>
   )
 }

@@ -1,6 +1,9 @@
 import { useState } from 'react'
+import { Ban, Printer, Undo2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
 import {
   Sheet,
   SheetContent,
@@ -17,6 +20,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from '@/components/ui/alert-dialog'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table'
 import { formatMoney } from '@shared/money'
 import { formatISO } from '@shared/dates'
 import { unitShort } from '@shared/units'
@@ -77,89 +88,97 @@ export function SaleDetailPanel({
       >
         <SheetContent className="overflow-y-auto sm:max-w-md">
           <SheetHeader>
-            <SheetTitle>{t('sales.saleDetails')}</SheetTitle>
+            <SheetTitle className="flex items-center gap-2">
+              {t('sales.saleDetails')}
+              {detail && (
+                <Badge variant={canceled ? 'destructive' : 'secondary'}>
+                  {canceled ? t('sales.canceled') : t('sales.completed')}
+                </Badge>
+              )}
+            </SheetTitle>
           </SheetHeader>
           {detail && (
-            <div className="flex flex-col gap-3 text-sm">
-              <div className="flex flex-col gap-1 border-b border-border pb-3">
+            <div className="flex flex-col gap-4 text-sm">
+              <div className="flex flex-col gap-0.5 rounded-lg bg-muted/40 p-4">
                 {business?.name !== '' && <p className="text-base font-bold">{business?.name}</p>}
-                {business?.address !== '' && <p className="whitespace-pre-line text-muted-foreground">{business?.address}</p>}
-                {business?.phone !== '' && (
+                {business?.address !== '' && (
+                  <p className="whitespace-pre-line text-muted-foreground">{business?.address}</p>
+                )}
+                {(business?.phone !== '' || business?.email !== '') && (
                   <p className="text-muted-foreground">
-                    {t('pos.receipt.phone')}: {business?.phone}
+                    {[business?.phone, business?.email].filter((v) => v !== '').join(' · ')}
                   </p>
                 )}
-                {business?.email !== '' && (
-                  <p className="text-muted-foreground">
-                    {t('pos.receipt.email')}: {business?.email}
-                  </p>
-                )}
-                <p className="mt-1">
-                  {formatISO(detail.createdAt, dateFormat)} · {detail.receiptNo}
-                </p>
-                {canceled && <p className="font-bold text-destructive">{t('sales.canceled')}</p>}
+                <p className="mt-2 font-mono text-xs text-muted-foreground">{detail.receiptNo}</p>
+                <p className="text-xs text-muted-foreground">{formatISO(detail.createdAt, dateFormat)}</p>
               </div>
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border text-left">
-                    <th className="py-1 font-medium">{t('pos.receipt.items')}</th>
-                    <th className="py-1 font-medium">{t('pos.receipt.qty')}</th>
-                    <th className="py-1 text-right font-medium">{t('pos.receipt.price')}</th>
-                    <th className="py-1 text-right font-medium">{t('pos.receipt.receiptTotal')}</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('pos.receipt.items')}</TableHead>
+                    <TableHead>{t('pos.receipt.qty')}</TableHead>
+                    <TableHead className="text-right">{t('pos.receipt.price')}</TableHead>
+                    <TableHead className="text-right">{t('pos.receipt.receiptTotal')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {detail.items.map((i, n) => (
-                    <tr key={n} className="border-b border-border/50">
-                      <td className="py-1">{i.productName ?? t('sales.unknownProduct')}</td>
-                      <td className="py-1">
+                    <TableRow key={n}>
+                      <TableCell className="font-medium">{i.productName ?? t('sales.unknownProduct')}</TableCell>
+                      <TableCell>
                         {i.qty} {unitShort(i.unit, t)}
-                      </td>
-                      <td className="py-1 text-right">{formatMoney(i.unitPrice, currency)}</td>
-                      <td className="py-1 text-right">{formatMoney(i.lineTotal, currency)}</td>
-                    </tr>
+                      </TableCell>
+                      <TableCell className="text-right">{formatMoney(i.unitPrice, currency)}</TableCell>
+                      <TableCell className="text-right">{formatMoney(i.lineTotal, currency)}</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-              <div className="flex justify-between">
-                <span>{t('pos.subtotal')}</span>
-                <span>{formatMoney(detail.subtotal, currency)}</span>
-              </div>
-              {detail.discount > 0 && (
-                <div className="flex justify-between text-destructive">
-                  <span>{t('pos.discount')}</span>
-                  <span>−{formatMoney(detail.discount, currency)}</span>
+                </TableBody>
+              </Table>
+              <div className="flex flex-col gap-1.5 rounded-lg bg-muted/40 p-4">
+                <div className="flex justify-between text-muted-foreground">
+                  <span>{t('pos.subtotal')}</span>
+                  <span>{formatMoney(detail.subtotal, currency)}</span>
                 </div>
-              )}
-              <div className="flex justify-between font-bold">
-                <span>{t('pos.total')}</span>
-                <span>{formatMoney(detail.total, currency)}</span>
-              </div>
-              <div className="flex justify-between border-t border-border pt-2">
-                <span>{t('pos.receipt.paymentMethod')}</span>
-                <span>
-                  {detail.paymentMethod === 'cash'
-                    ? t('pos.receipt.cash')
-                    : detail.paymentMethod === 'card'
-                      ? t('pos.receipt.card')
-                      : t('pos.receipt.split')}
-                </span>
-              </div>
-              {detail.changeAmount > 0 && (
-                <div className="flex justify-between">
-                  <span>{t('pos.change')}</span>
-                  <span>{formatMoney(detail.changeAmount, currency)}</span>
+                {detail.discount > 0 && (
+                  <div className="flex justify-between text-destructive">
+                    <span>{t('pos.discount')}</span>
+                    <span>−{formatMoney(detail.discount, currency)}</span>
+                  </div>
+                )}
+                <Separator />
+                <div className="flex items-baseline justify-between">
+                  <span className="font-medium">{t('pos.total')}</span>
+                  <span className="text-xl font-bold">{formatMoney(detail.total, currency)}</span>
                 </div>
-              )}
-              <div className="mt-2 flex flex-wrap gap-2">
+                <div className="mt-1 flex justify-between text-muted-foreground">
+                  <span>{t('pos.receipt.paymentMethod')}</span>
+                  <span className="text-foreground">
+                    {detail.paymentMethod === 'cash'
+                      ? t('pos.receipt.cash')
+                      : detail.paymentMethod === 'card'
+                        ? t('pos.receipt.card')
+                        : t('pos.receipt.split')}
+                  </span>
+                </div>
+                {detail.changeAmount > 0 && (
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>{t('pos.change')}</span>
+                    <span>{formatMoney(detail.changeAmount, currency)}</span>
+                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
                 <Button variant="outline" onClick={() => setPrint(true)}>
+                  <Printer className="size-4" />
                   {t('pos.receipt.print')}
                 </Button>
                 <Button variant="outline" disabled title={t('sales.returnDisabled')}>
+                  <Undo2 className="size-4" />
                   {t('sales.processReturn')}
                 </Button>
                 {!canceled && (
-                  <Button variant="destructive" onClick={() => setConfirmCancel(true)}>
+                  <Button variant="destructive" className="col-span-2" onClick={() => setConfirmCancel(true)}>
+                    <Ban className="size-4" />
                     {t('sales.cancelSale')}
                   </Button>
                 )}

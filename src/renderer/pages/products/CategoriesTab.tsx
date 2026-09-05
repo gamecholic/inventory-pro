@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -27,26 +27,27 @@ import type { CategoryRow } from '@shared/products'
 import { useCategories, useDeleteCategory } from '@/hooks/useCatalog'
 import { CategoryFormDialog } from './CategoryFormDialog'
 
-/** Features §4.5 — toolbar + table + dialog. Delete blocked while products exist. */
-export function CategoriesTab(): React.JSX.Element {
+/** Features §4.5 — table + dialog. Delete blocked while products exist. */
+export function CategoriesTab({
+  registerAdd
+}: {
+  registerAdd: (open: () => void) => void
+}): React.JSX.Element {
   const { t } = useTranslation()
   const { data } = useCategories()
   const remove = useDeleteCategory()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<CategoryRow | null>(null)
 
+  useEffect(() => {
+    registerAdd(() => {
+      setEditing(null)
+      setDialogOpen(true)
+    })
+  })
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-end">
-        <Button
-          onClick={() => {
-            setEditing(null)
-            setDialogOpen(true)
-          }}
-        >
-          {t('products.addCategory')}
-        </Button>
-      </div>
       <Card>
         <CardContent className="pt-6">
           {(data ?? []).length === 0 ? (

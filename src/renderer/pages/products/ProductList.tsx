@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Pencil, RotateCcw, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
@@ -39,8 +39,12 @@ import { StockBadge } from './StockBadge'
 const STOCK_LEVELS = ['all', 'out', 'low', 'in'] as const
 const STATUSES = ['active', 'deleted', 'all'] as const
 
-/** Features §4.2–§4.3 — toolbar, filters, paginated table, dialog, archive/restore. */
-export function ProductList(): React.JSX.Element {
+/** Features §4.2–§4.3 — filters, paginated table, dialog, archive/restore. */
+export function ProductList({
+  registerAdd
+}: {
+  registerAdd: (open: () => void) => void
+}): React.JSX.Element {
   const { t } = useTranslation()
   const { data: settings } = useSettings()
   const { data: categories } = useCategories()
@@ -70,6 +74,10 @@ export function ProductList(): React.JSX.Element {
     setDialogOpen(true)
   }
 
+  useEffect(() => {
+    registerAdd(openCreate)
+  })
+
   const openEdit = (product: ProductRow): void => {
     setEditing(product)
     setDialogOpen(true)
@@ -77,9 +85,6 @@ export function ProductList(): React.JSX.Element {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-end">
-        <Button onClick={openCreate}>{t('products.addProduct')}</Button>
-      </div>
       <div className="flex flex-wrap gap-2">
         <Input
           className="max-w-xs"

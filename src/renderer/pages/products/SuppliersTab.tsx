@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
@@ -26,26 +26,27 @@ import type { SupplierRow } from '@shared/products'
 import { useDeleteSupplier, useSuppliers } from '@/hooks/useCatalog'
 import { SupplierFormDialog } from './SupplierFormDialog'
 
-/** Features §4.6 — toolbar + table + dialog. Delete blocked while products are linked. */
-export function SuppliersTab(): React.JSX.Element {
+/** Features §4.6 — table + dialog. Delete blocked while products are linked. */
+export function SuppliersTab({
+  registerAdd
+}: {
+  registerAdd: (open: () => void) => void
+}): React.JSX.Element {
   const { t } = useTranslation()
   const { data } = useSuppliers()
   const remove = useDeleteSupplier()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<SupplierRow | null>(null)
 
+  useEffect(() => {
+    registerAdd(() => {
+      setEditing(null)
+      setDialogOpen(true)
+    })
+  })
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-end">
-        <Button
-          onClick={() => {
-            setEditing(null)
-            setDialogOpen(true)
-          }}
-        >
-          {t('products.addSupplier')}
-        </Button>
-      </div>
       <Card>
         <CardContent className="pt-6">
           {(data ?? []).length === 0 ? (

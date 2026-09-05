@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatMoney } from '@shared/money'
-import { unitShort } from '@shared/units'
 import type { ProductRow } from '@shared/products'
+import { StockBadge } from '@/components/stock-badge'
 import { useProductSearch } from '@/hooks/useStock'
 import { useSettings } from '@/hooks/useSettings'
 import { AdjustForm } from './AdjustForm'
@@ -49,7 +49,7 @@ export function StockPage(): React.JSX.Element {
                 <p className="font-bold">{p.name}</p>
                 {p.barcode && <p className="text-xs text-muted-foreground">{p.barcode}</p>}
                 <p className="mt-1 text-sm">
-                  {t('stock.stockIs')}: {p.stockQty} {unitShort(p.unit, t)}
+                  <StockBadge qty={p.stockQty} unit={p.unit} threshold={p.minStock} />
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {t('stock.costIs')}: {formatMoney(p.costPrice, currency)}

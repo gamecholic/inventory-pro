@@ -101,98 +101,102 @@ export function AdjustForm({
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="adjType">{t('stock.type')}</Label>
-            <Controller
-              name="type"
-              control={form.control}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger id="adjType">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="add">{t('stock.add')}</SelectItem>
-                    <SelectItem value="remove">{t('stock.remove')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="adjType">{t('stock.type')}</Label>
+              <Controller
+                name="type"
+                control={form.control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="adjType">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="add">{t('stock.add')}</SelectItem>
+                      <SelectItem value="remove">{t('stock.remove')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="adjQty">{t('stock.quantity')} *</Label>
+              <Controller
+                name="quantity"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <Input
+                      id="adjQty"
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={field.value}
+                      onChange={(e) => field.onChange(num(e.target.valueAsNumber))}
+                    />
+                    {fieldState.error && <p className="text-sm text-destructive">{t('stock.invalidQty')}</p>}
+                  </>
+                )}
+              />
+            </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="adjQty">{t('stock.quantity')} *</Label>
-            <Controller
-              name="quantity"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="adjCost">{t('stock.newCost')}</Label>
+              <Controller
+                name="newCostPrice"
+                control={form.control}
+                render={({ field }) => (
                   <Input
-                    id="adjQty"
+                    id="adjCost"
                     type="number"
                     min={0}
-                    step={1}
-                    value={field.value}
+                    step={0.01}
+                    disabled={type === 'remove'}
+                    value={field.value ?? product.costPrice}
                     onChange={(e) => field.onChange(num(e.target.valueAsNumber))}
                   />
-                  {fieldState.error && <p className="text-sm text-destructive">{t('stock.invalidQty')}</p>}
-                </>
-              )}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="adjCost">{t('stock.newCost')}</Label>
-            <Controller
-              name="newCostPrice"
-              control={form.control}
-              render={({ field }) => (
-                <Input
-                  id="adjCost"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  disabled={type === 'remove'}
-                  value={field.value ?? product.costPrice}
-                  onChange={(e) => field.onChange(num(e.target.valueAsNumber))}
-                />
-              )}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="adjSell">{t('stock.newSelling')}</Label>
-            <Controller
-              name="newSellingPrice"
-              control={form.control}
-              render={({ field }) => (
-                <Input
-                  id="adjSell"
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={field.value ?? product.sellingPrice}
-                  onChange={(e) => field.onChange(num(e.target.valueAsNumber))}
-                />
-              )}
-            />
+                )}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="adjSell">{t('stock.newSelling')}</Label>
+              <Controller
+                name="newSellingPrice"
+                control={form.control}
+                render={({ field }) => (
+                  <Input
+                    id="adjSell"
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={field.value ?? product.sellingPrice}
+                    onChange={(e) => field.onChange(num(e.target.valueAsNumber))}
+                  />
+                )}
+              />
+            </div>
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="adjReason">{t('stock.reason')}</Label>
-            <Textarea id="adjReason" {...form.register('reason')} />
+            <Textarea id="adjReason" rows={2} {...form.register('reason')} />
           </div>
           {preview && (
-            <div className="flex flex-col gap-1 rounded-lg border border-border p-4 text-sm">
+            <div className="flex flex-col gap-1 rounded-lg border border-border bg-muted/40 p-4 text-sm">
               <p className="font-medium">{t('stock.preview')}</p>
-              <span>
-                {t('stock.currentValue')}: {formatMoney(preview.currentValue, currency)}
-              </span>
-              <span>
-                {t('stock.newTotal')}: {preview.newQty} {unitShort(product.unit, t)}
-              </span>
-              <span>
-                {t('stock.newAvg')}: {formatMoney(preview.newCost, currency)}
-              </span>
-              <span>
-                {t('stock.newValue')}: {formatMoney(preview.newValue, currency)}
-              </span>
+              <p className="text-muted-foreground">
+                {preview.currentQty} {unitShort(product.unit, t)} + {quantity} {unitShort(product.unit, t)} →{' '}
+                <strong className="text-foreground">
+                  {preview.newQty} {unitShort(product.unit, t)}
+                </strong>
+              </p>
+              <p className="text-muted-foreground">
+                {formatMoney(preview.currentValue, currency)} → {formatMoney(preview.newValue, currency)}
+              </p>
+              <p>
+                {t('stock.newAvg')}: <strong>{formatMoney(preview.newCost, currency)}</strong>
+              </p>
             </div>
           )}
           <div className="flex gap-2">

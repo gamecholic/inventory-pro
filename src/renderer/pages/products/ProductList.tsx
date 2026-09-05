@@ -34,7 +34,7 @@ import type { ProductListFilter, ProductRow } from '@shared/products'
 import { useArchiveProduct, useCategories, useProducts, useRestoreProduct, useSuppliers } from '@/hooks/useCatalog'
 import { useSettings } from '@/hooks/useSettings'
 import { ProductFormDialog } from './ProductFormDialog'
-import { StockBadge } from './StockBadge'
+import { StockBadge } from '@/components/stock-badge'
 
 const STOCK_LEVELS = ['all', 'out', 'low', 'in'] as const
 const STATUSES = ['active', 'deleted', 'all'] as const

@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge'
 import { stockStatus } from '@shared/products'
 import { unitShort } from '@shared/units'
 
-/** `<qty> <unit> (<status>)` — red out, amber low, green in (features §4.3). */
+/** `<qty> <unit> (<status>)` — red out, amber low, green in. Shared by product list and stock cards. */
 export function StockBadge({
   qty,
   unit,

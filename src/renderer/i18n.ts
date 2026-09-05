@@ -14,7 +14,8 @@ const resources = {
         reports: 'Reports',
         settings: 'Settings'
       },
-      app: { name: 'Inventory Pro', comingSoon: 'Coming soon' }
+      app: { name: 'Inventory Pro', comingSoon: 'Coming soon' },
+      theme: { toggle: 'Toggle theme' }
     }
   },
   tr: {
@@ -29,7 +30,8 @@ const resources = {
         reports: 'Raporlar',
         settings: 'Ayarlar'
       },
-      app: { name: 'Inventory Pro', comingSoon: 'Çok yakında' }
+      app: { name: 'Inventory Pro', comingSoon: 'Çok yakında' },
+      theme: { toggle: 'Temayı değiştir' }
     }
   }
 } as const

@@ -10,5 +10,6 @@
     "isolatedModules": true,
     "useDefineForClassFields": true,
     "noEmit": true
-  }
+  },
+  "files": []
 }

@@ -30,6 +30,7 @@ test('product create → archive → restore flow', async () => {
 
   // Category first (required for products).
   await page.getByRole('tab', { name: 'Categories' }).click()
+  await page.getByRole('button', { name: 'Add Category' }).click()
   await page.locator('#catName').fill(CATEGORY)
   await page.getByRole('button', { name: 'Save Category' }).click()
   await expect(page.getByRole('cell', { name: CATEGORY })).toBeVisible()

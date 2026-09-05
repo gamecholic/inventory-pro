@@ -31,26 +31,26 @@ import {
 } from '@/components/ui/alert-dialog'
 import { formatMoney } from '@shared/money'
 import type { ProductListFilter, ProductRow } from '@shared/products'
-import { useArchiveProduct, useCategories, useProducts, useRestoreProduct } from '@/hooks/useCatalog'
+import { useArchiveProduct, useCategories, useProducts, useRestoreProduct, useSuppliers } from '@/hooks/useCatalog'
 import { useSettings } from '@/hooks/useSettings'
+import { ProductFormDialog } from './ProductFormDialog'
 import { StockBadge } from './StockBadge'
 
 const STOCK_LEVELS = ['all', 'out', 'low', 'in'] as const
 const STATUSES = ['active', 'deleted', 'all'] as const
 
-/** Features §4.2–§4.3 — search, filters, paginated table, archive/restore. */
-export function ProductList({
-  onEdit
-}: {
-  onEdit: (product: ProductRow) => void
-}): React.JSX.Element {
+/** Features §4.2–§4.3 — toolbar, filters, paginated table, dialog, archive/restore. */
+export function ProductList(): React.JSX.Element {
   const { t } = useTranslation()
   const { data: settings } = useSettings()
   const { data: categories } = useCategories()
+  const { data: suppliers } = useSuppliers()
   const archive = useArchiveProduct()
   const restore = useRestoreProduct()
   const [confirmId, setConfirmId] = useState<number | null>(null)
   const [restoreId, setRestoreId] = useState<number | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editing, setEditing] = useState<ProductRow | null>(null)
   const [filter, setFilter] = useState<ProductListFilter>({
     search: '',
     categoryId: null,
@@ -65,8 +65,21 @@ export function ProductList({
 
   const searching = filter.search.trim() !== '' || filter.categoryId !== null || filter.stockLevel !== 'all'
 
+  const openCreate = (): void => {
+    setEditing(null)
+    setDialogOpen(true)
+  }
+
+  const openEdit = (product: ProductRow): void => {
+    setEditing(product)
+    setDialogOpen(true)
+  }
+
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex justify-end">
+        <Button onClick={openCreate}>{t('products.addProduct')}</Button>
+      </div>
       <div className="flex flex-wrap gap-2">
         <Input
           className="max-w-xs"
@@ -173,7 +186,7 @@ export function ProductList({
                       </Button>
                     ) : (
                       <>
-                        <Button variant="ghost" size="icon" title={t('products.editProduct')} onClick={() => onEdit(p)}>
+                        <Button variant="ghost" size="icon" title={t('products.editProduct')} onClick={() => openEdit(p)}>
                           <Pencil className="size-4" />
                         </Button>
                         <Button variant="ghost" size="icon" title={t('products.archiveTitle')} onClick={() => setConfirmId(p.id)}>
@@ -252,6 +265,14 @@ export function ProductList({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ProductFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        categories={categories ?? []}
+        suppliers={suppliers ?? []}
+        editing={editing}
+      />
     </div>
   )
 }

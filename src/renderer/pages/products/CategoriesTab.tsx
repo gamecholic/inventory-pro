@@ -1,15 +1,9 @@
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import type { Resolver } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -29,69 +23,30 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger
 } from '@/components/ui/alert-dialog'
-import { categoryInput, type CategoryInput, type CategoryRow } from '@shared/products'
-import { useCategories, useCreateCategory, useDeleteCategory, useUpdateCategory } from '@/hooks/useCatalog'
+import type { CategoryRow } from '@shared/products'
+import { useCategories, useDeleteCategory } from '@/hooks/useCatalog'
+import { CategoryFormDialog } from './CategoryFormDialog'
 
-/** Features §4.5 — form left, list right. Delete blocked while products exist. */
+/** Features §4.5 — toolbar + table + dialog. Delete blocked while products exist. */
 export function CategoriesTab(): React.JSX.Element {
   const { t } = useTranslation()
   const { data } = useCategories()
-  const create = useCreateCategory()
-  const update = useUpdateCategory()
   const remove = useDeleteCategory()
+  const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<CategoryRow | null>(null)
 
-  const form = useForm<CategoryInput>({
-    resolver: zodResolver(categoryInput) as Resolver<CategoryInput>,
-    values: editing ? { name: editing.name, description: editing.description ?? '' } : { name: '', description: '' }
-  })
-
-  const onSubmit = form.handleSubmit((values) => {
-    if (editing) {
-      update.mutate(
-        { id: editing.id, input: values },
-        { onSuccess: () => setEditing(null) }
-      )
-    } else {
-      create.mutate(values, { onSuccess: () => form.reset() })
-    }
-  })
-
-  const cancelEdit = (): void => {
-    setEditing(null)
-    form.reset()
-  }
-
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
-      <Card>
-        <CardHeader>
-          <CardTitle>{editing ? t('products.editCategory') : t('products.addCategory')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={onSubmit} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="catName">{t('products.categoryName')} *</Label>
-              <Input id="catName" {...form.register('name')} />
-              {form.formState.errors.name && <p className="text-sm text-destructive">{t('settings.required')}</p>}
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="catDesc">{t('products.description')}</Label>
-              <Textarea id="catDesc" {...form.register('description')} />
-            </div>
-            <div className="flex gap-2">
-              <Button type="submit" disabled={create.isPending || update.isPending}>
-                {editing ? t('products.updateCategory') : t('products.saveCategory')}
-              </Button>
-              {editing && (
-                <Button type="button" variant="outline" onClick={cancelEdit}>
-                  {t('products.cancel')}
-                </Button>
-              )}
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+    <div className="flex flex-col gap-4">
+      <div className="flex justify-end">
+        <Button
+          onClick={() => {
+            setEditing(null)
+            setDialogOpen(true)
+          }}
+        >
+          {t('products.addCategory')}
+        </Button>
+      </div>
       <Card>
         <CardContent className="pt-6">
           {(data ?? []).length === 0 ? (
@@ -111,7 +66,14 @@ export function CategoriesTab(): React.JSX.Element {
                     <TableCell>{c.name}</TableCell>
                     <TableCell>{c.productCount}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => setEditing(c)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setEditing(c)
+                          setDialogOpen(true)
+                        }}
+                      >
                         <Pencil className="size-4" />
                       </Button>
                       <AlertDialog>
@@ -154,6 +116,7 @@ export function CategoriesTab(): React.JSX.Element {
           )}
         </CardContent>
       </Card>
+      <CategoryFormDialog open={dialogOpen} onOpenChange={setDialogOpen} editing={editing} />
     </div>
   )
 }

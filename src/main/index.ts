@@ -1,10 +1,12 @@
-import { app, BrowserWindow, dialog, ipcMain } from 'electron'
+import { app, BrowserWindow, dialog } from 'electron'
 import { join } from 'node:path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { getDb } from './db/client'
+import { getSettings } from './db/settingsStore'
+import { defaultBackupPath, registerIpc, writeExcelBackup } from './ipc'
 
 let mainWindow: BrowserWindow | null = null
-// Reads Settings.backupOnClose in the future; default off (features §1.8).
-let backupOnCloseEnabled = false
+let closingAfterBackupChoice = false
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -12,7 +14,7 @@ function createWindow(): void {
     height: 800,
     show: false,
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
+      preload: join(__dirname, '../preload/index.mjs'),
       contextIsolation: true,
       sandbox: false
     }
@@ -20,12 +22,19 @@ function createWindow(): void {
 
   mainWindow.on('ready-to-show', () => mainWindow?.show())
 
-  // Backup prompt on close (features §1.8). Disabled by default → close directly.
+  // Backup prompt on close (features §1.8). Reads the live setting every time.
   mainWindow.on('close', (event) => {
-    if (!backupOnCloseEnabled || mainWindow?.isDestroyed()) return
+    if (closingAfterBackupChoice || mainWindow?.isDestroyed()) return
+    let backupOnClose = false
+    try {
+      backupOnClose = getSettings().general.backupOnClose
+    } catch {
+      backupOnClose = false
+    }
+    if (!backupOnClose) return
     event.preventDefault()
-    void dialog
-      .showMessageBox(mainWindow!, {
+    void (async () => {
+      const { response } = await dialog.showMessageBox(mainWindow!, {
         type: 'question',
         title: 'Close Application',
         message: 'Do you want to export an Excel backup before closing?',
@@ -33,19 +42,27 @@ function createWindow(): void {
         defaultId: 1,
         cancelId: 2
       })
-      .then(({ response }) => {
-        if (response === 2) return // Cancel: stay open
-        if (response === 0) {
-          // Yes: export Excel backup first (implemented with Database Management §9.4).
-          backupOnCloseEnabled = false
-          // TODO: run Excel export, show Backup Complete/Failed, then close.
-          mainWindow?.close()
-          return
+      if (response === 2) return // Cancel: stay open
+      closingAfterBackupChoice = true
+      if (response === 0) {
+        try {
+          const filePath = defaultBackupPath()
+          await writeExcelBackup(filePath)
+          await dialog.showMessageBox(mainWindow!, {
+            type: 'info',
+            title: 'Backup Complete',
+            message: `Backup saved to:\n${filePath}`
+          })
+        } catch (error) {
+          await dialog.showMessageBox(mainWindow!, {
+            type: 'error',
+            title: 'Backup Failed',
+            message: error instanceof Error ? error.message : String(error)
+          })
         }
-        // No: close immediately.
-        backupOnCloseEnabled = false
-        mainWindow?.close()
-      })
+      }
+      mainWindow?.close()
+    })()
   })
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
@@ -57,8 +74,15 @@ function createWindow(): void {
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.inventorypro.app')
+  try {
+    getDb()
+  } catch (error) {
+    dialog.showErrorBox('Database failed to open', error instanceof Error ? error.message : String(error))
+    app.quit()
+    return
+  }
   app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
-  ipcMain.handle('app:ping', () => 'pong')
+  registerIpc()
   createWindow()
 
   app.on('activate', () => {

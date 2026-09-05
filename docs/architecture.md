@@ -24,6 +24,8 @@ shared/api.ts shared/schemas shared/normalizeTR shared/money shared/dates
 - Two builds (electron-vite main + renderer). ESLint `no-restricted-imports` blocks renderer → `main/*`.
 - Contracts first: add channel + Zod schema + TS types in `shared/api.ts`, then main handler, then renderer hook.
 - Backend owns truth (SQLite). UI caches and invalidates after each mutation.
+- Preload output is `out/preload/index.mjs` — main must reference the `.mjs` path, not `.js`.
+- Settings live in a `settings` key-value table (one JSON row per section), merged over `shared/settings.ts` defaults. Display prefs (language/currency/dates) are read from the `['settings']` TanStack Query cache.
 
 ## 4. Must-not-break (from features.md)
 Single-user offline-first, no auth/cloud. No hold/park sale (§3.12), no bulk product actions (§4.4), no stock history log (§5.4), no recurring expenses/attachments (§7.2), no report CSV/print (§8.6). Receipt # `INV-YYYYMMDD-HHmmss` + business identity + header/footer everywhere (§1.4, §3.11).

@@ -1,13 +1,28 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { HashRouter, Route, Routes, useLocation } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from 'next-themes'
 import { useTranslation } from 'react-i18next'
+import { Toaster } from '@/components/ui/sonner'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SiteHeader } from '@/components/site-header'
+import { useSettings } from '@/hooks/useSettings'
+import { SettingsPage } from '@/pages/settings/SettingsPage'
 import { routes } from '@/routes'
+
+/** Applies the persisted language immediately, including on boot (features §1.2). */
+function ApplySettings(): React.JSX.Element | null {
+  const { data } = useSettings()
+  const { i18n } = useTranslation()
+  useEffect(() => {
+    if (data && i18n.language !== data.general.language) {
+      void i18n.changeLanguage(data.general.language)
+    }
+  }, [data, i18n])
+  return null
+}
 
 function Placeholder({ titleKey }: { titleKey: string }): React.JSX.Element {
   const { t } = useTranslation()
@@ -41,7 +56,11 @@ function Shell(): React.JSX.Element {
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <Routes>
                 {routes.map((r) => (
-                  <Route key={r.key} path={r.path} element={<Placeholder titleKey={r.key} />} />
+                  <Route
+                    key={r.key}
+                    path={r.path}
+                    element={r.key === 'settings' ? <SettingsPage /> : <Placeholder titleKey={r.key} />}
+                  />
                 ))}
               </Routes>
             </div>
@@ -60,8 +79,10 @@ export default function App(): React.JSX.Element {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <HashRouter>
+            <ApplySettings />
             <Shell />
           </HashRouter>
+          <Toaster richColors />
         </TooltipProvider>
       </QueryClientProvider>
     </ThemeProvider>

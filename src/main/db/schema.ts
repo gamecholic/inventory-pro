@@ -1,5 +1,12 @@
 import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
+/** Key-value settings store (features §9). Value holds one JSON section. */
+export const settings = sqliteTable('settings', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+  updatedAt: text('updated_at').notNull()
+})
+
 export const categories = sqliteTable('categories', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),

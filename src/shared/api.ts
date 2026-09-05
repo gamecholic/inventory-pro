@@ -11,5 +11,14 @@ export const dateRangeFilter = z.object({
 
 export type DateRangeFilter = z.infer<typeof dateRangeFilter>
 
-export const channels = ['app:ping'] as const
+export const channels = [
+  'app:ping',
+  'settings:get',
+  'settings:update',
+  'backup:export-json',
+  'backup:import-json',
+  'backup:export-excel',
+  'backup:import-excel',
+  'db:reset'
+] as const
 export type Channel = (typeof channels)[number]

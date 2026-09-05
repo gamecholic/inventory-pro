@@ -10,6 +10,7 @@ import type {
   SupplierRow
 } from '../shared/products'
 import type { StockAdjustInput } from '../shared/stock'
+import type { CheckoutInput, Receipt } from '../shared/sale'
 import type { SettingsSection, SettingsValues } from '../shared/settings'
 
 export interface ImportResult {
@@ -36,7 +37,8 @@ const api = {
   },
   products: {
     list: (filter: ProductListFilter): Promise<ProductList> => ipcRenderer.invoke('products:list', filter),
-    search: (query: string): Promise<ProductRow[]> => ipcRenderer.invoke('products:search', { query }),
+    search: (query: string, limit = 50): Promise<ProductRow[]> =>
+      ipcRenderer.invoke('products:search', { query, limit }),
     create: (input: ProductInput): Promise<ProductRow> => ipcRenderer.invoke('products:create', input),
     update: (id: number, input: ProductInput): Promise<ProductRow> =>
       ipcRenderer.invoke('products:update', { ...input, id }),
@@ -53,6 +55,9 @@ const api = {
   stock: {
     adjust: (input: StockAdjustInput): Promise<{ product: ProductRow; reason: string }> =>
       ipcRenderer.invoke('stock:adjust', input)
+  },
+  sales: {
+    complete: (input: CheckoutInput): Promise<Receipt> => ipcRenderer.invoke('sales:complete', input)
   },
   suppliers: {
     list: (): Promise<SupplierRow[]> => ipcRenderer.invoke('suppliers:list'),

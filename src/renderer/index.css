@@ -121,3 +121,18 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Receipt printing (§3.11): only the receipt paints. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #receipt-print,
+  #receipt-print * {
+    visibility: visible;
+  }
+  #receipt-print {
+    position: absolute;
+    inset: 0;
+  }
+}

@@ -10,6 +10,7 @@ import { AppSidebar } from '@/components/app-sidebar'
 import { SiteHeader } from '@/components/site-header'
 import { useSettings } from '@/hooks/useSettings'
 import { ProductsPage } from '@/pages/products/ProductsPage'
+import { PosPage } from '@/pages/pos/PosPage'
 import { SettingsPage } from '@/pages/settings/SettingsPage'
 import { StockPage } from '@/pages/stock/StockPage'
 import { routes } from '@/routes'
@@ -18,6 +19,7 @@ function pageFor(key: string): React.JSX.Element {
   if (key === 'settings') return <SettingsPage />
   if (key === 'products') return <ProductsPage />
   if (key === 'stock') return <StockPage />
+  if (key === 'pos') return <PosPage />
   return <Placeholder titleKey={key} />
 }
 

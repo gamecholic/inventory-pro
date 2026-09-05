@@ -28,6 +28,8 @@ import {
   updateSupplier
 } from './db/catalog'
 import { stockAdjustInput } from '../shared/stock'
+import { checkoutInput } from '../shared/sale'
+import { completeSale } from './db/sales'
 import {
   categoryInput,
   productId,
@@ -139,10 +141,11 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle('products:search', (_event, input: unknown) => {
-    const { query } = productSearchInput.parse(input)
-    return searchProducts(query)
+    const { query, limit } = productSearchInput.parse(input)
+    return searchProducts(query, limit)
   })
   ipcMain.handle('stock:adjust', (_event, input: unknown) => adjustStock(stockAdjustInput.parse(input)))
+  ipcMain.handle('sales:complete', (_event, input: unknown) => completeSale(checkoutInput.parse(input)))
 }
 
 export { defaultBackupPath, writeExcelBackup }

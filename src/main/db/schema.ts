@@ -41,3 +41,32 @@ export const products = sqliteTable('products', {
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull()
 })
+
+/** Completed/canceled sales (features §3, §6). Product data snapshotted into items. */
+export const sales = sqliteTable('sales', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  receiptNo: text('receipt_no').notNull().unique(),
+  createdAt: text('created_at').notNull(),
+  subtotal: real('subtotal').notNull(),
+  discount: real('discount').notNull().default(0),
+  total: real('total').notNull(),
+  paymentMethod: text('payment_method').notNull(),
+  cashAmount: real('cash_amount'),
+  cardAmount: real('card_amount'),
+  changeAmount: real('change_amount').notNull().default(0),
+  status: text('status').notNull().default('completed'),
+  canceledAt: text('canceled_at')
+})
+
+export const saleItems = sqliteTable('sale_items', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  saleId: integer('sale_id')
+    .notNull()
+    .references(() => sales.id),
+  productId: integer('product_id'),
+  productName: text('product_name').notNull(),
+  unit: text('unit').notNull(),
+  qty: real('qty').notNull(),
+  unitPrice: real('unit_price').notNull(),
+  lineTotal: real('line_total').notNull()
+})

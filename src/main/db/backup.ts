@@ -6,10 +6,10 @@ import { z } from 'zod'
 import { settingsValues, withDefaults, type SettingsValues } from '../../shared/settings'
 import { toISO } from '../../shared/dates'
 import { getDb, getSqlite } from './client'
-import { categories, products, settings } from './schema'
+import { categories, products, saleItems, sales, settings } from './schema'
 import { seedSettings } from './settingsStore'
 
-const BACKUP_VERSION = 1
+const BACKUP_VERSION = 2
 
 const rowRecord = z.record(z.string(), z.unknown())
 const backupFile = z.object({
@@ -18,7 +18,9 @@ const backupFile = z.object({
   exportedAt: z.string(),
   settings: z.unknown(),
   categories: z.array(rowRecord),
-  products: z.array(rowRecord)
+  products: z.array(rowRecord),
+  sales: z.array(rowRecord).default([]),
+  sale_items: z.array(rowRecord).default([])
 })
 export type BackupFile = z.infer<typeof backupFile>
 
@@ -26,6 +28,8 @@ export interface TableDump {
   settings: SettingsValues
   categories: Array<typeof categories.$inferSelect>
   products: Array<typeof products.$inferSelect>
+  sales: Array<typeof sales.$inferSelect>
+  sale_items: Array<typeof saleItems.$inferSelect>
 }
 
 /** Read every user table. Dates/amounts stay as stored; exportedAt is ISO8601 UTC. */
@@ -42,7 +46,9 @@ export function collectAll(): TableDump {
       )
     ),
     categories: db.select().from(categories).all(),
-    products: db.select().from(products).all()
+    products: db.select().from(products).all(),
+    sales: db.select().from(sales).all(),
+    sale_items: db.select().from(saleItems).all()
   }
 }
 
@@ -55,10 +61,14 @@ export function replaceAll(data: unknown): { categories: number; products: numbe
   const validatedSettings = settingsValues.parse(withDefaults(parsed.settings))
   const sqlite = getSqlite()
   const run = sqlite.transaction(() => {
+    sqlite.prepare('DELETE FROM sale_items').run()
+    sqlite.prepare('DELETE FROM sales').run()
     sqlite.prepare('DELETE FROM products').run()
     sqlite.prepare('DELETE FROM categories').run()
     sqlite.prepare('DELETE FROM settings').run()
     const now = toISO(new Date())
+    const num = (v: unknown, fallback: number): number => (typeof v === 'number' && Number.isFinite(v) ? v : fallback)
+    const str = (v: unknown): string | null => (typeof v === 'string' ? v : null)
     for (const [key, value] of Object.entries(validatedSettings)) {
       sqlite.prepare('INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)').run(key, JSON.stringify(value), now)
     }
@@ -75,8 +85,6 @@ export function replaceAll(data: unknown): { categories: number; products: numbe
       'INSERT INTO products (id, name, barcode, category_id, unit, selling_price, cost_price, stock_qty, min_stock, supplier_id, description, archived_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     )
     for (const p of parsed.products) {
-      const num = (v: unknown, fallback: number): number => (typeof v === 'number' && Number.isFinite(v) ? v : fallback)
-      const str = (v: unknown): string | null => (typeof v === 'string' ? v : null)
       insertProd.run(
         typeof p.id === 'number' ? p.id : null,
         typeof p.name === 'string' ? p.name : '',
@@ -94,6 +102,40 @@ export function replaceAll(data: unknown): { categories: number; products: numbe
         typeof p.updated_at === 'string' ? p.updated_at : now
       )
     }
+    const insertSale = sqlite.prepare(
+      'INSERT INTO sales (id, receipt_no, created_at, subtotal, discount, total, payment_method, cash_amount, card_amount, change_amount, status, canceled_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    )
+    for (const s of parsed.sales) {
+      insertSale.run(
+        typeof s.id === 'number' ? s.id : null,
+        typeof s.receipt_no === 'string' ? s.receipt_no : `RESTORED-${String(s.id ?? '?')}`,
+        typeof s.created_at === 'string' ? s.created_at : now,
+        num(s.subtotal, 0),
+        num(s.discount, 0),
+        num(s.total, 0),
+        typeof s.payment_method === 'string' ? s.payment_method : 'cash',
+        typeof s.cash_amount === 'number' ? s.cash_amount : null,
+        typeof s.card_amount === 'number' ? s.card_amount : null,
+        num(s.change_amount, 0),
+        typeof s.status === 'string' ? s.status : 'completed',
+        str(s.canceled_at)
+      )
+    }
+    const insertItem = sqlite.prepare(
+      'INSERT INTO sale_items (id, sale_id, product_id, product_name, unit, qty, unit_price, line_total) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    )
+    for (const i of parsed.sale_items) {
+      insertItem.run(
+        typeof i.id === 'number' ? i.id : null,
+        typeof i.sale_id === 'number' ? i.sale_id : null,
+        typeof i.product_id === 'number' ? i.product_id : null,
+        typeof i.product_name === 'string' ? i.product_name : '',
+        typeof i.unit === 'string' ? i.unit : 'pcs',
+        num(i.qty, 0),
+        num(i.unit_price, 0),
+        num(i.line_total, 0)
+      )
+    }
   })
   run()
   return { categories: parsed.categories.length, products: parsed.products.length }
@@ -102,6 +144,8 @@ export function replaceAll(data: unknown): { categories: number; products: numbe
 /** Delete everything and reseed defaults. */
 export function resetDatabase(): void {
   const sqlite = getSqlite()
+  sqlite.prepare('DELETE FROM sale_items').run()
+  sqlite.prepare('DELETE FROM sales').run()
   sqlite.prepare('DELETE FROM products').run()
   sqlite.prepare('DELETE FROM categories').run()
   sqlite.prepare('DELETE FROM settings').run()
@@ -165,6 +209,27 @@ export async function writeExcelBackup(filePath: string): Promise<void> {
   const prodSheet = wb.addWorksheet('Products')
   prodSheet.columns = PRODUCT_COLUMNS.map((h) => ({ header: h, key: h, width: h === 'name' ? 30 : 16 }))
   for (const p of dump.products) prodSheet.addRow({ ...p })
+  const salesSheet = wb.addWorksheet('Sales')
+  salesSheet.columns = [
+    'id',
+    'receipt_no',
+    'created_at',
+    'subtotal',
+    'discount',
+    'total',
+    'payment_method',
+    'cash_amount',
+    'card_amount',
+    'change_amount',
+    'status',
+    'canceled_at'
+  ].map((h) => ({ header: h, key: h, width: 18 }))
+  for (const s of dump.sales) salesSheet.addRow({ ...s })
+  const itemsSheet = wb.addWorksheet('SaleItems')
+  itemsSheet.columns = ['id', 'sale_id', 'product_id', 'product_name', 'unit', 'qty', 'unit_price', 'line_total'].map(
+    (h) => ({ header: h, key: h, width: 16 })
+  )
+  for (const i of dump.sale_items) itemsSheet.addRow({ ...i })
   await wb.xlsx.writeFile(filePath)
 }
 
@@ -177,6 +242,8 @@ export async function readExcelBackup(filePath: string): Promise<{ categories: n
     if (!sheet) throw new Error(`Missing sheet: ${name}`)
     return sheet
   }
+  // Sales sheets are absent in v1 backups — treat as empty, keep them importable.
+  const optSheet = (name: string): ExcelJS.Worksheet | null => wb.getWorksheet(name) ?? null
   const settingsObj: Record<string, unknown> = {}
   getSheet('Settings').eachRow((row, n) => {
     if (n === 1) return
@@ -211,7 +278,9 @@ export async function readExcelBackup(filePath: string): Promise<{ categories: n
     exportedAt: toISO(new Date()),
     settings: settingsObj,
     categories: readRows(getSheet('Categories')),
-    products: readRows(getSheet('Products'))
+    products: readRows(getSheet('Products')),
+    sales: optSheet('Sales') ? readRows(optSheet('Sales') as ExcelJS.Worksheet) : [],
+    sale_items: optSheet('SaleItems') ? readRows(optSheet('SaleItems') as ExcelJS.Worksheet) : []
   })
 }
 

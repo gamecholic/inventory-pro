@@ -9,3 +9,12 @@ export function formatMoney(amount: number, currency: StoreCurrency): string {
     maximumFractionDigits: 2
   }).format(amount)
 }
+
+/**
+ * Round to cents. Applied at every save boundary (product prices, stock cost
+ * averaging) so repeating decimals like 71.666… never reach the DB or inputs.
+ * Matches the spec's "2-decimal steps" for all price fields.
+ */
+export function round2(n: number): number {
+  return Math.round((n + Number.EPSILON) * 100) / 100
+}

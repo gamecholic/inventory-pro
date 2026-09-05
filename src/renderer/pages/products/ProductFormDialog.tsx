@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { productInput, type CategoryRow, type ProductInput, type ProductRow } from '@shared/products'
+import { round2 } from '@shared/money'
 import { UNITS, unitLong, unitShort } from '@shared/units'
 import type { SupplierRow } from '@shared/products'
 import { useCreateProduct, useUpdateProduct } from '@/hooks/useCatalog'
@@ -169,7 +170,7 @@ export function ProductFormDialog({
                     type="number"
                     min={0}
                     step={0.01}
-                    value={field.value}
+                    value={round2(field.value)}
                     onChange={(e) => field.onChange(num(e.target.valueAsNumber))}
                   />
                 )}
@@ -187,7 +188,7 @@ export function ProductFormDialog({
                     type="number"
                     min={0}
                     step={0.01}
-                    value={field.value}
+                    value={round2(field.value)}
                     onChange={(e) => field.onChange(num(e.target.valueAsNumber))}
                   />
                 )}

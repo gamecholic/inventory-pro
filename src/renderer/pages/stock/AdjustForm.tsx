@@ -14,7 +14,7 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { formatMoney } from '@shared/money'
+import { formatMoney, round2 } from '@shared/money'
 import { computeAdjustment, stockAdjustInput, type StockAdjustInput } from '@shared/stock'
 import { unitShort } from '@shared/units'
 import type { ProductRow } from '@shared/products'
@@ -154,7 +154,7 @@ export function AdjustForm({
                     min={0}
                     step={0.01}
                     disabled={type === 'remove'}
-                    value={field.value ?? product.costPrice}
+                    value={round2(field.value ?? product.costPrice)}
                     onChange={(e) => field.onChange(num(e.target.valueAsNumber))}
                   />
                 )}
@@ -171,7 +171,7 @@ export function AdjustForm({
                     type="number"
                     min={0}
                     step={0.01}
-                    value={field.value ?? product.sellingPrice}
+                    value={round2(field.value ?? product.sellingPrice)}
                     onChange={(e) => field.onChange(num(e.target.valueAsNumber))}
                   />
                 )}

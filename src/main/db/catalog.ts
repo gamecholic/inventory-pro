@@ -17,6 +17,7 @@ import {
   type SupplierRow
 } from '../../shared/products'
 import { computeAdjustment, normalizeReason, stockAdjustInput, type StockAdjustInput } from '../../shared/stock'
+import { round2 } from '../../shared/money'
 import { toISO } from '../../shared/dates'
 import { getDb } from './client'
 import { categories, products, suppliers } from './schema'
@@ -202,8 +203,8 @@ export function createProduct(input: ProductInput): ProductRow {
       barcode: parsed.barcode || null,
       categoryId: parsed.categoryId,
       unit: parsed.unit,
-      sellingPrice: parsed.sellingPrice,
-      costPrice: parsed.costPrice,
+      sellingPrice: round2(parsed.sellingPrice),
+      costPrice: round2(parsed.costPrice),
       stockQty: parsed.stockQty,
       minStock: parsed.minStock,
       supplierId: parsed.supplierId,
@@ -226,8 +227,8 @@ export function updateProduct(id: number, input: ProductInput): ProductRow {
       barcode: parsed.barcode || null,
       categoryId: parsed.categoryId,
       unit: parsed.unit,
-      sellingPrice: parsed.sellingPrice,
-      costPrice: parsed.costPrice,
+      sellingPrice: round2(parsed.sellingPrice),
+      costPrice: round2(parsed.costPrice),
       stockQty: parsed.stockQty,
       minStock: parsed.minStock,
       supplierId: parsed.supplierId,
@@ -341,10 +342,10 @@ export function adjustStock(input: StockAdjustInput): AdjustResult {
       newCostPrice: parsed.type === 'add' ? (parsed.newCostPrice ?? current.costPrice) : null
     }
   )
-  const sellingPrice = parsed.newSellingPrice ?? current.sellingPrice
+  const sellingPrice = round2(parsed.newSellingPrice ?? current.sellingPrice)
   const now = toISO(new Date())
   db.update(products)
-    .set({ stockQty: preview.newQty, costPrice: preview.newCost, sellingPrice, updatedAt: now })
+    .set({ stockQty: preview.newQty, costPrice: round2(preview.newCost), sellingPrice, updatedAt: now })
     .where(eq(products.id, parsed.productId))
     .run()
   const product = getProductRow(parsed.productId) as ProductRow

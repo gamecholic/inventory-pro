@@ -18,8 +18,8 @@ export function AppSidebar({ routes }: { routes: readonly AppRoute[] }): React.J
   const location = useLocation()
 
   return (
-    <Sidebar collapsible="icon" variant="sidebar">
-      <SidebarHeader className="border-b">
+    <Sidebar collapsible="icon" variant="inset">
+      <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton className="data-[slot=sidebar-menu-button]:p-1.5!">

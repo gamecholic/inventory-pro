@@ -6,6 +6,7 @@ import { enUS, tr } from 'date-fns/locale'
 import type { DateRange } from 'react-day-picker'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
+import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { formatISO } from '@shared/dates'
 import { presetRange, type DatePreset } from '@shared/dates'
@@ -44,35 +45,39 @@ export function DateRangePicker({
           {label}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-2" align="start">
-        <Calendar
-          mode="range"
-          captionLayout="dropdown"
-          numberOfMonths={2}
-          locale={locale}
-          formatters={{
-            // The stock calendar formats dropdowns with the OS locale — pin to the app language.
-            formatMonthDropdown: (d) => format(d, 'MMM', { locale }),
-            formatWeekdayName: (d) => format(d, 'EEEEEE', { locale })
-          }}
-          startMonth={subYears(today, 10)}
-          endMonth={today}
-          selected={range}
-          onSelect={onSelect}
-        />
-        <div className="mt-2 flex max-w-xl flex-wrap gap-1.5 border-t border-border pt-2">
-          {PRESETS.map((p) => (
-            <Button
-              key={p}
-              variant="outline"
-              size="sm"
-              className="rounded-full"
-              onClick={() => onSelect(presetRange(p, today))}
-            >
-              {t(`sales.presets.${p}`)}
-            </Button>
-          ))}
-        </div>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Card className="border-0 shadow-none">
+          <CardContent className="p-2">
+            <Calendar
+              mode="range"
+              captionLayout="dropdown"
+              numberOfMonths={2}
+              locale={locale}
+              formatters={{
+                // The stock calendar formats dropdowns with the OS locale — pin to the app language.
+                formatMonthDropdown: (d) => format(d, 'MMM', { locale }),
+                formatWeekdayName: (d) => format(d, 'EEEEEE', { locale })
+              }}
+              startMonth={subYears(today, 10)}
+              endMonth={today}
+              selected={range}
+              onSelect={onSelect}
+            />
+          </CardContent>
+          <CardFooter className="flex max-w-xl flex-wrap gap-1.5 border-t px-2 py-2">
+            {PRESETS.map((p) => (
+              <Button
+                key={p}
+                variant="outline"
+                size="sm"
+                className="flex-1 rounded-full"
+                onClick={() => onSelect(presetRange(p, today))}
+              >
+                {t(`sales.presets.${p}`)}
+              </Button>
+            ))}
+          </CardFooter>
+        </Card>
       </PopoverContent>
     </Popover>
   )

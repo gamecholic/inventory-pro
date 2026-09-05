@@ -14,6 +14,17 @@ export const categories = sqliteTable('categories', {
   createdAt: text('created_at').notNull()
 })
 
+export const suppliers = sqliteTable('suppliers', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  companyName: text('company_name').notNull(),
+  contactPerson: text('contact_person'),
+  phone: text('phone'),
+  email: text('email'),
+  address: text('address'),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull()
+})
+
 export const products = sqliteTable('products', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),

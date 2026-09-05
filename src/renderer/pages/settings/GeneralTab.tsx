@@ -76,147 +76,149 @@ export function GeneralTab(): React.JSX.Element {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('settings.tabs.general')}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={onSubmit} className="flex max-w-lg flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="language">{t('settings.language')}</Label>
-            <Controller
-              name="language"
-              control={form.control}
-              render={({ field }) => (
-                <Select
-                  value={field.value}
-                  onValueChange={(value) => {
-                    field.onChange(value)
-                    // Spec §1.2: language applies immediately, Save persists it.
-                    void i18n.changeLanguage(value)
-                  }}
-                >
-                  <SelectTrigger id="language">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="tr">Türkçe</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="theme">{t('settings.theme')}</Label>
-            <Select value={theme} onValueChange={setTheme}>
-              <SelectTrigger id="theme">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">{t('theme.light')}</SelectItem>
-                <SelectItem value="dark">{t('theme.dark')}</SelectItem>
-                <SelectItem value="system">{t('theme.system')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="currency">{t('settings.currency')}</Label>
-            <Controller
-              name="currency"
-              control={form.control}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger id="currency">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CURRENCIES.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>
-                        {c.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="dateFormat">{t('settings.dateFormat')}</Label>
-            <Controller
-              name="dateFormat"
-              control={form.control}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger id="dateFormat">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DATE_FORMATS.map((f) => (
-                      <SelectItem key={f} value={f}>
-                        {f}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </div>
-          <div className="flex items-center justify-between gap-4">
-            <Label htmlFor="lowStock">{t('settings.lowStock')}</Label>
-            <Controller
-              name="lowStockNotifications"
-              control={form.control}
-              render={({ field }) => (
-                <Switch id="lowStock" checked={field.value} onCheckedChange={field.onChange} />
-              )}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="cardFee">{t('settings.cardFee')}</Label>
-            <Controller
-              name="cardFeePercent"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <>
-                  <Input
-                    id="cardFee"
-                    type="number"
-                    min={0}
-                    max={100}
-                    step={0.01}
+    <div className="flex max-w-2xl flex-col gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('settings.tabs.general')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={onSubmit} className="flex max-w-lg flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="language">{t('settings.language')}</Label>
+              <Controller
+                name="language"
+                control={form.control}
+                render={({ field }) => (
+                  <Select
                     value={field.value}
-                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                  />
-                  {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
-                </>
-              )}
-            />
-          </div>
-          <div className="flex gap-2">
-            <Button type="submit" disabled={update.isPending}>
-              {t('settings.save')}
-            </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button type="button" variant="destructive" disabled={resetting}>
-                  {t('settings.reset')}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>{t('settings.resetTitle')}</AlertDialogTitle>
-                  <AlertDialogDescription>{t('settings.resetDesc')}</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{t('settings.cancel')}</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => void onReset()}>{t('settings.confirm')}</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+                    onValueChange={(value) => {
+                      field.onChange(value)
+                      // Spec §1.2: language applies immediately, Save persists it.
+                      void i18n.changeLanguage(value)
+                    }}
+                  >
+                    <SelectTrigger id="language">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="en">English</SelectItem>
+                      <SelectItem value="tr">Türkçe</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="theme">{t('settings.theme')}</Label>
+              <Select value={theme} onValueChange={setTheme}>
+                <SelectTrigger id="theme">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">{t('theme.light')}</SelectItem>
+                  <SelectItem value="dark">{t('theme.dark')}</SelectItem>
+                  <SelectItem value="system">{t('theme.system')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="currency">{t('settings.currency')}</Label>
+              <Controller
+                name="currency"
+                control={form.control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="currency">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CURRENCIES.map((c) => (
+                        <SelectItem key={c.value} value={c.value}>
+                          {c.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="dateFormat">{t('settings.dateFormat')}</Label>
+              <Controller
+                name="dateFormat"
+                control={form.control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="dateFormat">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DATE_FORMATS.map((f) => (
+                        <SelectItem key={f} value={f}>
+                          {f}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <Label htmlFor="lowStock">{t('settings.lowStock')}</Label>
+              <Controller
+                name="lowStockNotifications"
+                control={form.control}
+                render={({ field }) => (
+                  <Switch id="lowStock" checked={field.value} onCheckedChange={field.onChange} />
+                )}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="cardFee">{t('settings.cardFee')}</Label>
+              <Controller
+                name="cardFeePercent"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <Input
+                      id="cardFee"
+                      type="number"
+                      min={0}
+                      max={100}
+                      step={0.01}
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                    />
+                    {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
+                  </>
+                )}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button type="submit" disabled={update.isPending}>
+                {t('settings.save')}
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button type="button" variant="destructive" disabled={resetting}>
+                    {t('settings.reset')}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t('settings.resetTitle')}</AlertDialogTitle>
+                    <AlertDialogDescription>{t('settings.resetDesc')}</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t('settings.cancel')}</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => void onReset()}>{t('settings.confirm')}</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   )
 }

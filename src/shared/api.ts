@@ -19,6 +19,21 @@ export const channels = [
   'backup:import-json',
   'backup:export-excel',
   'backup:import-excel',
-  'db:reset'
+  'db:reset',
+  'products:list',
+  'products:create',
+  'products:update',
+  'products:archive',
+  'products:restore',
+  'categories:list',
+  'categories:create',
+  'categories:update',
+  'categories:delete',
+  'suppliers:list',
+  'suppliers:create',
+  'suppliers:update',
+  'suppliers:delete'
 ] as const
 export type Channel = (typeof channels)[number]
+
+export const idInput = z.object({ id: z.number().int().positive() })

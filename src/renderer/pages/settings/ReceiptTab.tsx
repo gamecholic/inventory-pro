@@ -25,37 +25,39 @@ export function ReceiptTab(): React.JSX.Element {
   })
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('settings.tabs.receipt')}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={onSubmit} className="flex max-w-lg flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="rcptHeader">{t('settings.receiptHeader')}</Label>
-            <Textarea id="rcptHeader" {...form.register('header')} />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="rcptFooter">{t('settings.receiptFooter')}</Label>
-            <Textarea id="rcptFooter" {...form.register('footer')} />
-          </div>
-          <div className="flex items-center justify-between gap-4">
-            <Label htmlFor="rcptLogo">{t('settings.showLogo')}</Label>
-            <Controller
-              name="showLogo"
-              control={form.control}
-              render={({ field }) => (
-                <Switch id="rcptLogo" checked={field.value} onCheckedChange={field.onChange} />
-              )}
-            />
-          </div>
-          <div>
-            <Button type="submit" disabled={update.isPending}>
-              {t('settings.save')}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+    <div className="flex max-w-2xl flex-col gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('settings.tabs.receipt')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={onSubmit} className="flex max-w-lg flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="rcptHeader">{t('settings.receiptHeader')}</Label>
+              <Textarea id="rcptHeader" {...form.register('header')} />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="rcptFooter">{t('settings.receiptFooter')}</Label>
+              <Textarea id="rcptFooter" {...form.register('footer')} />
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <Label htmlFor="rcptLogo">{t('settings.showLogo')}</Label>
+              <Controller
+                name="showLogo"
+                control={form.control}
+                render={({ field }) => (
+                  <Switch id="rcptLogo" checked={field.value} onCheckedChange={field.onChange} />
+                )}
+              />
+            </div>
+            <div>
+              <Button type="submit" disabled={update.isPending}>
+                {t('settings.save')}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   )
 }

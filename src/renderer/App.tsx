@@ -9,8 +9,15 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SiteHeader } from '@/components/site-header'
 import { useSettings } from '@/hooks/useSettings'
+import { ProductsPage } from '@/pages/products/ProductsPage'
 import { SettingsPage } from '@/pages/settings/SettingsPage'
 import { routes } from '@/routes'
+
+function pageFor(key: string): React.JSX.Element {
+  if (key === 'settings') return <SettingsPage />
+  if (key === 'products') return <ProductsPage />
+  return <Placeholder titleKey={key} />
+}
 
 /** Applies the persisted language immediately, including on boot (features §1.2). */
 function ApplySettings(): React.JSX.Element | null {
@@ -56,11 +63,7 @@ function Shell(): React.JSX.Element {
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <Routes>
                 {routes.map((r) => (
-                  <Route
-                    key={r.key}
-                    path={r.path}
-                    element={r.key === 'settings' ? <SettingsPage /> : <Placeholder titleKey={r.key} />}
-                  />
+                  <Route key={r.key} path={r.path} element={pageFor(r.key)} />
                 ))}
               </Routes>
             </div>

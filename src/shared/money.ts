@@ -1,13 +1,20 @@
 export type StoreCurrency = 'USD' | 'EUR' | 'GBP' | 'TRY'
 
-/** Money with 2 decimals in the store currency (features §1.3). */
+/** Exact symbols from the spec (features §1.3). Intl maps these inconsistently per locale, so pin them. */
+export const CURRENCY_SYMBOLS: Record<StoreCurrency, string> = {
+  USD: '$',
+  EUR: '€',
+  GBP: '£',
+  TRY: '₺'
+}
+
+/** Money with 2 decimals and the pinned store-currency symbol (features §1.3). */
 export function formatMoney(amount: number, currency: StoreCurrency): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
+  const grouped = new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(amount)
+  return `${CURRENCY_SYMBOLS[currency]}${grouped}`
 }
 
 /**

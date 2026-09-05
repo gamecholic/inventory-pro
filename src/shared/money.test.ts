@@ -10,8 +10,10 @@ describe('round2', () => {
 })
 
 describe('formatMoney', () => {
-  it('formats with 2 decimals in the store currency', () => {
-    expect(formatMoney(25, 'USD')).toContain('25.00')
-    expect(formatMoney(71.666666, 'TRY')).toContain('71.67')
+  it('uses the pinned symbol for every store currency', () => {
+    expect(formatMoney(25, 'USD')).toBe('$25.00')
+    expect(formatMoney(25, 'EUR')).toBe('€25.00')
+    expect(formatMoney(25, 'GBP')).toBe('£25.00')
+    expect(formatMoney(71.666666, 'TRY')).toBe('₺71.67')
   })
 })

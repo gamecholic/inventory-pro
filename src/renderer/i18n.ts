@@ -15,7 +15,7 @@ const resources = {
         settings: 'Settings'
       },
       app: { name: 'Inventory Pro', comingSoon: 'Coming soon' },
-      theme: { toggle: 'Toggle theme' }
+      theme: { toggle: 'Toggle theme', light: 'Light', dark: 'Dark', system: 'System' }
     }
   },
   tr: {
@@ -31,7 +31,7 @@ const resources = {
         settings: 'Ayarlar'
       },
       app: { name: 'Inventory Pro', comingSoon: 'Çok yakında' },
-      theme: { toggle: 'Temayı değiştir' }
+      theme: { toggle: 'Temayı değiştir', light: 'Açık', dark: 'Koyu', system: 'Sistem' }
     }
   }
 } as const

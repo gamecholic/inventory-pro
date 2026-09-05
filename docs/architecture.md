@@ -14,15 +14,19 @@ Status: [DECIDED] = agreed, not locked. [OPEN] = needs decision.
 
 ## 2. Layout
 ```
-main/db/* main/ipc/* main/backup main/print main/updater
+main/db/{client,schema,settingsStore,backup,excel,categories,suppliers,products,stock,sales}.ts
+main/ipc/{index,settings,backup,catalog,sales}.ts  (./ipc resolves to index)
 preload/ (window.api.* only)
 renderer/pages/{dashboard,pos,products,stock,sales,expenses,reports,settings}
-shared/api.ts shared/schemas shared/normalizeTR shared/money shared/dates
+renderer/{hooks,stores,components,lib}  renderer/i18n/{en,tr}.ts
+shared/{api,settings,products,sale,stock,normalizeTR,money,dates,units}.ts (+ *.test.ts)
 ```
+Print (receipt template → BrowserWindow.print) and updater (GitHub Releases) live in
+`main/index.ts` + `main/ipc/` for now; split into `main/print|updater` when they grow.
 
 ## 3. Separation (enforced)
 - Two builds (electron-vite main + renderer). ESLint `no-restricted-imports` blocks renderer → `main/*`.
-- Contracts first: add channel + Zod schema + TS types in `shared/api.ts`, then main handler, then renderer hook.
+- Contracts first: channel names in `shared/api.ts`, Zod schemas beside them in `shared/*.ts`, then main handler in `main/ipc/<domain>.ts`, then renderer hook. No `any` across the boundary.
 - Backend owns truth (SQLite). UI caches and invalidates after each mutation.
 - Preload output is `out/preload/index.mjs` — main must reference the `.mjs` path, not `.js`.
 - Settings live in a `settings` key-value table (one JSON row per section), merged over `shared/settings.ts` defaults. Display prefs (language/currency/dates) are read from the `['settings']` TanStack Query cache.

@@ -8,6 +8,7 @@ export default defineConfig({
   webServer: {
     command: 'npm run dev:renderer',
     port: 5173,
-    reuseExistingServer: true
+    // Never reuse: a squatter serves stale code and tests pass against the wrong build.
+    reuseExistingServer: false
   }
 })

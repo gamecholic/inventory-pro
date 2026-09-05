@@ -10,14 +10,13 @@ test('shell visual', async ({ page }) => {
   await page.screenshot({ path: 'C:/Users/PC/AppData/Local/Temp/opencode/shell-dark.png' })
 })
 
-test('theme menu switches appearance on first selection', async ({ page }) => {
+test('theme select on settings page switches appearance', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.goto('/')
-  await page.getByTitle('Toggle theme').click()
-  await page.getByRole('menuitem', { name: 'Dark' }).click()
+  await page.goto('/#/settings')
+  await page.locator('#theme').click()
+  await page.getByRole('option', { name: 'Dark' }).click()
   await expect(page.locator('html.dark')).toBeAttached()
-  await expect(page.getByRole('menu')).toBeHidden()
-  await page.getByTitle('Toggle theme').click()
-  await page.getByRole('menuitem', { name: 'Light' }).click()
+  await page.locator('#theme').click()
+  await page.getByRole('option', { name: 'Light' }).click()
   await expect(page.locator('html.dark')).toHaveCount(0)
 })

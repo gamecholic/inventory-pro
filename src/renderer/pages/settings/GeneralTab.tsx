@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useTheme } from 'next-themes'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -42,6 +43,7 @@ const DATE_FORMATS = ['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD'] as const
 /** Features §9.1 — language, currency, dates, notifications, card fee, reset. */
 export function GeneralTab(): React.JSX.Element {
   const { t, i18n } = useTranslation()
+  const { theme, setTheme } = useTheme()
   const { data } = useSettings()
   const update = useUpdateSettings()
   const queryClient = useQueryClient()
@@ -86,7 +88,14 @@ export function GeneralTab(): React.JSX.Element {
               name="language"
               control={form.control}
               render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select
+                  value={field.value}
+                  onValueChange={(value) => {
+                    field.onChange(value)
+                    // Spec §1.2: language applies immediately, Save persists it.
+                    void i18n.changeLanguage(value)
+                  }}
+                >
                   <SelectTrigger id="language">
                     <SelectValue />
                   </SelectTrigger>
@@ -97,6 +106,19 @@ export function GeneralTab(): React.JSX.Element {
                 </Select>
               )}
             />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="theme">{t('settings.theme')}</Label>
+            <Select value={theme} onValueChange={setTheme}>
+              <SelectTrigger id="theme">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="light">{t('theme.light')}</SelectItem>
+                <SelectItem value="dark">{t('theme.dark')}</SelectItem>
+                <SelectItem value="system">{t('theme.system')}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="currency">{t('settings.currency')}</Label>

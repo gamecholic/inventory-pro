@@ -55,6 +55,7 @@ export function DateRangePicker({
         <Calendar
           mode="range"
           captionLayout="dropdown"
+          numberOfMonths={2}
           locale={locale}
           formatters={{
             // The stock calendar formats dropdowns with the OS locale — pin to the app language.

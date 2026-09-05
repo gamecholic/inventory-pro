@@ -34,7 +34,7 @@ function Shell(): React.JSX.Element {
       }
     >
       <AppSidebar routes={routes} />
-      <SidebarInset>
+      <SidebarInset className="md:peer-data-[variant=inset]:overflow-clip">
         <SiteHeader title={t(`nav.${active.key}`)} />
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">

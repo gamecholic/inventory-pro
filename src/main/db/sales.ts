@@ -4,18 +4,19 @@ import { SALE_PAGE_SIZE, saleId, saleListFilter, type SaleDetail, type SaleList 
 import { round2 } from '../../shared/money'
 import { stockStatus } from '../../shared/products'
 import { toISO } from '../../shared/dates'
-import { getDb, getSqlite } from './client'
+import { getDb, defaultHandles, type AppDb, type DbHandles } from './client'
 import { products, saleItems, sales } from './schema'
-import { getSettings } from './settingsStore'
+import { readSettings } from './settingsStore'
+import { logAdjustment } from './stock'
 
 /**
  * Validate stock, compute totals with shared discount rules, then insert the
  * sale + items and decrement stock in ONE transaction (features §3.5–§3.10).
  * Shortfall-as-discount and split math are resolved by the UI before calling.
  */
-export function completeSale(input: CheckoutInput): Receipt {
+export function completeSale(input: CheckoutInput, handles: DbHandles = defaultHandles()): Receipt {
   const parsed = checkoutInput.parse(input)
-  const db = getDb()
+  const { db, sqlite } = handles
 
   const items = parsed.lines.map((line) => {
     const product = db.select().from(products).where(eq(products.id, line.productId)).get()
@@ -50,11 +51,10 @@ export function completeSale(input: CheckoutInput): Receipt {
 
   const now = new Date()
   const createdAt = toISO(now)
-  const notifyLow = getSettings().general.lowStockNotifications
+  const notifyLow = readSettings(db).general.lowStockNotifications
   const lowStock: LowStockAlert[] = []
   let savedReceiptNo = ''
 
-  const sqlite = getSqlite()
   sqlite.transaction(() => {
     let seq = 0
     for (;;) {
@@ -101,6 +101,12 @@ export function completeSale(input: CheckoutInput): Receipt {
         .set({ stockQty: newQty, updatedAt: createdAt })
         .where(eq(products.id, product.id))
         .run()
+      logAdjustment(handles, {
+        productId: product.id,
+        qtyChange: -qty,
+        type: 'sale',
+        reason: `Sale ${savedReceiptNo}`
+      })
       if (
         notifyLow &&
         stockStatus(product.stockQty, product.minStock) === 'in' &&
@@ -167,10 +173,10 @@ export function listSales(filter: unknown): SaleList {
 }
 
 /** One sale with its lines for the detail panel. */
-export function getSale(id: number): SaleDetail {
-  const sale = getDb().select().from(sales).where(eq(sales.id, saleId.parse({ id }).id)).get()
+export function getSale(id: number, db: AppDb = getDb()): SaleDetail {
+  const sale = db.select().from(sales).where(eq(sales.id, saleId.parse({ id }).id)).get()
   if (!sale) throw new Error('Sale not found')
-  const items = getDb().select().from(saleItems).where(eq(saleItems.saleId, sale.id)).all()
+  const items = db.select().from(saleItems).where(eq(saleItems.saleId, sale.id)).all()
   return {
     id: sale.id,
     receiptNo: sale.receiptNo,
@@ -199,15 +205,14 @@ export function getSale(id: number): SaleDetail {
  * Cancel an active sale: mark canceled and return all quantities to stock
  * in one transaction (features §6.6). Already-canceled sales are rejected.
  */
-export function cancelSale(id: number): SaleDetail {
+export function cancelSale(id: number, handles: DbHandles = defaultHandles()): SaleDetail {
   const saleIdParsed = saleId.parse({ id }).id
-  const db = getDb()
+  const { db, sqlite } = handles
   const sale = db.select().from(sales).where(eq(sales.id, saleIdParsed)).get()
   if (!sale) throw new Error('Sale not found')
   if (sale.status === 'canceled') throw new Error('Sale is already canceled')
 
   const now = toISO(new Date())
-  const sqlite = getSqlite()
   sqlite.transaction(() => {
     const items = db.select().from(saleItems).where(eq(saleItems.saleId, saleIdParsed)).all()
     for (const item of items) {
@@ -218,8 +223,14 @@ export function cancelSale(id: number): SaleDetail {
         .set({ stockQty: product.stockQty + item.qty, updatedAt: now })
         .where(eq(products.id, product.id))
         .run()
+      logAdjustment(handles, {
+        productId: product.id,
+        qtyChange: item.qty,
+        type: 'restore',
+        reason: `Cancel ${sale.receiptNo}`
+      })
     }
     db.update(sales).set({ status: 'canceled', canceledAt: now }).where(eq(sales.id, saleIdParsed)).run()
   })()
-  return getSale(saleIdParsed)
+  return getSale(saleIdParsed, db)
 }

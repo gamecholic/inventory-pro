@@ -11,6 +11,9 @@ export const en = {
         settings: 'Settings'
       },
       app: { name: 'Inventory Pro', comingSoon: 'Coming soon' },
+      reports: {
+        grossRevenueNote: 'Revenue before discounts.'
+      },
       expenses: {
         title: 'Expenses',
         addExpense: 'Add Expense',

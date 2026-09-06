@@ -104,3 +104,19 @@ export const saleItems = sqliteTable('sale_items', {
 }, (t) => [
   index('sale_items_sale_id_idx').on(t.saleId)
 ])
+
+/**
+ * Silent audit trail for every stock movement (adjust/add/remove, sale,
+ * cancel-restore) with the user reason. No UI reads this table (§5.4) —
+ * it exists so reasons are truly "saved" (§5.2) and for future auditing.
+ */
+export const stockAdjustments = sqliteTable('stock_adjustments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  productId: integer('product_id'),
+  qtyChange: real('qty_change').notNull(),
+  type: text('type').notNull(),
+  reason: text('reason').notNull().default(''),
+  createdAt: text('created_at').notNull()
+}, (t) => [
+  index('stock_adjustments_product_idx').on(t.productId)
+])

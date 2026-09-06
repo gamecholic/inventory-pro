@@ -90,6 +90,13 @@ export async function writeExcelBackup(filePath: string): Promise<void> {
     'updated_at'
   ].map((h) => ({ header: h, key: h, width: 18 }))
   for (const e of dump.expenses) expSheet.addRow({ ...e })
+  const adjSheet = wb.addWorksheet('StockAdjustments')
+  adjSheet.columns = ['id', 'product_id', 'qty_change', 'type', 'reason', 'created_at'].map((h) => ({
+    header: h,
+    key: h,
+    width: 18
+  }))
+  for (const a of dump.stock_adjustments) adjSheet.addRow({ ...a })
   await wb.xlsx.writeFile(filePath)
 }
 
@@ -136,6 +143,7 @@ export async function readExcelBackup(filePath: string): Promise<{ categories: n
   const itemsSheet = optSheet('SaleItems')
   const expCatSheet = optSheet('ExpenseCategories')
   const expSheet = optSheet('Expenses')
+  const adjSheet = optSheet('StockAdjustments')
   return replaceAll({
     app: 'inventory-pro',
     version: BACKUP_VERSION,
@@ -146,6 +154,7 @@ export async function readExcelBackup(filePath: string): Promise<{ categories: n
     sales: salesSheet ? readRows(salesSheet) : [],
     sale_items: itemsSheet ? readRows(itemsSheet) : [],
     expense_categories: expCatSheet ? readRows(expCatSheet) : [],
-    expenses: expSheet ? readRows(expSheet) : []
+    expenses: expSheet ? readRows(expSheet) : [],
+    stock_adjustments: adjSheet ? readRows(adjSheet) : []
   })
 }

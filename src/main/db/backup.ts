@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { settingsValues, withDefaults, type SettingsValues } from '../../shared/settings'
 import { toISO } from '../../shared/dates'
 import { getDb, getSqlite } from './client'
-import { categories, expenseCategories, expenses, products, saleItems, sales, settings } from './schema'
+import { categories, expenseCategories, expenses, products, saleItems, sales, settings, stockAdjustments } from './schema'
 import { seedSettings } from './settingsStore'
 
 const BACKUP_VERSION = 2
@@ -22,7 +22,8 @@ const backupFile = z.object({
   sales: z.array(rowRecord).default([]),
   sale_items: z.array(rowRecord).default([]),
   expense_categories: z.array(rowRecord).default([]),
-  expenses: z.array(rowRecord).default([])
+  expenses: z.array(rowRecord).default([]),
+  stock_adjustments: z.array(rowRecord).default([])
 })
 export type BackupFile = z.infer<typeof backupFile>
 
@@ -34,6 +35,7 @@ export interface TableDump {
   sale_items: Array<typeof saleItems.$inferSelect>
   expense_categories: Array<typeof expenseCategories.$inferSelect>
   expenses: Array<typeof expenses.$inferSelect>
+  stock_adjustments: Array<typeof stockAdjustments.$inferSelect>
 }
 
 /** Read every user table. Dates/amounts stay as stored; exportedAt is ISO8601 UTC. */
@@ -54,7 +56,8 @@ export function collectAll(): TableDump {
     sales: db.select().from(sales).all(),
     sale_items: db.select().from(saleItems).all(),
     expense_categories: db.select().from(expenseCategories).all(),
-    expenses: db.select().from(expenses).all()
+    expenses: db.select().from(expenses).all(),
+    stock_adjustments: db.select().from(stockAdjustments).all()
   }
 }
 
@@ -67,6 +70,7 @@ export function replaceAll(data: unknown): { categories: number; products: numbe
   const validatedSettings = settingsValues.parse(withDefaults(parsed.settings))
   const sqlite = getSqlite()
   const run = sqlite.transaction(() => {
+    sqlite.prepare('DELETE FROM stock_adjustments').run()
     sqlite.prepare('DELETE FROM sale_items').run()
     sqlite.prepare('DELETE FROM sales').run()
     sqlite.prepare('DELETE FROM expenses').run()
@@ -178,6 +182,19 @@ export function replaceAll(data: unknown): { categories: number; products: numbe
         typeof e.updated_at === 'string' ? e.updated_at : now
       )
     }
+    const insertAdj = sqlite.prepare(
+      'INSERT INTO stock_adjustments (id, product_id, qty_change, type, reason, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+    )
+    for (const a of parsed.stock_adjustments) {
+      insertAdj.run(
+        typeof a.id === 'number' ? a.id : null,
+        typeof a.product_id === 'number' ? a.product_id : null,
+        num(a.qty_change, 0),
+        typeof a.type === 'string' ? a.type : '',
+        typeof a.reason === 'string' ? a.reason : '',
+        typeof a.created_at === 'string' ? a.created_at : now
+      )
+    }
   })
   run()
   return { categories: parsed.categories.length, products: parsed.products.length }
@@ -186,6 +203,7 @@ export function replaceAll(data: unknown): { categories: number; products: numbe
 /** Delete everything and reseed defaults. */
 export function resetDatabase(): void {
   const sqlite = getSqlite()
+  sqlite.prepare('DELETE FROM stock_adjustments').run()
   sqlite.prepare('DELETE FROM sale_items').run()
   sqlite.prepare('DELETE FROM sales').run()
   sqlite.prepare('DELETE FROM expenses').run()

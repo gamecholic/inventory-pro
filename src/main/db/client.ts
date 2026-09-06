@@ -28,6 +28,16 @@ export function openDatabase(filePath: string): { db: AppDb; sqlite: Database.Da
   return { db: database, sqlite: handle }
 }
 
+/** Injectable handles so stores are testable against :memory: (defaults hit the shop DB). */
+export interface DbHandles {
+  db: AppDb
+  sqlite: Database.Database
+}
+
+export function defaultHandles(): DbHandles {
+  return { db: getDb(), sqlite: getSqlite() }
+}
+
 /** Open (or reuse) the shop database and run pending Drizzle migrations. */
 export function getDb(): AppDb {
   if (db && sqlite) return db

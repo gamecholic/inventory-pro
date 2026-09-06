@@ -36,8 +36,8 @@ function productColumns() {
   }
 }
 
-export function getProductRow(id: number): ProductRow | undefined {
-  return getDb()
+export function getProductRow(id: number, db = getDb()): ProductRow | undefined {
+  return db
     .select(productColumns())
     .from(products)
     .leftJoin(categories, eq(products.categoryId, categories.id))

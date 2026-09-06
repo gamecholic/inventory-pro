@@ -11,6 +11,9 @@ export const tr = {
         settings: 'Ayarlar'
       },
       app: { name: 'Inventory Pro', comingSoon: 'Çok yakında' },
+      reports: {
+        grossRevenueNote: 'İndirimler öncesi ciro.'
+      },
       expenses: {
         title: 'Giderler',
         addExpense: 'Gider Ekle',

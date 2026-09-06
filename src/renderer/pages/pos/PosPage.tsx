@@ -84,7 +84,7 @@ export function PosPage(): React.JSX.Element {
   return (
     <div className="px-4 lg:px-6">
       <h2 className="mb-4 text-2xl font-semibold">{t('pos.title')}</h2>
-      <div className="grid items-start gap-4 md:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
         <form onSubmit={submitSearch}>
           <ProductGrid
             catalog={catalog ?? []}

@@ -102,16 +102,16 @@ export function ProductGrid({
                 type="button"
                 disabled={out}
                 onClick={() => onPick(p)}
-                className={`flex flex-col gap-1 rounded-lg border border-border p-3 text-left transition-colors ${
+                className={`flex flex-col gap-0.5 rounded-lg border border-border p-2 text-left transition-colors ${
                   out ? 'opacity-50' : 'hover:bg-muted/50'
                 }`}
               >
-                <span className="font-medium">{p.name}</span>
-                <span className="text-sm">{formatMoney(p.sellingPrice, currency)}</span>
-                <span className={`text-xs ${out ? 'text-destructive' : 'text-muted-foreground'}`}>
-                  {out
-                    ? t('pos.outOfStock')
-                    : `${t('pos.inStock')}: ${p.stockQty} ${unitShort(p.unit, t)}`}
+                <span className="truncate text-sm font-medium">{p.name}</span>
+                <span className="flex items-baseline justify-between gap-1">
+                  <span className="text-sm font-semibold">{formatMoney(p.sellingPrice, currency)}</span>
+                  <span className={`truncate text-[11px] ${out ? 'text-destructive' : 'text-muted-foreground'}`}>
+                    {out ? t('pos.outOfStock') : `${p.stockQty} ${unitShort(p.unit, t)}`}
+                  </span>
                 </span>
               </button>
             )

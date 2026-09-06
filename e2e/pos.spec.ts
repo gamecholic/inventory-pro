@@ -60,5 +60,5 @@ test('cash sale: search → add → pay exact → receipt → stock decremented'
 
   // Cart cleared and stock decremented 10 → 8.
   await expect(page.getByText('No items in cart.')).toBeVisible()
-  await expect(page.getByText('In Stock: 8 pcs')).toBeVisible()
+  await expect(page.getByText('8 pcs')).toBeVisible()
 })

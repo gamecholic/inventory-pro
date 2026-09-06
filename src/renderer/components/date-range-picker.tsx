@@ -28,22 +28,49 @@ export function DateRangePicker({
   const { t, i18n } = useTranslation()
   const { data: settings } = useSettings()
   const [open, setOpen] = useState(false)
-  // Left calendar tracks the range start (right follows consecutively).
-  // Synced on preset pick and popover open; free navigation otherwise.
-  const [month, setMonth] = useState<Date>(() => startOfMonth(range?.from ?? new Date()))
+  // Two independent months: left tracks the range start, right tracks the end.
+  // Synced on preset pick and popover open, and to whichever end just changed;
+  // free navigation otherwise.
+  const [startMonth, setStartMonth] = useState<Date>(() => startOfMonth(range?.from ?? new Date()))
+  const [endMonth, setEndMonth] = useState<Date>(() => startOfMonth(range?.to ?? new Date()))
   const dateFormat = settings?.general.dateFormat ?? 'MM/DD/YYYY'
   const today = new Date()
   const locale = i18n.language === 'tr' ? tr : enUS
 
   const reopen = (o: boolean): void => {
     setOpen(o)
-    if (o && range?.from) setMonth(startOfMonth(range.from))
+    if (o) {
+      if (range?.from) setStartMonth(startOfMonth(range.from))
+      if (range?.to) setEndMonth(startOfMonth(range.to))
+    }
   }
 
   const pickPreset = (p: DatePreset): void => {
     const r = presetRange(p, today)
     onSelect(r)
-    setMonth(startOfMonth(r.from))
+    setStartMonth(startOfMonth(r.from))
+    setEndMonth(startOfMonth(r.to))
+  }
+
+  const handleSelect = (r: DateRange | undefined): void => {
+    if (r?.from && r.from.getTime() !== range?.from?.getTime()) setStartMonth(startOfMonth(r.from))
+    if (r?.to && r.to?.getTime() !== range?.to?.getTime()) setEndMonth(startOfMonth(r.to))
+    onSelect(r)
+  }
+
+  const calendarProps = {
+    mode: 'range' as const,
+    captionLayout: 'dropdown' as const,
+    locale,
+    formatters: {
+      // The stock calendar formats dropdowns with the OS locale — pin to the app language.
+      formatMonthDropdown: (d: Date) => format(d, 'MMM', { locale }),
+      formatWeekdayName: (d: Date) => format(d, 'EEEEEE', { locale })
+    },
+    startMonth: subYears(today, 10),
+    endMonth: today,
+    selected: range,
+    onSelect: handleSelect
   }
 
   const label =
@@ -61,24 +88,9 @@ export function DateRangePicker({
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Card className="border-0 shadow-none">
-          <CardContent className="p-2">
-            <Calendar
-              mode="range"
-              captionLayout="dropdown"
-              numberOfMonths={2}
-              month={month}
-              onMonthChange={setMonth}
-              locale={locale}
-              formatters={{
-                // The stock calendar formats dropdowns with the OS locale — pin to the app language.
-                formatMonthDropdown: (d) => format(d, 'MMM', { locale }),
-                formatWeekdayName: (d) => format(d, 'EEEEEE', { locale })
-              }}
-              startMonth={subYears(today, 10)}
-              endMonth={today}
-              selected={range}
-              onSelect={onSelect}
-            />
+          <CardContent className="flex gap-2 p-2">
+            <Calendar {...calendarProps} month={startMonth} onMonthChange={setStartMonth} />
+            <Calendar {...calendarProps} month={endMonth} onMonthChange={setEndMonth} />
           </CardContent>
           <CardFooter className="flex max-w-xl flex-wrap gap-1.5 border-t px-2 py-2">
             {PRESETS.map((p) => (

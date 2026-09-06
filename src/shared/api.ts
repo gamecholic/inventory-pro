@@ -46,7 +46,19 @@ export const channels = [
   'expense-categories:list',
   'expense-categories:create',
   'expense-categories:update',
-  'expense-categories:delete'
+  'expense-categories:delete',
+  'analytics:financial',
+  'analytics:top-products',
+  'analytics:supplier',
+  'analytics:payment',
+  'analytics:card-fees',
+  'analytics:category',
+  'analytics:expenses',
+  'analytics:reorder',
+  'analytics:dead-stock',
+  'analytics:basket',
+  'analytics:discounts',
+  'analytics:monthly-expenses'
 ] as const
 export type Channel = (typeof channels)[number]
 

@@ -11,14 +11,14 @@ import {
   type SettingsValues
 } from '../../shared/settings'
 import { toISO } from '../../shared/dates'
-import { getDb } from './client'
+import { getDb, type AppDb } from './client'
 import { settings } from './schema'
 
 const sectionSchemas = { general: generalSettings, business: businessSettings, receipt: receiptSettings } as const
 
-/** Read all settings rows, merged over defaults (tolerates partial/old data). */
-export function getSettings(): SettingsValues {
-  const rows = getDb().select().from(settings).all()
+/** Read all settings rows from any handle, merged over defaults. */
+export function readSettings(db: AppDb): SettingsValues {
+  const rows = db.select().from(settings).all()
   const stored: Record<string, unknown> = {}
   for (const row of rows) {
     try {
@@ -28,6 +28,11 @@ export function getSettings(): SettingsValues {
     }
   }
   return withDefaults(stored)
+}
+
+/** Read all settings rows, merged over defaults (tolerates partial/old data). */
+export function getSettings(): SettingsValues {
+  return readSettings(getDb())
 }
 
 /**

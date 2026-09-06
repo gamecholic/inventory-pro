@@ -34,7 +34,7 @@ const SALE_COLUMNS = [
   'canceled_at'
 ] as const
 
-const ITEM_COLUMNS = ['id', 'sale_id', 'product_id', 'product_name', 'unit', 'qty', 'unit_price', 'line_total'] as const
+const ITEM_COLUMNS = ['id', 'sale_id', 'product_id', 'product_name', 'unit', 'qty', 'unit_price', 'unit_cost', 'line_total'] as const
 
 /** One workbook, one sheet per table. First row is the header. */
 export async function writeExcelBackup(filePath: string): Promise<void> {

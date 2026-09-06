@@ -13,6 +13,21 @@ import type { StockAdjustInput } from '../shared/stock'
 import type { CheckoutInput, Receipt } from '../shared/sale'
 import type { SaleDetail, SaleList, SaleListFilter } from '../shared/sales'
 import type {
+  BasketPoint,
+  CardFeeReport,
+  CategoryProfitRow,
+  DeadStockRow,
+  DiscountSummary,
+  ExpenseSummary,
+  FinancialMetrics,
+  PaymentRevenueRow,
+  RangeInput,
+  ReorderRow,
+  SupplierRevenueRow,
+  TopProductRow,
+  TopProductsInput
+} from '../shared/analytics'
+import type {
   ExpenseCategoryInput,
   ExpenseCategoryRow,
   ExpenseFilter,
@@ -84,6 +99,23 @@ const api = {
     list: (filter: SaleListFilter): Promise<SaleList> => ipcRenderer.invoke('sales:list', filter),
     get: (id: number): Promise<SaleDetail> => ipcRenderer.invoke('sales:get', { id }),
     cancel: (id: number): Promise<SaleDetail> => ipcRenderer.invoke('sales:cancel', { id })
+  },
+  analytics: {
+    financial: (range: RangeInput): Promise<FinancialMetrics> => ipcRenderer.invoke('analytics:financial', range),
+    topProducts: (input: TopProductsInput): Promise<TopProductRow[]> =>
+      ipcRenderer.invoke('analytics:top-products', input),
+    supplier: (range: RangeInput): Promise<SupplierRevenueRow[]> => ipcRenderer.invoke('analytics:supplier', range),
+    payment: (range: RangeInput): Promise<PaymentRevenueRow[]> => ipcRenderer.invoke('analytics:payment', range),
+    cardFees: (range: RangeInput): Promise<CardFeeReport> => ipcRenderer.invoke('analytics:card-fees', range),
+    category: (range: RangeInput): Promise<CategoryProfitRow[]> => ipcRenderer.invoke('analytics:category', range),
+    expenses: (range: RangeInput): Promise<ExpenseSummary> => ipcRenderer.invoke('analytics:expenses', range),
+    reorder: (): Promise<ReorderRow[]> => ipcRenderer.invoke('analytics:reorder'),
+    deadStock: (days: number): Promise<{ items: DeadStockRow[]; totalValue: number }> =>
+      ipcRenderer.invoke('analytics:dead-stock', { days }),
+    basket: (range: RangeInput): Promise<BasketPoint[]> => ipcRenderer.invoke('analytics:basket', range),
+    discounts: (range: RangeInput): Promise<DiscountSummary> => ipcRenderer.invoke('analytics:discounts', range),
+    monthlyExpenses: (months: number): Promise<Array<{ month: string; total: number }>> =>
+      ipcRenderer.invoke('analytics:monthly-expenses', { months })
   },
   suppliers: {
     list: (): Promise<SupplierRow[]> => ipcRenderer.invoke('suppliers:list'),

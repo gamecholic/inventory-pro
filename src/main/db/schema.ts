@@ -91,5 +91,6 @@ export const saleItems = sqliteTable('sale_items', {
   unit: text('unit').notNull(),
   qty: real('qty').notNull(),
   unitPrice: real('unit_price').notNull(),
+  unitCost: real('unit_cost').notNull().default(0),
   lineTotal: real('line_total').notNull()
 })

@@ -130,7 +130,7 @@ export function replaceAll(data: unknown): { categories: number; products: numbe
       )
     }
     const insertItem = sqlite.prepare(
-      'INSERT INTO sale_items (id, sale_id, product_id, product_name, unit, qty, unit_price, line_total) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO sale_items (id, sale_id, product_id, product_name, unit, qty, unit_price, unit_cost, line_total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
     )
     for (const i of parsed.sale_items) {
       insertItem.run(
@@ -141,6 +141,7 @@ export function replaceAll(data: unknown): { categories: number; products: numbe
         typeof i.unit === 'string' ? i.unit : 'pcs',
         num(i.qty, 0),
         num(i.unit_price, 0),
+        num(i.unit_cost, 0),
         num(i.line_total, 0)
       )
     }

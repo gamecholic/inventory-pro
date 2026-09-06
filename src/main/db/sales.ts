@@ -92,6 +92,7 @@ export function completeSale(input: CheckoutInput): Receipt {
           unit: product.unit,
           qty,
           unitPrice: product.sellingPrice,
+          unitCost: product.costPrice,
           lineTotal
         })
         .run()

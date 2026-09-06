@@ -5,21 +5,35 @@ import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import * as schema from './schema'
 
+export type AppDb = BetterSQLite3Database<typeof schema>
+
 let sqlite: Database.Database | null = null
-let db: BetterSQLite3Database<typeof schema> | null = null
+let db: AppDb | null = null
 
 export function dbPath(): string {
   return join(app.getPath('userData'), 'inventory.db')
 }
 
-/** Open (or reuse) the SQLite file and run pending Drizzle migrations. */
-export function getDb(): BetterSQLite3Database<typeof schema> {
+export function migrationsPath(): string {
+  return join(__dirname, '../../drizzle')
+}
+
+/** Open any SQLite file (or :memory:) and migrate it. Electron-free for tests. */
+export function openDatabase(filePath: string): { db: AppDb; sqlite: Database.Database } {
+  const handle = new Database(filePath)
+  handle.pragma('journal_mode = WAL')
+  handle.pragma('foreign_keys = ON')
+  const database = drizzle(handle, { schema })
+  migrate(database, { migrationsFolder: migrationsPath() })
+  return { db: database, sqlite: handle }
+}
+
+/** Open (or reuse) the shop database and run pending Drizzle migrations. */
+export function getDb(): AppDb {
   if (db && sqlite) return db
-  sqlite = new Database(dbPath())
-  sqlite.pragma('journal_mode = WAL')
-  sqlite.pragma('foreign_keys = ON')
-  db = drizzle(sqlite, { schema })
-  migrate(db, { migrationsFolder: join(__dirname, '../../drizzle') })
+  const opened = openDatabase(dbPath())
+  sqlite = opened.sqlite
+  db = opened.db
   return db
 }
 

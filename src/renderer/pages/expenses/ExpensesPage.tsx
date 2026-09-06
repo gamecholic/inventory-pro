@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { endOfDay, endOfMonth, startOfDay, startOfMonth, startOfWeek, startOfYear } from 'date-fns'
+import { endOfDay, startOfDay, startOfMonth } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -42,9 +42,7 @@ import { ExpenseCategoryDialog } from './ExpenseCategoryDialog'
 import { ExpenseCategoryManager } from './ExpenseCategoryManager'
 import { ExpenseFormDialog } from './ExpenseFormDialog'
 
-type QuickKey = 'today' | 'week' | 'month' | 'year'
-
-/** Features §7 — actions, preset+range filters, summary cards, table. */
+/** Features §7 — actions, range filter, summary cards, table. */
 export function ExpensesPage(): React.JSX.Element {
   const { t } = useTranslation()
   const { data: settings } = useSettings()
@@ -97,20 +95,6 @@ export function ExpensesPage(): React.JSX.Element {
     byCategory.set(key, entry)
   }
 
-  const applyQuick = (key: QuickKey): void => {
-    const now = new Date()
-    const from =
-      key === 'today'
-        ? startOfDay(now)
-        : key === 'week'
-          ? startOfWeek(now, { weekStartsOn: 1 })
-          : key === 'month'
-            ? startOfMonth(now)
-            : startOfYear(now)
-    setDraft({ from, to: now })
-    setApplied({ from: toISO(startOfDay(from)), to: toISO(endOfDay(now)) })
-  }
-
   const applyAll = (): void => {
     if (draft?.from && draft?.to) {
       setApplied({ from: toISO(startOfDay(draft.from)), to: toISO(endOfDay(draft.to)) })
@@ -131,8 +115,6 @@ export function ExpensesPage(): React.JSX.Element {
     setDraftSearch('')
     setAppliedSearch('')
   }
-
-  const quickKeys: QuickKey[] = ['today', 'week', 'month', 'year']
 
   return (
     <div className="px-4 lg:px-6">
@@ -157,11 +139,6 @@ export function ExpensesPage(): React.JSX.Element {
       </div>
 
       <div className="mb-4 flex flex-wrap items-end gap-2">
-        {quickKeys.map((k) => (
-          <Button key={k} variant="outline" size="sm" onClick={() => applyQuick(k)}>
-            {t(`sales.presets.${k}`)}
-          </Button>
-        ))}
         <DateRangePicker range={draft} onSelect={setDraft} />
         <Select
           value={draftCategory === null ? 'all' : String(draftCategory)}

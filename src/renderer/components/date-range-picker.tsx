@@ -64,13 +64,13 @@ export function DateRangePicker({
               onSelect={onSelect}
             />
           </CardContent>
-          <CardFooter className="flex flex-wrap gap-1.5 rounded-b-xl border-t bg-muted/40 px-2 py-2">
+          <CardFooter className="flex max-w-xl flex-wrap gap-1.5 border-t px-2 py-2">
             {PRESETS.map((p) => (
               <Button
                 key={p}
                 variant="outline"
                 size="sm"
-                className="rounded-full bg-background"
+                className="flex-1 rounded-full"
                 onClick={() => onSelect(presetRange(p, today))}
               >
                 {t(`sales.presets.${p}`)}

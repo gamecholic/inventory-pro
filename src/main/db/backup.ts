@@ -183,7 +183,7 @@ export function replaceAll(data: unknown): { categories: number; products: numbe
       )
     }
     const insertAdj = sqlite.prepare(
-      'INSERT INTO stock_adjustments (id, product_id, qty_change, type, reason, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+      'INSERT INTO stock_adjustments (id, product_id, qty_change, type, reason, cost_price, selling_price, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
     )
     for (const a of parsed.stock_adjustments) {
       insertAdj.run(
@@ -192,6 +192,8 @@ export function replaceAll(data: unknown): { categories: number; products: numbe
         num(a.qty_change, 0),
         typeof a.type === 'string' ? a.type : '',
         typeof a.reason === 'string' ? a.reason : '',
+        typeof a.cost_price === 'number' ? a.cost_price : null,
+        typeof a.selling_price === 'number' ? a.selling_price : null,
         typeof a.created_at === 'string' ? a.created_at : now
       )
     }

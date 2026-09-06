@@ -181,7 +181,8 @@ export const en = {
         newValue: 'New inventory value',
         update: 'Update',
         reset: 'Reset',
-        updated: 'Stock updated'
+        updated: 'Stock updated',
+        historyTitle: 'Price History'
       },
       units: {
         pcs: 'pcs',

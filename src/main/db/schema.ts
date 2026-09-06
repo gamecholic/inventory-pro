@@ -116,6 +116,8 @@ export const stockAdjustments = sqliteTable('stock_adjustments', {
   qtyChange: real('qty_change').notNull(),
   type: text('type').notNull(),
   reason: text('reason').notNull().default(''),
+  costPrice: real('cost_price'),
+  sellingPrice: real('selling_price'),
   createdAt: text('created_at').notNull()
 }, (t) => [
   index('stock_adjustments_product_idx').on(t.productId)

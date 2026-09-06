@@ -57,3 +57,13 @@ export function computeAdjustment(
 export function normalizeReason(reason: string): string {
   return reason.trim() === '' ? 'Stock adjustment' : reason.trim()
 }
+
+export const priceHistoryInput = z.object({ productId: z.number().int().positive() })
+
+/** One priced movement for the stock-page chart. Rows without prices are excluded. */
+export interface PricePoint {
+  createdAt: string
+  type: string
+  costPrice: number | null
+  sellingPrice: number | null
+}

@@ -1,26 +1,32 @@
-import { eq } from 'drizzle-orm'
-import { computeAdjustment, normalizeReason, stockAdjustInput, type StockAdjustInput } from '../../shared/stock'
+import { asc, eq } from 'drizzle-orm'
+import { computeAdjustment, normalizeReason, stockAdjustInput, type PricePoint, type StockAdjustInput } from '../../shared/stock'
 import { round2 } from '../../shared/money'
 import { toISO } from '../../shared/dates'
 import type { ProductRow } from '../../shared/products'
 import { defaultHandles, type DbHandles } from './client'
 import { products, stockAdjustments } from './schema'
 import { getProductRow } from './products'
+import { logAdjustment } from './movements'
 
 export interface AdjustResult {
   product: ProductRow
   reason: string
 }
 
-/** Silent audit row. No UI reads stock_adjustments (§5.4). */
-export function logAdjustment(
-  handles: DbHandles,
-  entry: { productId: number | null; qtyChange: number; type: string; reason: string }
-): void {
-  handles.db
-    .insert(stockAdjustments)
-    .values({ ...entry, createdAt: toISO(new Date()) })
-    .run()
+/** Price trail for the stock-page chart: every logged movement carrying prices, oldest first. */
+export function getPriceHistory(productId: number, db = defaultHandles().db): PricePoint[] {
+  return db
+    .select({
+      createdAt: stockAdjustments.createdAt,
+      type: stockAdjustments.type,
+      costPrice: stockAdjustments.costPrice,
+      sellingPrice: stockAdjustments.sellingPrice
+    })
+    .from(stockAdjustments)
+    .where(eq(stockAdjustments.productId, productId))
+    .orderBy(asc(stockAdjustments.id))
+    .all()
+    .filter((r) => r.costPrice !== null || r.sellingPrice !== null)
 }
 
 /**
@@ -54,7 +60,9 @@ export function adjustStock(input: StockAdjustInput, handles: DbHandles = defaul
     productId: parsed.productId,
     qtyChange: parsed.type === 'add' ? parsed.quantity : -parsed.quantity,
     type: parsed.type,
-    reason
+    reason,
+    costPrice: round2(preview.newCost),
+    sellingPrice
   })
   const product = getProductRow(parsed.productId, db)
   if (!product) throw new Error('Product not found after adjustment')

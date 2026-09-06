@@ -6,7 +6,7 @@ import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { eq } from 'drizzle-orm'
 import * as schema from './schema'
 import type { AppDb, DbHandles } from './client'
-import { adjustStock } from './stock'
+import { adjustStock, getPriceHistory } from './stock'
 import { cancelSale, completeSale } from './sales'
 
 let db: AppDb
@@ -62,6 +62,18 @@ describe('stock movement log', () => {
     const rows = logRows()
     expect(rows).toHaveLength(2)
     expect(rows[1]).toMatchObject({ qtyChange: -3, type: 'remove', reason: 'Damaged' })
+  })
+
+  it('records prices on every movement for the history chart', () => {
+    const history = getPriceHistory(productId, db)
+    expect(history.length).toBeGreaterThanOrEqual(2)
+    for (const point of history) {
+      expect(typeof point.createdAt).toBe('string')
+      expect(point.costPrice).not.toBeNull()
+      expect(point.sellingPrice).not.toBeNull()
+    }
+    const ordered = history.map((h) => h.createdAt)
+    expect([...ordered].sort()).toEqual(ordered)
   })
 
   it('logs each sale line with the receipt reference', () => {

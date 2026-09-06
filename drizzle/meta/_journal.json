@@ -50,6 +50,13 @@
       "when": 1788688837470,
       "tag": "0006_lonely_pandemic",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1788689140468,
+      "tag": "0007_talented_robbie_robertson",
+      "breakpoints": true
     }
   ]
 }

@@ -91,7 +91,7 @@ export async function writeExcelBackup(filePath: string): Promise<void> {
   ].map((h) => ({ header: h, key: h, width: 18 }))
   for (const e of dump.expenses) expSheet.addRow({ ...e })
   const adjSheet = wb.addWorksheet('StockAdjustments')
-  adjSheet.columns = ['id', 'product_id', 'qty_change', 'type', 'reason', 'created_at'].map((h) => ({
+  adjSheet.columns = ['id', 'product_id', 'qty_change', 'type', 'reason', 'cost_price', 'selling_price', 'created_at'].map((h) => ({
     header: h,
     key: h,
     width: 18

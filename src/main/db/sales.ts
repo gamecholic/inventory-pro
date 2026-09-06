@@ -7,7 +7,7 @@ import { toISO } from '../../shared/dates'
 import { getDb, defaultHandles, type AppDb, type DbHandles } from './client'
 import { products, saleItems, sales } from './schema'
 import { readSettings } from './settingsStore'
-import { logAdjustment } from './stock'
+import { logAdjustment } from './movements'
 
 /**
  * Validate stock, compute totals with shared discount rules, then insert the
@@ -105,7 +105,9 @@ export function completeSale(input: CheckoutInput, handles: DbHandles = defaultH
         productId: product.id,
         qtyChange: -qty,
         type: 'sale',
-        reason: `Sale ${savedReceiptNo}`
+        reason: `Sale ${savedReceiptNo}`,
+        costPrice: product.costPrice,
+        sellingPrice: product.sellingPrice
       })
       if (
         notifyLow &&
@@ -227,7 +229,9 @@ export function cancelSale(id: number, handles: DbHandles = defaultHandles()): S
         productId: product.id,
         qtyChange: item.qty,
         type: 'restore',
-        reason: `Cancel ${sale.receiptNo}`
+        reason: `Cancel ${sale.receiptNo}`,
+        costPrice: product.costPrice,
+        sellingPrice: product.sellingPrice
       })
     }
     db.update(sales).set({ status: 'canceled', canceledAt: now }).where(eq(sales.id, saleIdParsed)).run()

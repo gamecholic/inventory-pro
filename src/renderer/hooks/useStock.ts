@@ -11,6 +11,15 @@ export function useProductSearch(query: string) {
   })
 }
 
+/** Price trail for the selected product (movement log, priced rows only). */
+export function usePriceHistory(productId: number | null) {
+  return useQuery({
+    queryKey: ['price-history', productId],
+    queryFn: () => window.api.stock.history(productId as number),
+    enabled: productId !== null
+  })
+}
+
 export function useAdjustStock() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -19,6 +28,7 @@ export function useAdjustStock() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['products'] })
       void queryClient.invalidateQueries({ queryKey: ['product-search'] })
+      void queryClient.invalidateQueries({ queryKey: ['price-history'] })
       toast.success(t('stock.updated'))
     },
     onError: (error) => {

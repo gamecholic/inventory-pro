@@ -8,6 +8,7 @@ import { StockBadge } from '@/components/stock-badge'
 import { useProductSearch } from '@/hooks/useStock'
 import { useSettings } from '@/hooks/useSettings'
 import { AdjustForm } from './AdjustForm'
+import { PriceHistoryChart } from './PriceHistoryChart'
 
 /** Features §5 — left search+cards, right adjustment form. */
 export function StockPage(): React.JSX.Element {
@@ -58,9 +59,12 @@ export function StockPage(): React.JSX.Element {
             ))
           )}
         </div>
-        <div>
+        <div className="flex flex-col gap-4">
           {selected ? (
-            <AdjustForm key={selected.id} product={selected} onDone={clear} />
+            <>
+              <AdjustForm key={selected.id} product={selected} onDone={clear} />
+              <PriceHistoryChart productId={selected.id} />
+            </>
           ) : (
             <p className="rounded-lg border border-border p-8 text-center text-muted-foreground">
               {t('stock.selectPrompt')}

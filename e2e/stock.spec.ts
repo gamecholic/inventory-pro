@@ -54,4 +54,7 @@ test('stock search → select → add with cost averaging', async () => {
   await page.getByRole('button', { name: /E2E Flour/ }).click()
   await expect(page.getByText('Stock Update: E2E Flour')).toBeVisible()
   await expect(page.getByText('Current stock: 13 kg')).toBeVisible()
+
+  // Movement log feeds the price history chart (create + adjustment points).
+  await expect(page.getByText('Price History')).toBeVisible()
 })

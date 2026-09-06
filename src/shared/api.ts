@@ -35,6 +35,7 @@ export const channels = [
   'suppliers:delete',
   'products:search',
   'stock:adjust',
+  'stock:history',
   'sales:complete',
   'sales:list',
   'sales:get',

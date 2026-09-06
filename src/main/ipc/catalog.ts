@@ -9,8 +9,8 @@ import {
   searchProducts,
   updateProduct
 } from '../db/products'
-import { adjustStock } from '../db/stock'
-import { stockAdjustInput } from '../../shared/stock'
+import { adjustStock, getPriceHistory } from '../db/stock'
+import { priceHistoryInput, stockAdjustInput } from '../../shared/stock'
 import {
   categoryInput,
   productId,
@@ -44,6 +44,10 @@ export function registerCatalogIpc(): void {
     return searchProducts(query, limit)
   })
   ipcMain.handle('stock:adjust', (_event, input: unknown) => adjustStock(stockAdjustInput.parse(input)))
+  ipcMain.handle('stock:history', (_event, input: unknown) => {
+    const { productId } = priceHistoryInput.parse(input)
+    return getPriceHistory(productId)
+  })
 
   ipcMain.handle('categories:list', () => listCategories())
   ipcMain.handle('categories:create', (_event, input: unknown) => createCategory(categoryInput.parse(input)))

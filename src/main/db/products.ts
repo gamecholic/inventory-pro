@@ -12,8 +12,9 @@ import {
 } from '../../shared/products'
 import { round2 } from '../../shared/money'
 import { toISO } from '../../shared/dates'
-import { getDb } from './client'
+import { getDb, getSqlite } from './client'
 import { categories, products } from './schema'
+import { logAdjustment } from './movements'
 
 /** Product + category name in one query. Shared by list, search and single-row reads. */
 function productColumns() {
@@ -121,6 +122,17 @@ export function createProduct(input: ProductInput): ProductRow {
       updatedAt: now
     })
     .run().lastInsertRowid as number
+  logAdjustment(
+    { db: getDb(), sqlite: getSqlite() },
+    {
+      productId: id,
+      qtyChange: 0,
+      type: 'create',
+      reason: 'Product created',
+      costPrice: round2(parsed.costPrice),
+      sellingPrice: round2(parsed.sellingPrice)
+    }
+  )
   return requireProductRow(id)
 }
 
@@ -128,6 +140,7 @@ export function updateProduct(id: number, input: ProductInput): ProductRow {
   const parsed = productInput.parse(input)
   productId.parse({ id })
   assertBarcodeFree(parsed.barcode, id)
+  const before = getDb().select().from(products).where(eq(products.id, id)).get()
   getDb()
     .update(products)
     .set({
@@ -145,6 +158,19 @@ export function updateProduct(id: number, input: ProductInput): ProductRow {
     })
     .where(eq(products.id, id))
     .run()
+  if (before && (before.costPrice !== round2(parsed.costPrice) || before.sellingPrice !== round2(parsed.sellingPrice))) {
+    logAdjustment(
+      { db: getDb(), sqlite: getSqlite() },
+      {
+        productId: id,
+        qtyChange: 0,
+        type: 'edit',
+        reason: 'Product updated',
+        costPrice: round2(parsed.costPrice),
+        sellingPrice: round2(parsed.sellingPrice)
+      }
+    )
+  }
   return requireProductRow(id)
 }
 

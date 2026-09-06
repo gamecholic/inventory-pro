@@ -181,7 +181,8 @@ export const tr = {
         newValue: 'Yeni stok değeri',
         update: 'Güncelle',
         reset: 'Sıfırla',
-        updated: 'Stok güncellendi'
+        updated: 'Stok güncellendi',
+        historyTitle: 'Fiyat Geçmişi'
       },
       units: {
         pcs: 'adet',

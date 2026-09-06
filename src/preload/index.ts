@@ -9,7 +9,7 @@ import type {
   SupplierInput,
   SupplierRow
 } from '../shared/products'
-import type { StockAdjustInput } from '../shared/stock'
+import type { PricePoint, StockAdjustInput } from '../shared/stock'
 import type { CheckoutInput, Receipt } from '../shared/sale'
 import type { SaleDetail, SaleList, SaleListFilter } from '../shared/sales'
 import type {
@@ -77,7 +77,8 @@ const api = {
   },
   stock: {
     adjust: (input: StockAdjustInput): Promise<{ product: ProductRow; reason: string }> =>
-      ipcRenderer.invoke('stock:adjust', input)
+      ipcRenderer.invoke('stock:adjust', input),
+    history: (productId: number): Promise<PricePoint[]> => ipcRenderer.invoke('stock:history', { productId })
   },
   expenses: {
     list: (filter: ExpenseFilter): Promise<ExpenseRow[]> => ipcRenderer.invoke('expenses:list', filter),

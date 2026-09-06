@@ -2,6 +2,17 @@ import ExcelJS from 'exceljs'
 import { toISO } from '../../shared/dates'
 import { BACKUP_VERSION, collectAll, replaceAll } from './backup'
 
+const SUPPLIER_COLUMNS = [
+  'id',
+  'company_name',
+  'contact_person',
+  'phone',
+  'email',
+  'address',
+  'created_at',
+  'updated_at'
+] as const
+
 const PRODUCT_COLUMNS = [
   'id',
   'name',
@@ -58,6 +69,9 @@ export async function writeExcelBackup(filePath: string): Promise<void> {
     { header: 'created_at', key: 'created_at', width: 28 }
   ]
   for (const c of dump.categories) catSheet.addRow(c)
+  const supSheet = wb.addWorksheet('Suppliers')
+  supSheet.columns = SUPPLIER_COLUMNS.map((h) => ({ header: h, key: h, width: h === 'company_name' ? 30 : 18 }))
+  for (const s of dump.suppliers) supSheet.addRow({ ...s })
   const prodSheet = wb.addWorksheet('Products')
   prodSheet.columns = PRODUCT_COLUMNS.map((h) => ({ header: h, key: h, width: h === 'name' ? 30 : 16 }))
   for (const p of dump.products) prodSheet.addRow({ ...p })
@@ -144,12 +158,15 @@ export async function readExcelBackup(filePath: string): Promise<{ categories: n
   const expCatSheet = optSheet('ExpenseCategories')
   const expSheet = optSheet('Expenses')
   const adjSheet = optSheet('StockAdjustments')
+  // Suppliers sheet is absent in v1/v2 backups — treat as empty, keep them importable.
+  const supSheet = optSheet('Suppliers')
   return replaceAll({
     app: 'inventory-pro',
     version: BACKUP_VERSION,
     exportedAt: toISO(new Date()),
     settings: settingsObj,
     categories: readRows(getSheet('Categories')),
+    suppliers: supSheet ? readRows(supSheet) : [],
     products: readRows(getSheet('Products')),
     sales: salesSheet ? readRows(salesSheet) : [],
     sale_items: itemsSheet ? readRows(itemsSheet) : [],

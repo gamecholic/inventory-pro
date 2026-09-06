@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { endOfDay, startOfDay, startOfMonth } from 'date-fns'
+import { endOfDay, startOfDay } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -35,7 +35,7 @@ import type { DateRange } from 'react-day-picker'
 import { DateRangePicker } from '@/components/date-range-picker'
 import { formatMoney, round2 } from '@shared/money'
 import { categoryColor, EXPENSE_PAYMENTS, type ExpenseRow } from '@shared/expenses'
-import { formatISO, toISO } from '@shared/dates'
+import { formatISO, presetRange, toISO } from '@shared/dates'
 import { useDeleteExpense, useExpenseCategories, useExpenses } from '@/hooks/useExpenses'
 import { useSettings } from '@/hooks/useSettings'
 import { ExpenseCategoryDialog } from './ExpenseCategoryDialog'
@@ -51,15 +51,13 @@ export function ExpensesPage(): React.JSX.Element {
   const currency = settings?.general.currency ?? 'USD'
   const dateFormat = settings?.general.dateFormat ?? 'MM/DD/YYYY'
 
-  const monthRange = (): { from: string; to: string } => {
-    const now = new Date()
-    return { from: toISO(startOfDay(startOfMonth(now))), to: toISO(endOfDay(now)) }
+  // Default window is Last 1 Month on every page using the picker.
+  const lastMonthRange = (): { from: string; to: string } => {
+    const r = presetRange('lastMonth')
+    return { from: toISO(startOfDay(r.from)), to: toISO(endOfDay(r.to)) }
   }
-  const [draft, setDraft] = useState<DateRange | undefined>(() => {
-    const now = new Date()
-    return { from: startOfDay(startOfMonth(now)), to: now }
-  })
-  const [applied, setApplied] = useState(monthRange)
+  const [draft, setDraft] = useState<DateRange | undefined>(() => presetRange('lastMonth'))
+  const [applied, setApplied] = useState(lastMonthRange)
   const [draftCategory, setDraftCategory] = useState<number | null>(null)
   const [appliedCategory, setAppliedCategory] = useState<number | null>(null)
   const [draftPayment, setDraftPayment] = useState<'all' | (typeof EXPENSE_PAYMENTS)[number]>('all')
@@ -105,9 +103,8 @@ export function ExpensesPage(): React.JSX.Element {
   }
 
   const resetAll = (): void => {
-    const now = new Date()
-    setDraft({ from: startOfDay(startOfMonth(now)), to: now })
-    setApplied(monthRange())
+    setDraft(presetRange('lastMonth'))
+    setApplied(lastMonthRange())
     setDraftCategory(null)
     setAppliedCategory(null)
     setDraftPayment('all')

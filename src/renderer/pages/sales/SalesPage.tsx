@@ -20,8 +20,8 @@ import {
   TableRow
 } from '@/components/ui/table'
 import { formatMoney } from '@shared/money'
-import { endOfDay, startOfDay, subDays } from 'date-fns'
-import { formatISO, toISO } from '@shared/dates'
+import { endOfDay, startOfDay } from 'date-fns'
+import { formatISO, presetRange, toISO } from '@shared/dates'
 import type { DateRange } from 'react-day-picker'
 import { DateRangePicker } from '@/components/date-range-picker'
 import { useSales } from '@/hooks/useSales'
@@ -38,13 +38,11 @@ export function SalesPage(): React.JSX.Element {
   const dateFormat = settings?.general.dateFormat ?? 'MM/DD/YYYY'
 
   // Draft range (picker + presets) commits to the query only via Apply Filter (§6.2).
-  const [draft, setDraft] = useState<DateRange | undefined>(() => {
-    const now = new Date()
-    return { from: startOfDay(subDays(now, 29)), to: now }
-  })
+  // Default window is Last 1 Month on every page using the picker.
+  const [draft, setDraft] = useState<DateRange | undefined>(() => presetRange('lastMonth'))
   const [applied, setApplied] = useState(() => {
-    const now = new Date()
-    return { from: toISO(startOfDay(subDays(now, 29))), to: toISO(endOfDay(now)) }
+    const r = presetRange('lastMonth')
+    return { from: toISO(startOfDay(r.from)), to: toISO(endOfDay(r.to)) }
   })
   const [payment, setPayment] = useState<'all' | 'cash' | 'card' | 'split'>('all')
   const [search, setSearch] = useState('')

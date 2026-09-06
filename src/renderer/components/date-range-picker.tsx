@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { CalendarIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { format, subYears } from 'date-fns'
+import { format, startOfMonth, subYears } from 'date-fns'
 import { enUS, tr } from 'date-fns/locale'
 import type { DateRange } from 'react-day-picker'
 import { Button } from '@/components/ui/button'
@@ -28,9 +28,23 @@ export function DateRangePicker({
   const { t, i18n } = useTranslation()
   const { data: settings } = useSettings()
   const [open, setOpen] = useState(false)
+  // Left calendar tracks the range start (right follows consecutively).
+  // Synced on preset pick and popover open; free navigation otherwise.
+  const [month, setMonth] = useState<Date>(() => startOfMonth(range?.from ?? new Date()))
   const dateFormat = settings?.general.dateFormat ?? 'MM/DD/YYYY'
   const today = new Date()
   const locale = i18n.language === 'tr' ? tr : enUS
+
+  const reopen = (o: boolean): void => {
+    setOpen(o)
+    if (o && range?.from) setMonth(startOfMonth(range.from))
+  }
+
+  const pickPreset = (p: DatePreset): void => {
+    const r = presetRange(p, today)
+    onSelect(r)
+    setMonth(startOfMonth(r.from))
+  }
 
   const label =
     range?.from && range?.to
@@ -38,7 +52,7 @@ export function DateRangePicker({
       : t('sales.pickRange')
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={reopen}>
       <PopoverTrigger asChild>
         <Button variant="outline" className="w-64 justify-start font-normal">
           <CalendarIcon className="size-4" />
@@ -52,6 +66,8 @@ export function DateRangePicker({
               mode="range"
               captionLayout="dropdown"
               numberOfMonths={2}
+              month={month}
+              onMonthChange={setMonth}
               locale={locale}
               formatters={{
                 // The stock calendar formats dropdowns with the OS locale — pin to the app language.
@@ -71,7 +87,7 @@ export function DateRangePicker({
                 variant="outline"
                 size="sm"
                 className="flex-1 rounded-full"
-                onClick={() => onSelect(presetRange(p, today))}
+                onClick={() => pickPreset(p)}
               >
                 {t(`sales.presets.${p}`)}
               </Button>

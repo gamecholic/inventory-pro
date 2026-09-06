@@ -82,10 +82,10 @@ export function PosPage(): React.JSX.Element {
   const currentLow = lowQueue[0] ?? null
 
   return (
-    <div className="px-4 lg:px-6">
-      <h2 className="mb-4 text-2xl font-semibold">{t('pos.title')}</h2>
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
-        <form onSubmit={submitSearch}>
+    <div className="flex flex-col gap-4 px-4 lg:h-[calc(100svh-var(--header-height)-4rem)] lg:px-6">
+      <h2 className="shrink-0 text-2xl font-semibold">{t('pos.title')}</h2>
+      <div className="grid min-h-0 flex-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
+        <form onSubmit={submitSearch} className="min-h-0 lg:h-full">
           <ProductGrid
             catalog={catalog ?? []}
             categories={categories ?? []}

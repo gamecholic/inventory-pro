@@ -48,7 +48,7 @@ export function ProductGrid({
   const filtered = filterPosProducts(catalog, search, categoryId)
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex min-h-0 flex-col gap-3 lg:h-full">
       <div className="flex gap-2">
         <Input
           ref={searchRef}
@@ -95,7 +95,7 @@ export function ProductGrid({
       ) : filtered.length === 0 ? (
         <p className="rounded-lg border border-border p-8 text-center text-muted-foreground">{t('pos.noResults')}</p>
       ) : (
-        <div className="grid grid-cols-2 gap-2 xl:grid-cols-3">
+        <div data-testid="product-grid" className="grid min-h-0 grid-cols-2 content-start gap-2 overflow-y-auto pr-1 lg:flex-1 xl:grid-cols-3">
           {filtered.map((p) => {
             const out = p.stockQty <= 0
             return (

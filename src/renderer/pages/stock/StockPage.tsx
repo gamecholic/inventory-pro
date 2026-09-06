@@ -26,10 +26,10 @@ export function StockPage(): React.JSX.Element {
   const clear = (): void => setSelectedId(null)
 
   return (
-    <div className="px-4 lg:px-6">
-      <h2 className="mb-4 text-2xl font-semibold">{t('stock.title')}</h2>
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
-        <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-4 px-4 lg:h-[calc(100svh-var(--header-height)-4rem)] lg:px-6">
+      <h2 className="shrink-0 text-2xl font-semibold">{t('stock.title')}</h2>
+      <div className="grid min-h-0 flex-1 items-start gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+        <div className="flex min-h-0 flex-col gap-2 lg:h-full"> 
           <Input placeholder={t('stock.search')} value={search} onChange={(e) => setSearch(e.target.value)} />
           {isPending ? (
             <>
@@ -39,7 +39,8 @@ export function StockPage(): React.JSX.Element {
           ) : (data ?? []).length === 0 ? (
             <p className="p-4 text-center text-sm text-muted-foreground">{t('stock.noResults')}</p>
           ) : (
-            (data ?? []).map((p) => (
+            <div data-testid="stock-list" className="flex min-h-0 flex-col gap-2 overflow-y-auto pr-1 lg:flex-1">
+              {(data ?? []).map((p) => (
               <Button
                 key={p.id}
                 type="button"
@@ -58,10 +59,11 @@ export function StockPage(): React.JSX.Element {
                   {t('stock.costIs')}: {formatMoney(p.costPrice, currency)}
                 </span>
               </Button>
-            ))
+            ))}
+          </div>
           )}
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="flex min-h-0 flex-col gap-4 lg:h-full lg:overflow-y-auto lg:pr-1">
           {selected ? (
             <>
               <AdjustForm key={selected.id} product={selected} onDone={clear} />

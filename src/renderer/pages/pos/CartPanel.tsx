@@ -44,7 +44,12 @@ export function CartPanel({ onPay }: { onPay: (method: PaymentMethod) => void })
     <div className="flex h-full flex-col gap-3 rounded-lg border border-border p-4">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold">{t('pos.currentSale')}</h3>
-        <Button variant="ghost" size="sm" onClick={clear}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="border-red-500 text-xs text-red-500 hover:bg-red-500 hover:text-white"
+          onClick={clear}
+        >
           {t('pos.clear')}
         </Button>
       </div>

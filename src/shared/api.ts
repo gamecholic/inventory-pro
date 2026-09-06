@@ -59,7 +59,12 @@ export const channels = [
   'analytics:dead-stock',
   'analytics:basket',
   'analytics:discounts',
-  'analytics:monthly-expenses'
+  'analytics:monthly-expenses',
+  'analytics:inventory-overview',
+  'analytics:inventory-value',
+  'analytics:revenue-trend',
+  'analytics:weekday',
+  'analytics:monthly'
 ] as const
 export type Channel = (typeof channels)[number]
 

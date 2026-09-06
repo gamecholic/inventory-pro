@@ -7,13 +7,18 @@ import {
   getDiscountSummary,
   getExpenseSummary,
   getFinancialMetrics,
+  getInventoryOverview,
+  getInventoryValue,
+  getMonthlyAverages,
   getMonthlyExpenses,
   getPaymentRevenue,
   getReorderSuggestions,
+  getRevenueProfitTrend,
   getSupplierRevenue,
-  getTopProducts
+  getTopProducts,
+  getWeekdayAverages
 } from '../db/analytics'
-import { deadStockInput, rangeInput, topProductsInput } from '../../shared/analytics'
+import { deadStockInput, rangeInput, topProductsInput, yearInput } from '../../shared/analytics'
 
 export function registerAnalyticsIpc(): void {
   ipcMain.handle('analytics:financial', (_event, input: unknown) => getFinancialMetrics(rangeInput.parse(input)))
@@ -32,4 +37,17 @@ export function registerAnalyticsIpc(): void {
     const n = typeof months === 'number' && Number.isInteger(months) && months >= 1 && months <= 24 ? months : 6
     return getMonthlyExpenses(n)
   })
+  ipcMain.handle('analytics:inventory-overview', () => getInventoryOverview())
+  ipcMain.handle('analytics:inventory-value', (_event, input: unknown) => {
+    const by = (input as { by?: unknown })?.by
+    if (by !== 'supplier' && by !== 'category') throw new Error('Invalid group')
+    return getInventoryValue(by)
+  })
+  ipcMain.handle('analytics:revenue-trend', (_event, input: unknown) => {
+    const months = (input as { months?: unknown })?.months
+    const n = typeof months === 'number' && Number.isInteger(months) && months >= 1 && months <= 24 ? months : 6
+    return getRevenueProfitTrend(n)
+  })
+  ipcMain.handle('analytics:weekday', (_event, input: unknown) => getWeekdayAverages(rangeInput.parse(input)))
+  ipcMain.handle('analytics:monthly', (_event, input: unknown) => getMonthlyAverages(yearInput.parse(input)))
 }

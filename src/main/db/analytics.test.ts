@@ -13,10 +13,15 @@ import {
   getDiscountSummary,
   getExpenseSummary,
   getFinancialMetrics,
+  getInventoryOverview,
+  getInventoryValue,
+  getMonthlyAverages,
   getPaymentRevenue,
   getReorderSuggestions,
+  getRevenueProfitTrend,
   getSupplierRevenue,
-  getTopProducts
+  getTopProducts,
+  getWeekdayAverages
 } from './analytics'
 
 let db: AppDb
@@ -193,5 +198,40 @@ describe('analytics', () => {
     // Sold nothing in trailing 30d → null cover, sorts last.
     expect(stale?.daysOfCover).toBeNull()
     expect(rows[rows.length - 1]?.name).toBe('Stale Tea')
+  })
+
+  it('computes the inventory overview', () => {
+    const o = getInventoryOverview(db)
+    expect(o.totalProducts).toBe(2)
+    expect(o.lowStockItems).toBe(0)
+    expect(o.todaySales).toBe(45)
+    expect(o.inventoryValue).toBe(160)
+    expect(o.turnover).toBeCloseTo(20 / 160, 10)
+  })
+
+  it('groups inventory value by supplier and category', () => {
+    const bySup = getInventoryValue('supplier', db)
+    expect(bySup.reduce((s, r) => s + r.value, 0)).toBe(160)
+    expect(bySup.find((r) => r.name === 'Acme')?.value).toBe(80)
+    const byCat = getInventoryValue('category', db)
+    expect(byCat).toHaveLength(1)
+    expect(byCat[0]).toMatchObject({ name: 'Drinks', value: 160, items: 2, share: 100 })
+  })
+
+  it('tracks revenue and profit per month', () => {
+    const trend = getRevenueProfitTrend(1, db)
+    expect(trend).toHaveLength(1)
+    expect(trend[0]?.revenue).toBe(45)
+    expect(trend[0]?.profit).toBe(25)
+  })
+
+  it('averages sales by weekday and month', () => {
+    const week = getWeekdayAverages(RANGE, db)
+    expect(week).toHaveLength(7)
+    expect(week.reduce((s, d) => s + d.sales, 0)).toBe(1)
+    expect(week.reduce((s, d) => s + d.revenue, 0)).toBe(45)
+    const months = getMonthlyAverages({ year: new Date().getFullYear() }, db)
+    expect(months).toHaveLength(12)
+    expect(months.reduce((s, m) => s + m.sales, 0)).toBe(1)
   })
 })

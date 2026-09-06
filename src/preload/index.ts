@@ -20,12 +20,17 @@ import type {
   DiscountSummary,
   ExpenseSummary,
   FinancialMetrics,
+  InventoryOverview,
+  InventoryValueRow,
+  MonthPoint,
   PaymentRevenueRow,
   RangeInput,
   ReorderRow,
   SupplierRevenueRow,
   TopProductRow,
-  TopProductsInput
+  TopProductsInput,
+  TrendPoint,
+  WeekdayPoint
 } from '../shared/analytics'
 import type {
   ExpenseCategoryInput,
@@ -116,7 +121,13 @@ const api = {
     basket: (range: RangeInput): Promise<BasketPoint[]> => ipcRenderer.invoke('analytics:basket', range),
     discounts: (range: RangeInput): Promise<DiscountSummary> => ipcRenderer.invoke('analytics:discounts', range),
     monthlyExpenses: (months: number): Promise<Array<{ month: string; total: number }>> =>
-      ipcRenderer.invoke('analytics:monthly-expenses', { months })
+      ipcRenderer.invoke('analytics:monthly-expenses', { months }),
+    inventoryOverview: (): Promise<InventoryOverview> => ipcRenderer.invoke('analytics:inventory-overview'),
+    inventoryValue: (by: 'supplier' | 'category'): Promise<InventoryValueRow[]> =>
+      ipcRenderer.invoke('analytics:inventory-value', { by }),
+    revenueTrend: (months: number): Promise<TrendPoint[]> => ipcRenderer.invoke('analytics:revenue-trend', { months }),
+    weekday: (range: RangeInput): Promise<WeekdayPoint[]> => ipcRenderer.invoke('analytics:weekday', range),
+    monthly: (year: number): Promise<MonthPoint[]> => ipcRenderer.invoke('analytics:monthly', { year })
   },
   suppliers: {
     list: (): Promise<SupplierRow[]> => ipcRenderer.invoke('suppliers:list'),

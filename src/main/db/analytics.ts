@@ -9,12 +9,18 @@ import type {
   DiscountSummary,
   ExpenseSummary,
   FinancialMetrics,
+  InventoryOverview,
+  InventoryValueRow,
+  MonthPoint,
   PaymentRevenueRow,
   RangeInput,
   ReorderRow,
   SupplierRevenueRow,
   TopProductRow,
-  TopProductsInput
+  TopProductsInput,
+  TrendPoint,
+  WeekdayPoint,
+  YearInput
 } from '../../shared/analytics'
 import { getDb, type AppDb } from './client'
 import { categories, expenseCategories, expenses, products, saleItems, sales, suppliers } from './schema'
@@ -26,7 +32,7 @@ function marginOf(profit: number, revenue: number): number {
   return revenue > 0 ? (profit / revenue) * 100 : 0
 }
 
-/** §8.1 — revenue, gross profit (snapshot costs), margin, expenses, cash math. */
+/** Â§8.1 â€” revenue, gross profit (snapshot costs), margin, expenses, cash math. */
 export function getFinancialMetrics(input: RangeInput, db: AppDb = getDb()): FinancialMetrics {
   const { from, to } = input
   const rows = db
@@ -64,7 +70,7 @@ export function getFinancialMetrics(input: RangeInput, db: AppDb = getDb()): Fin
   }
 }
 
-/** §8.2 — top products with overall-margin-compatible rows. */
+/** Â§8.2 â€” top products with overall-margin-compatible rows. */
 export function getTopProducts(input: TopProductsInput, db: AppDb = getDb()): TopProductRow[] {
   const { from, to, sort, limit } = input
   const rows = db
@@ -97,7 +103,7 @@ export function getTopProducts(input: TopProductsInput, db: AppDb = getDb()): To
   return mapped.slice(0, limit)
 }
 
-/** §8.4 — per-supplier revenue/profit. Discounts excluded (spec warning). */
+/** Â§8.4 â€” per-supplier revenue/profit. Discounts excluded (spec warning). */
 export function getSupplierRevenue(input: RangeInput, db: AppDb = getDb()): SupplierRevenueRow[] {
   const { from, to } = input
   const rows = db
@@ -123,7 +129,7 @@ export function getSupplierRevenue(input: RangeInput, db: AppDb = getDb()): Supp
     .sort((a, b) => b.revenue - a.revenue)
 }
 
-/** §8.3 — revenue share per payment method. */
+/** Â§8.3 â€” revenue share per payment method. */
 export function getPaymentRevenue(input: RangeInput, db: AppDb = getDb()): PaymentRevenueRow[] {
   const { from, to } = input
   const rows = db
@@ -168,7 +174,7 @@ export function getCardFeeReport(input: RangeInput, db: AppDb = getDb()): CardFe
   }
 }
 
-/** §8.5 — per-category revenue/cost/profit. Discounts excluded (spec warning). */
+/** Â§8.5 â€” per-category revenue/cost/profit. Discounts excluded (spec warning). */
 export function getCategoryProfit(input: RangeInput, db: AppDb = getDb()): CategoryProfitRow[] {
   const { from, to } = input
   const rows = db
@@ -378,4 +384,148 @@ export function getMonthlyExpenses(months: number, db: AppDb = getDb()): Array<{
     out.push({ month: `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}`, total: round2(total) })
   }
   return out
+}
+
+// --- Dashboard snapshots, trends and averages (Â§2) ---
+
+/** Â§2.1 cards beyond FinancialMetrics. Today = local midnight boundary. */
+export function getInventoryOverview(db: AppDb = getDb()): InventoryOverview {
+  const active = db.select().from(products).where(isNull(products.archivedAt)).all()
+  const midnight = new Date()
+  midnight.setHours(0, 0, 0, 0)
+  const todaySales =
+    db
+      .select({ t: sql<number>`COALESCE(SUM(${sales.total}), 0)` })
+      .from(sales)
+      .where(and(gte(sales.createdAt, midnight.toISOString()), COMPLETED))
+      .get()?.t ?? 0
+  const inventoryValue = round2(active.reduce((s, p) => s + p.stockQty * p.costPrice, 0))
+  const monthStart = new Date(midnight.getFullYear(), midnight.getMonth(), 1).toISOString()
+  const monthCogs =
+    db
+      .select({ c: sql<number>`COALESCE(SUM(${saleItems.qty} * ${saleItems.unitCost}), 0)` })
+      .from(saleItems)
+      .innerJoin(sales, eq(saleItems.saleId, sales.id))
+      .where(and(gte(sales.createdAt, monthStart), COMPLETED))
+      .get()?.c ?? 0
+  return {
+    totalProducts: active.length,
+    lowStockItems: active.filter((p) => p.stockQty <= p.minStock).length,
+    todaySales: round2(todaySales),
+    inventoryValue,
+    // True turnover needs average inventory over time; current value is the
+    // documented small-shop approximation (no historical snapshots exist).
+    turnover: inventoryValue > 0 ? monthCogs / inventoryValue : 0
+  }
+}
+
+/** Current stock value grouped by supplier or category (Â§2.7, Â§2.11). */
+export function getInventoryValue(
+  by: 'supplier' | 'category',
+  db: AppDb = getDb()
+): InventoryValueRow[] {
+  const rows = db.select().from(products).where(isNull(products.archivedAt)).all()
+  const supNames = new Map(db.select().from(suppliers).all().map((s) => [s.id, s.companyName]))
+  const catNames = new Map(db.select().from(categories).all().map((c) => [c.id, c.name]))
+  const groups = new Map<string, { name: string; value: number; items: number }>()
+  for (const p of rows) {
+    const id = by === 'supplier' ? p.supplierId : p.categoryId
+    const key = id === null ? '' : String(id)
+    const names = by === 'supplier' ? supNames : catNames
+    const entry = groups.get(key) ?? { name: names.get(id as number) ?? '', value: 0, items: 0 }
+    entry.value = round2(entry.value + p.stockQty * p.costPrice)
+    entry.items += 1
+    groups.set(key, entry)
+  }
+  const total = [...groups.values()].reduce((s, g) => s + g.value, 0)
+  return [...groups.entries()]
+    .map(([key, g]) => ({ key, name: g.name, value: g.value, items: g.items, share: total > 0 ? (g.value / total) * 100 : 0 }))
+    .sort((a, b) => b.value - a.value)
+}
+
+/** Six calendar months of revenue + gross profit (Â§2.9). */
+export function getRevenueProfitTrend(months: number, db: AppDb = getDb()): TrendPoint[] {
+  const now = new Date()
+  const out: TrendPoint[] = []
+  for (let i = months - 1; i >= 0; i--) {
+    const start = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1)
+    const from = start.toISOString()
+    const to = end.toISOString()
+    const revenue =
+      db
+        .select({ t: sql<number>`COALESCE(SUM(${sales.total}), 0)` })
+        .from(sales)
+        .where(and(gte(sales.createdAt, from), lte(sales.createdAt, to), COMPLETED))
+        .get()?.t ?? 0
+    const cogs =
+      db
+        .select({ c: sql<number>`COALESCE(SUM(${saleItems.qty} * ${saleItems.unitCost}), 0)` })
+        .from(saleItems)
+        .innerJoin(sales, eq(saleItems.saleId, sales.id))
+        .where(and(gte(sales.createdAt, from), lte(sales.createdAt, to), COMPLETED))
+        .get()?.c ?? 0
+    out.push({
+      month: `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}`,
+      revenue: round2(revenue),
+      profit: round2(revenue - cogs)
+    })
+  }
+  return out
+}
+
+/** Per-weekday average sale count + revenue over the range (Â§2.4). Monday-first. */
+export function getWeekdayAverages(input: RangeInput, db: AppDb = getDb()): WeekdayPoint[] {
+  const { from, to } = input
+  const rows = db
+    .select({ createdAt: sales.createdAt, total: sales.total })
+    .from(sales)
+    .where(and(gte(sales.createdAt, from), lte(sales.createdAt, to), COMPLETED))
+    .all()
+  // Monday=0..Sunday=6 buckets plus occurrence counts in the window.
+  const salesByDay: number[][] = Array.from({ length: 7 }, () => [])
+  const occurrences = [0, 0, 0, 0, 0, 0, 0] as number[]
+  for (let d = new Date(from.slice(0, 10)); d <= new Date(to.slice(0, 10)); d.setDate(d.getDate() + 1)) {
+    occurrences[(d.getDay() + 6) % 7] = (occurrences[(d.getDay() + 6) % 7] as number) + 1
+  }
+  for (const r of rows) {
+    const weekday = (new Date(r.createdAt).getDay() + 6) % 7
+    ;(salesByDay[weekday] as number[]).push(r.total)
+  }
+  return salesByDay.map((totals, weekday) => {
+    const n = totals.length
+    const revenue = round2(totals.reduce((s, v) => s + v, 0))
+    const occ = occurrences[weekday] as number
+    return {
+      weekday,
+      sales: n,
+      revenue,
+      avgSales: occ > 0 ? n / occ : 0,
+      avgRevenue: occ > 0 ? round2(revenue / occ) : 0
+    }
+  })
+}
+
+/** Per-month average sale count + revenue for a calendar year (Â§2.5). */
+export function getMonthlyAverages(
+  input: YearInput,
+  db: AppDb = getDb()
+): MonthPoint[] {
+  const { year } = input
+  const rows = db
+    .select({ createdAt: sales.createdAt, total: sales.total })
+    .from(sales)
+    .where(
+      and(gte(sales.createdAt, `${year}-01-01T00:00:00.000Z`), lte(sales.createdAt, `${year}-12-31T23:59:59.999Z`), COMPLETED)
+    )
+    .all()
+  const byMonth: number[][] = Array.from({ length: 12 }, () => [])
+  for (const r of rows) {
+    const m = new Date(r.createdAt).getMonth()
+    ;(byMonth[m] as number[]).push(r.total)
+  }
+  return byMonth.map((totals, month) => {
+    const revenue = round2(totals.reduce((s, v) => s + v, 0))
+    return { month, sales: totals.length, revenue, avgSales: totals.length, avgRevenue: revenue }
+  })
 }

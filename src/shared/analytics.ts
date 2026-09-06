@@ -116,3 +116,45 @@ export interface CardFeePoint {
 export interface CardFeeReport extends CardFeeSummary {
   perDay: CardFeePoint[]
 }
+
+/** §2.1 metric cards that aren't covered by FinancialMetrics. */
+export interface InventoryOverview {
+  totalProducts: number
+  lowStockItems: number
+  todaySales: number
+  inventoryValue: number
+  turnover: number
+}
+
+export interface InventoryValueRow {
+  key: string
+  name: string
+  value: number
+  items: number
+  share: number
+}
+
+export interface TrendPoint {
+  month: string
+  revenue: number
+  profit: number
+}
+
+export interface WeekdayPoint {
+  weekday: number
+  sales: number
+  revenue: number
+  avgSales: number
+  avgRevenue: number
+}
+
+export interface MonthPoint {
+  month: number
+  sales: number
+  revenue: number
+  avgSales: number
+  avgRevenue: number
+}
+
+export const yearInput = z.object({ year: z.number().int().min(2000).max(2100) })
+export type YearInput = z.infer<typeof yearInput>

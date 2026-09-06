@@ -9,6 +9,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SiteHeader } from '@/components/site-header'
 import { useSettings } from '@/hooks/useSettings'
+import { DashboardPage } from '@/pages/dashboard/DashboardPage'
 import { ExpensesPage } from '@/pages/expenses/ExpensesPage'
 import { ProductsPage } from '@/pages/products/ProductsPage'
 import { PosPage } from '@/pages/pos/PosPage'
@@ -19,6 +20,7 @@ import { StockPage } from '@/pages/stock/StockPage'
 import { routes } from '@/routes'
 
 function pageFor(key: string): React.JSX.Element {
+  if (key === 'dashboard') return <DashboardPage />
   if (key === 'settings') return <SettingsPage />
   if (key === 'products') return <ProductsPage />
   if (key === 'stock') return <StockPage />

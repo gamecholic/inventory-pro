@@ -12,6 +12,7 @@ import { useSettings } from '@/hooks/useSettings'
 import { ExpensesPage } from '@/pages/expenses/ExpensesPage'
 import { ProductsPage } from '@/pages/products/ProductsPage'
 import { PosPage } from '@/pages/pos/PosPage'
+import { ReportsPage } from '@/pages/reports/ReportsPage'
 import { SalesPage } from '@/pages/sales/SalesPage'
 import { SettingsPage } from '@/pages/settings/SettingsPage'
 import { StockPage } from '@/pages/stock/StockPage'
@@ -24,6 +25,7 @@ function pageFor(key: string): React.JSX.Element {
   if (key === 'pos') return <PosPage />
   if (key === 'sales') return <SalesPage />
   if (key === 'expenses') return <ExpensesPage />
+  if (key === 'reports') return <ReportsPage />
   return <Placeholder titleKey={key} />
 }
 

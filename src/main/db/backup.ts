@@ -92,7 +92,13 @@ export function replaceAll(data: unknown): { categories: number; products: numbe
     const insertProd = sqlite.prepare(
       'INSERT INTO products (id, name, barcode, category_id, unit, selling_price, cost_price, stock_qty, min_stock, supplier_id, description, archived_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     )
+    const seenBarcodes = new Set<string>()
     for (const p of parsed.products) {
+      const code = typeof p.barcode === 'string' ? p.barcode.trim() : ''
+      if (code !== '') {
+        if (seenBarcodes.has(code)) throw new Error(`Duplicate barcode ${code} in backup`)
+        seenBarcodes.add(code)
+      }
       insertProd.run(
         typeof p.id === 'number' ? p.id : null,
         typeof p.name === 'string' ? p.name : '',

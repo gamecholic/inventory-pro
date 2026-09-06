@@ -64,3 +64,21 @@ test('product create → archive → restore flow', async () => {
   await page.getByRole('option', { name: 'Active Products' }).click()
   await expect(page.getByRole('cell', { name: PRODUCT })).toBeVisible()
 })
+
+test('duplicate barcode is rejected with a message', async () => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.getByRole('link', { name: 'Products' }).click()
+  const create = async (name: string): Promise<void> => {
+    await page.getByRole('button', { name: 'Add Product' }).click()
+    await page.locator('#pName').fill(name)
+    await page.locator('#pCategory').click()
+    await page.getByRole('option', { name: CATEGORY }).first().click()
+    await page.locator('#pBarcode').fill('DUP-001')
+    await page.locator('#pSell').fill('10')
+    await page.getByRole('button', { name: 'Save Product' }).click()
+  }
+  await create('E2E Dup One')
+  await expect(page.getByRole('cell', { name: 'E2E Dup One' })).toBeVisible()
+  await create('E2E Dup Two')
+  await expect(page.getByText(/already used/)).toBeVisible()
+})

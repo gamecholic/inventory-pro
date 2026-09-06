@@ -1,4 +1,4 @@
-import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { index, integer, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
 
 /** Key-value settings store (features §9). Value holds one JSON section. */
 export const settings = sqliteTable('settings', {
@@ -63,7 +63,13 @@ export const products = sqliteTable('products', {
   archivedAt: text('archived_at'),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull()
-})
+}, (t) => [
+  // Nullable: SQLite permits multiple NULLs, so optional barcodes stay free
+  // while duplicates are rejected (protects POS exact-barcode lookup, §3.3).
+  uniqueIndex('products_barcode_unique').on(t.barcode),
+  index('products_category_idx').on(t.categoryId),
+  index('products_supplier_idx').on(t.supplierId)
+])
 
 /** Completed/canceled sales (features §3, §6). Product data snapshotted into items. */
 export const sales = sqliteTable('sales', {
@@ -79,7 +85,9 @@ export const sales = sqliteTable('sales', {
   changeAmount: real('change_amount').notNull().default(0),
   status: text('status').notNull().default('completed'),
   canceledAt: text('canceled_at')
-})
+}, (t) => [
+  index('sales_created_at_idx').on(t.createdAt)
+])
 
 export const saleItems = sqliteTable('sale_items', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -93,4 +101,6 @@ export const saleItems = sqliteTable('sale_items', {
   unitPrice: real('unit_price').notNull(),
   unitCost: real('unit_cost').notNull().default(0),
   lineTotal: real('line_total').notNull()
-})
+}, (t) => [
+  index('sale_items_sale_id_idx').on(t.saleId)
+])

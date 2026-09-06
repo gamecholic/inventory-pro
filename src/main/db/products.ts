@@ -51,6 +51,18 @@ function requireProductRow(id: number): ProductRow {
   return row
 }
 
+/**
+ * Friendly duplicate-barcode guard ahead of the unique index: empty barcodes
+ * are always free, otherwise no other product may hold the code (excludes self
+ * on update). Protects POS exact-barcode lookup (§3.3).
+ */
+function assertBarcodeFree(barcode: string, selfId: number | null): void {
+  const code = barcode.trim()
+  if (code === '') return
+  const clash = getDb().select({ id: products.id }).from(products).where(eq(products.barcode, code)).get()
+  if (clash && clash.id !== selfId) throw new Error(`Barcode ${code} is already used by another product`)
+}
+
 /** Features §4.3 — SQL filters plus Turkish-tolerant in-main search (SQLite has no TR collation). */
 export function listProducts(filter: ProductListFilter): ProductList {
   const f = productListFilter.parse(filter)
@@ -89,6 +101,7 @@ export function listProducts(filter: ProductListFilter): ProductList {
 
 export function createProduct(input: ProductInput): ProductRow {
   const parsed = productInput.parse(input)
+  assertBarcodeFree(parsed.barcode, null)
   const now = toISO(new Date())
   const id = getDb()
     .insert(products)
@@ -114,6 +127,7 @@ export function createProduct(input: ProductInput): ProductRow {
 export function updateProduct(id: number, input: ProductInput): ProductRow {
   const parsed = productInput.parse(input)
   productId.parse({ id })
+  assertBarcodeFree(parsed.barcode, id)
   getDb()
     .update(products)
     .set({

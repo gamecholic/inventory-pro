@@ -6,7 +6,6 @@ import { enUS, tr } from 'date-fns/locale'
 import type { DateRange } from 'react-day-picker'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
-import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { formatISO } from '@shared/dates'
 import { presetRange, type DatePreset } from '@shared/dates'
@@ -14,9 +13,13 @@ import { useSettings } from '@/hooks/useSettings'
 
 const PRESETS: DatePreset[] = ['today', 'week', 'month', 'year', 'lastMonth', 'lastYear', 'last5Years']
 
+const CHIP_CLASS =
+  'px-2.5 py-1 text-xs rounded-full border border-border bg-background hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer'
+
 /**
- * Draft date-range picker: preset shortcuts plus a calendar with month/year
- * dropdowns. Selection stays local until the parent commits (Apply Filter).
+ * Draft date-range picker: trigger button, two calendars (left tracks the
+ * range start, right the end), preset chips below. Selection stays local
+ * until the parent commits (Apply Filter).
  */
 export function DateRangePicker({
   range,
@@ -58,6 +61,11 @@ export function DateRangePicker({
     onSelect(r)
   }
 
+  const label =
+    range?.from && range?.to
+      ? `${formatISO(range.from.toISOString(), dateFormat)} – ${formatISO(range.to.toISOString(), dateFormat)}`
+      : t('sales.pickRange')
+
   const calendarProps = {
     mode: 'range' as const,
     captionLayout: 'dropdown' as const,
@@ -73,39 +81,26 @@ export function DateRangePicker({
     onSelect: handleSelect
   }
 
-  const label =
-    range?.from && range?.to
-      ? `${formatISO(range.from.toISOString(), dateFormat)} – ${formatISO(range.to.toISOString(), dateFormat)}`
-      : t('sales.pickRange')
-
   return (
     <Popover open={open} onOpenChange={reopen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="w-64 justify-start font-normal">
-          <CalendarIcon className="size-4" />
-          {label}
+        <Button variant="outline" className="h-10 w-[240px] justify-start px-2.5 text-left font-normal">
+          <CalendarIcon className="h-4 w-4 shrink-0" />
+          <span className="ml-1.5 truncate">{label}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <Card className="border-0 shadow-none">
-          <CardContent className="flex gap-2 p-2">
-            <Calendar {...calendarProps} month={startMonth} onMonthChange={setStartMonth} />
-            <Calendar {...calendarProps} month={endMonth} onMonthChange={setEndMonth} />
-          </CardContent>
-          <CardFooter className="flex max-w-xl flex-wrap gap-1.5 border-t px-2 py-2">
-            {PRESETS.map((p) => (
-              <Button
-                key={p}
-                variant="outline"
-                size="sm"
-                className="flex-1 rounded-full"
-                onClick={() => pickPreset(p)}
-              >
-                {t(`sales.presets.${p}`)}
-              </Button>
-            ))}
-          </CardFooter>
-        </Card>
+        <div className="flex gap-2 p-2">
+          <Calendar {...calendarProps} month={startMonth} onMonthChange={setStartMonth} />
+          <Calendar {...calendarProps} month={endMonth} onMonthChange={setEndMonth} />
+        </div>
+        <div className="flex flex-wrap gap-1.5 border-t border-border p-3">
+          {PRESETS.map((p) => (
+            <button key={p} type="button" className={CHIP_CLASS} onClick={() => pickPreset(p)}>
+              {t(`sales.presets.${p}`)}
+            </button>
+          ))}
+        </div>
       </PopoverContent>
     </Popover>
   )

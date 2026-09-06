@@ -27,8 +27,9 @@ describe('expenseFilter', () => {
 })
 
 describe('categoryColor', () => {
-  it('is stable and grey for uncategorized', () => {
+  it('is stable, theme-token based, and grey for uncategorized', () => {
     expect(categoryColor(3)).toBe(categoryColor(3))
-    expect(categoryColor(null)).toBe('#6b7280')
+    expect(categoryColor(3)).toMatch(/^var\(--chart-[1-5]\)$/)
+    expect(categoryColor(null)).toBe('var(--muted-foreground)')
   })
 })

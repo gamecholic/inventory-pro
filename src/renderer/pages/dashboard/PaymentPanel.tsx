@@ -11,7 +11,7 @@ import {
   TableRow
 } from '@/components/ui/table'
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
-import { formatMoney, round2 } from '@shared/money'
+import { chartMoneyFormatter, formatMoney, round2 } from '@shared/money'
 import { currentMonthRange, useCardFeeReport, usePaymentReport } from '@/hooks/useReports'
 import { useSettings } from '@/hooks/useSettings'
 import { Panel } from './Panel'
@@ -49,7 +49,7 @@ export function PaymentPanel(): React.JSX.Element {
         <>
           <ChartContainer config={config} className="h-64 w-full">
             <PieChart>
-              <ChartTooltip content={<ChartTooltipContent formatter={(v) => formatMoney(Number(v), currency)} />} />
+              <ChartTooltip content={<ChartTooltipContent formatter={chartMoneyFormatter(currency)} />} />
               <Pie data={data} dataKey="revenue" nameKey="method" innerRadius={48}>
                 {data.map((r, i) => (
                   <Cell key={r.method} fill={PIE_COLORS[i % PIE_COLORS.length]} />

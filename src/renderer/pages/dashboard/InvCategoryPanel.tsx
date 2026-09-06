@@ -25,7 +25,7 @@ import {
   ChartTooltipContent,
   type ChartConfig
 } from '@/components/ui/chart'
-import { formatMoney, round2 } from '@shared/money'
+import { chartMoneyFormatter, formatMoney, round2 } from '@shared/money'
 import { useInventoryValue } from '@/hooks/useReports'
 import { useSettings } from '@/hooks/useSettings'
 import { Panel } from './Panel'
@@ -71,7 +71,7 @@ export function InvCategoryPanel(): React.JSX.Element {
           {mode === 'pie' ? (
             <ChartContainer config={config} className="h-64 w-full">
               <PieChart>
-                <ChartTooltip content={<ChartTooltipContent formatter={(v) => formatMoney(Number(v), currency)} />} />
+                <ChartTooltip content={<ChartTooltipContent formatter={chartMoneyFormatter(currency)} />} />
                 <Pie data={data} dataKey="value" nameKey="name" innerRadius={48}>
                   {data.map((r, i) => (
                     <Cell key={r.key} fill={PIE_COLORS[i % PIE_COLORS.length]} />
@@ -86,7 +86,7 @@ export function InvCategoryPanel(): React.JSX.Element {
                 <CartesianGrid horizontal={false} />
                 <XAxis type="number" tickLine={false} axisLine={false} />
                 <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} width={140} />
-                <ChartTooltip content={<ChartTooltipContent formatter={(v) => formatMoney(Number(v), currency)} />} />
+                <ChartTooltip content={<ChartTooltipContent formatter={chartMoneyFormatter(currency)} />} />
                 <Bar dataKey="value" fill="var(--color-value)" radius={4} />
               </BarChart>
             </ChartContainer>

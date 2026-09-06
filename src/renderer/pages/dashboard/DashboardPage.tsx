@@ -25,7 +25,7 @@ export function DashboardPage(): React.JSX.Element {
         {businessName !== '' ? `, ${businessName}` : ''}
       </h2>
       <MetricCards />
-      <div className="grid items-start gap-4 xl:grid-cols-2">
+      <div className="grid items-start gap-4 md:grid-cols-2">
         <TopSellingPanel />
         <SupplierPanel />
         <WeekdayPanel />

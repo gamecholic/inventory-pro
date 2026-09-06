@@ -10,7 +10,7 @@ import {
   TableRow
 } from '@/components/ui/table'
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
-import { formatMoney, round2 } from '@shared/money'
+import { chartMoneyFormatter, formatMoney, round2 } from '@shared/money'
 import type { RangeInput } from '@shared/analytics'
 import { useSupplierReport } from '@/hooks/useReports'
 import { useSettings } from '@/hooks/useSettings'
@@ -48,7 +48,7 @@ export function SupplierReport({ range }: { range: RangeInput }): React.JSX.Elem
           <CartesianGrid vertical={false} />
           <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} />
           <YAxis tickLine={false} axisLine={false} width={64} />
-          <ChartTooltip content={<ChartTooltipContent formatter={(v) => formatMoney(Number(v), currency)} />} />
+          <ChartTooltip content={<ChartTooltipContent formatter={chartMoneyFormatter(currency)} />} />
           <ChartLegend content={<ChartLegendContent />} />
           <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
           <Bar dataKey="profit" fill="var(--color-profit)" radius={4} />

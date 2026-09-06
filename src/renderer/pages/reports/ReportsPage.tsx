@@ -4,7 +4,7 @@ import { endOfDay, endOfMonth, startOfDay, startOfMonth } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import type { DateRange } from 'react-day-picker'
 import { DateRangePicker } from '@/components/date-range-picker'
-import { toISO } from '@shared/dates'
+import { dayBounds, toISO } from '@shared/dates'
 import type { RangeInput } from '@shared/analytics'
 import { BasketReport } from './BasketReport'
 import { CardFeeReport } from './CardFeeReport'
@@ -78,7 +78,7 @@ export function ReportsPage(): React.JSX.Element {
                 disabled={!draft?.from || !draft?.to}
                 onClick={() => {
                   if (!draft?.from || !draft?.to) return
-                  setApplied({ from: toISO(startOfDay(draft.from)), to: toISO(endOfDay(draft.to)) })
+                  setApplied(dayBounds({ from: draft.from, to: draft.to }))
                 }}
               >
                 {t('reportPage.generate')}

@@ -2,8 +2,8 @@ import { useTranslation } from 'react-i18next'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
-import { formatMoney } from '@shared/money'
-import { formatISO } from '@shared/dates'
+import { chartMoneyFormatter, formatMoney } from '@shared/money'
+import { formatDateTime } from '@shared/dates'
 import { usePriceHistory } from '@/hooks/useStock'
 import { useSettings } from '@/hooks/useSettings'
 
@@ -15,15 +15,11 @@ export function PriceHistoryChart({ productId }: { productId: number }): React.J
   const currency = settings?.general.currency ?? 'USD'
   const dateFormat = settings?.general.dateFormat ?? 'MM/DD/YYYY'
 
-  const points = (data ?? []).map((p) => {
-    const d = new Date(p.createdAt)
-    const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-    return {
-      at: `${formatISO(p.createdAt, dateFormat)} ${time}`,
-      cost: p.costPrice,
-      selling: p.sellingPrice
-    }
-  })
+  const points = (data ?? []).map((p) => ({
+    at: formatDateTime(p.createdAt, dateFormat),
+    cost: p.costPrice,
+    selling: p.sellingPrice
+  }))
   if (points.length === 0) return null
 
   const config = {
@@ -48,7 +44,7 @@ export function PriceHistoryChart({ productId }: { productId: number }): React.J
               tickFormatter={(v: number) => formatMoney(v, currency)}
             />
             <ChartTooltip
-              content={<ChartTooltipContent formatter={(value) => formatMoney(Number(value), currency)} />}
+              content={<ChartTooltipContent formatter={chartMoneyFormatter(currency)} />}
             />
             <Line type="monotone" dataKey="cost" stroke="var(--color-cost)" strokeWidth={2} dot={false} />
             <Line type="monotone" dataKey="selling" stroke="var(--color-selling)" strokeWidth={2} dot={false} />

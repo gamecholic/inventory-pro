@@ -11,14 +11,14 @@ import { useSettings } from '@/hooks/useSettings'
 
 /** Shared by live grid filtering and submit auto-add (§3.1, §3.3). */
 export function filterPosProducts(catalog: ProductRow[], search: string, categoryId: number | null): ProductRow[] {
-  const q = search.trim()
-  const nq = normalizeTR(q)
+  const query = search.trim()
+  const normalizedQuery = normalizeTR(query)
   return catalog.filter((p) => {
     if (categoryId !== null && p.categoryId !== categoryId) return false
-    if (q === '') return true
-    if (normalizeTR(p.name).includes(nq)) return true
-    if ((p.barcode ?? '').toLowerCase().includes(q.toLowerCase())) return true
-    if (String(p.sellingPrice).includes(q)) return true
+    if (query === '') return true
+    if (normalizeTR(p.name).includes(normalizedQuery)) return true
+    if (normalizeTR(p.barcode ?? '').includes(normalizedQuery)) return true
+    if (String(p.sellingPrice).includes(query)) return true
     return false
   })
 }
@@ -59,13 +59,15 @@ export function ProductGrid({
         <Button type="submit">{t('pos.search')}</Button>
       </div>
       <div>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
+          className="px-1 text-muted-foreground hover:text-foreground"
           onClick={() => setExpanded((e) => !e)}
-          className="text-sm font-medium text-muted-foreground hover:text-foreground"
         >
           {t('pos.categories')} {expanded ? '▾' : '▸'}
-        </button>
+        </Button>
         {expanded && (
           <div className="mt-2 flex flex-wrap gap-2">
             <Button
@@ -97,13 +99,14 @@ export function ProductGrid({
           {filtered.map((p) => {
             const out = p.stockQty <= 0
             return (
-              <button
+              <Button
                 key={p.id}
                 type="button"
+                variant="outline"
                 disabled={out}
                 onClick={() => onPick(p)}
-                className={`flex flex-col gap-0.5 rounded-lg border border-border p-2 text-left transition-colors ${
-                  out ? 'opacity-50' : 'hover:bg-muted/50'
+                className={`h-auto flex-col items-stretch gap-0.5 p-2 text-left font-normal ${
+                  out ? 'opacity-50' : ''
                 }`}
               >
                 <span className="truncate text-sm font-medium">{p.name}</span>
@@ -113,7 +116,7 @@ export function ProductGrid({
                     {out ? t('pos.outOfStock') : `${p.stockQty} ${unitShort(p.unit, t)}`}
                   </span>
                 </span>
-              </button>
+              </Button>
             )
           })}
         </div>

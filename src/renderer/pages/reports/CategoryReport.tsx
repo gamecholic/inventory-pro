@@ -25,7 +25,7 @@ import {
   ChartTooltipContent,
   type ChartConfig
 } from '@/components/ui/chart'
-import { formatMoney, round2 } from '@shared/money'
+import { chartMoneyFormatter, formatMoney, round2 } from '@shared/money'
 import type { RangeInput } from '@shared/analytics'
 import { useCategoryReport } from '@/hooks/useReports'
 import { useSettings } from '@/hooks/useSettings'
@@ -79,7 +79,7 @@ export function CategoryReport({ range }: { range: RangeInput }): React.JSX.Elem
             <CartesianGrid vertical={false} />
             <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} />
             <YAxis tickLine={false} axisLine={false} width={64} />
-            <ChartTooltip content={<ChartTooltipContent formatter={(v) => formatMoney(Number(v), currency)} />} />
+            <ChartTooltip content={<ChartTooltipContent formatter={chartMoneyFormatter(currency)} />} />
             <ChartLegend content={<ChartLegendContent />} />
             <Bar dataKey="profit" fill="var(--color-profit)" radius={4} />
             <Bar dataKey="cost" fill="var(--color-cost)" radius={4} />
@@ -88,7 +88,7 @@ export function CategoryReport({ range }: { range: RangeInput }): React.JSX.Elem
       ) : (
         <ChartContainer config={config} className="h-72 w-full">
           <PieChart>
-            <ChartTooltip content={<ChartTooltipContent formatter={(v) => formatMoney(Number(v), currency)} />} />
+            <ChartTooltip content={<ChartTooltipContent formatter={chartMoneyFormatter(currency)} />} />
             <Pie data={data} dataKey="profit" nameKey="name" innerRadius={48}>
               {data.map((r, i) => (
                 <Cell key={r.name} fill={PIE_COLORS[i % PIE_COLORS.length]} />

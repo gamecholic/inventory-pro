@@ -25,3 +25,8 @@ export function formatMoney(amount: number, currency: StoreCurrency): string {
 export function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100
 }
+
+/** Shared Recharts tooltip value formatter (money). One definition for all chart panels. */
+export function chartMoneyFormatter(currency: StoreCurrency): (value: unknown) => string {
+  return (value: unknown) => formatMoney(Number(value), currency)
+}

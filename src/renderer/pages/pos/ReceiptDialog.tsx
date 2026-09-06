@@ -8,18 +8,23 @@ import {
   DialogTitle
 } from '@/components/ui/dialog'
 import { formatMoney } from '@shared/money'
-import { formatISO } from '@shared/dates'
+import { formatDateTime, formatISO } from '@shared/dates'
 import { unitShort } from '@shared/units'
 import type { Receipt } from '@shared/sale'
 import { useSettings } from '@/hooks/useSettings'
 
-/** Features §3.11 — receipt dialog shared with reprint. Prints via window.print + print CSS. */
+/**
+ * Features §3.11 — receipt dialog shared with reprint. Prints via window.print + print CSS.
+ * Reprint (§6.4) shows date + time; POS checkout shows the date only.
+ */
 export function ReceiptDialog({
   receipt,
-  onClose
+  onClose,
+  showTime = false
 }: {
   receipt: Receipt | null
   onClose: () => void
+  showTime?: boolean
 }): React.JSX.Element | null {
   const { t } = useTranslation()
   const { data: settings } = useSettings()
@@ -50,7 +55,9 @@ export function ReceiptDialog({
               {t('pos.receipt.receiptTotal')}: {receipt.receiptNo}
             </DialogTitle>
           </DialogHeader>
-          <p className="text-muted-foreground">{formatISO(receipt.createdAt, dateFormat)}</p>
+          <p className="text-muted-foreground">
+            {showTime ? formatDateTime(receipt.createdAt, dateFormat) : formatISO(receipt.createdAt, dateFormat)}
+          </p>
           {business.name !== '' && <p className="text-base font-bold">{business.name}</p>}
           {business.address !== '' && <p className="whitespace-pre-line">{business.address}</p>}
           {business.phone !== '' && (

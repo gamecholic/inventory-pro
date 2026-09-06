@@ -166,6 +166,18 @@ export function SaleDetailPanel({
                     <span>{formatMoney(detail.changeAmount, currency)}</span>
                   </div>
                 )}
+                {detail.paymentMethod === 'split' && (
+                  <>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>{t('pos.cashAmount')}</span>
+                      <span>{formatMoney(detail.cashAmount ?? 0, currency)}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>{t('pos.cardAmount')}</span>
+                      <span>{formatMoney(detail.cardAmount ?? 0, currency)}</span>
+                    </div>
+                  </>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <Button variant="outline" onClick={() => setPrint(true)}>
@@ -209,7 +221,7 @@ export function SaleDetailPanel({
         </AlertDialogContent>
       </AlertDialog>
 
-      <ReceiptDialog receipt={print && detail ? toReceipt(detail) : null} onClose={() => setPrint(false)} />
+      <ReceiptDialog receipt={print && detail ? toReceipt(detail) : null} onClose={() => setPrint(false)} showTime />
     </>
   )
 }

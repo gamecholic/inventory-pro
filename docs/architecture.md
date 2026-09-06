@@ -33,3 +33,12 @@ Print (receipt template → BrowserWindow.print) and updater (GitHub Releases) l
 
 ## 4. Must-not-break (from features.md)
 Single-user offline-first, no auth/cloud. No hold/park sale (§3.12), no bulk product actions (§4.4), no stock history log (§5.4), no recurring expenses/attachments (§7.2), no report CSV/print (§8.6). Receipt # `INV-YYYYMMDD-HHmmss` + business identity + header/footer everywhere (§1.4, §3.11).
+
+## 5. Approved deviations (owner-signed, override the spec above)
+- Theme toggle (header → Settings > General). Spec has no theme requirement.
+- Reports: 5 extra insight reports (reorder, dead stock, basket, discounts, card fees) beside the spec's 5 (§8).
+- Stock price-history chart + silent `stock_adjustments` log incl. prices. §5.4 forbids shown history; the log has no UI except this chart.
+- Expense category manager dialog (§7.1 names only Add buttons; edit/delete needs a list).
+- Sales/expenses default filter window is Last 1 Month, not last-30-days/current-month (§6.2, §7.4).
+- Tax rows omitted everywhere: no tax source exists, so `> 0` never fires (§6.3, §6.4).
+- Still open, not deviated: update notification card (§1.6) — to be built.

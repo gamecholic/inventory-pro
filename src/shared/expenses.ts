@@ -56,19 +56,11 @@ export interface ExpenseRow {
   notes: string | null
 }
 
-/** Stable badge color per category id (spec wants colored badges, no color field). */
-const PALETTE = [
-  '#2563eb',
-  '#16a34a',
-  '#dc2626',
-  '#d97706',
-  '#7c3aed',
-  '#0891b2',
-  '#db2777',
-  '#65a30d'
-] as const
-
+/**
+ * Stable badge color per category id. Theme tokens (not hex) so badges work in
+ * dark/light mode (docs/ui.md §1).
+ */
 export function categoryColor(id: number | null): string {
-  if (id === null) return '#6b7280'
-  return PALETTE[Math.abs(id) % PALETTE.length] as string
+  if (id === null) return 'var(--muted-foreground)'
+  return `var(--chart-${(Math.abs(id) % 5) + 1})`
 }

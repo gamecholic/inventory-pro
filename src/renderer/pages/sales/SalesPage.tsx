@@ -20,8 +20,7 @@ import {
   TableRow
 } from '@/components/ui/table'
 import { formatMoney } from '@shared/money'
-import { endOfDay, startOfDay } from 'date-fns'
-import { formatISO, presetRange, toISO } from '@shared/dates'
+import { dayBounds, formatDateTime, presetRange } from '@shared/dates'
 import type { DateRange } from 'react-day-picker'
 import { DateRangePicker } from '@/components/date-range-picker'
 import { useSales } from '@/hooks/useSales'
@@ -40,10 +39,7 @@ export function SalesPage(): React.JSX.Element {
   // Draft range (picker + presets) commits to the query only via Apply Filter (§6.2).
   // Default window is Last 1 Month on every page using the picker.
   const [draft, setDraft] = useState<DateRange | undefined>(() => presetRange('lastMonth'))
-  const [applied, setApplied] = useState(() => {
-    const r = presetRange('lastMonth')
-    return { from: toISO(startOfDay(r.from)), to: toISO(endOfDay(r.to)) }
-  })
+  const [applied, setApplied] = useState(dayBounds(presetRange('lastMonth')))
   const [payment, setPayment] = useState<'all' | 'cash' | 'card' | 'split'>('all')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -71,7 +67,7 @@ export function SalesPage(): React.JSX.Element {
           disabled={!draft?.from || !draft?.to}
           onClick={() => {
             if (!draft?.from || !draft?.to) return
-            setApplied({ from: toISO(startOfDay(draft.from)), to: toISO(endOfDay(draft.to)) })
+            setApplied(dayBounds({ from: draft.from, to: draft.to }))
             setPage(1)
           }}
         >
@@ -147,7 +143,7 @@ export function SalesPage(): React.JSX.Element {
                     <TableCell className={canceled ? 'text-muted-foreground' : ''}>
                       {canceled ? <s>{s.receiptNo}</s> : s.receiptNo}
                     </TableCell>
-                    <TableCell>{formatISO(s.createdAt, dateFormat)}</TableCell>
+                    <TableCell>{formatDateTime(s.createdAt, dateFormat)}</TableCell>
                     <TableCell>{s.itemCount}</TableCell>
                     <TableCell>{formatMoney(s.total, currency)}</TableCell>
                     <TableCell>

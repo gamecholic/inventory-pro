@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { endOfDay, startOfDay } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -35,7 +34,7 @@ import type { DateRange } from 'react-day-picker'
 import { DateRangePicker } from '@/components/date-range-picker'
 import { formatMoney, round2 } from '@shared/money'
 import { categoryColor, EXPENSE_PAYMENTS, type ExpenseRow } from '@shared/expenses'
-import { formatISO, presetRange, toISO } from '@shared/dates'
+import { formatISO, dayBounds, presetRange, toISO } from '@shared/dates'
 import { useDeleteExpense, useExpenseCategories, useExpenses } from '@/hooks/useExpenses'
 import { useSettings } from '@/hooks/useSettings'
 import { ExpenseCategoryDialog } from './ExpenseCategoryDialog'
@@ -52,10 +51,7 @@ export function ExpensesPage(): React.JSX.Element {
   const dateFormat = settings?.general.dateFormat ?? 'MM/DD/YYYY'
 
   // Default window is Last 1 Month on every page using the picker.
-  const lastMonthRange = (): { from: string; to: string } => {
-    const r = presetRange('lastMonth')
-    return { from: toISO(startOfDay(r.from)), to: toISO(endOfDay(r.to)) }
-  }
+  const lastMonthRange = (): { from: string; to: string } => dayBounds(presetRange('lastMonth'))
   const [draft, setDraft] = useState<DateRange | undefined>(() => presetRange('lastMonth'))
   const [applied, setApplied] = useState(lastMonthRange)
   const [draftCategory, setDraftCategory] = useState<number | null>(null)
@@ -95,7 +91,7 @@ export function ExpensesPage(): React.JSX.Element {
 
   const applyAll = (): void => {
     if (draft?.from && draft?.to) {
-      setApplied({ from: toISO(startOfDay(draft.from)), to: toISO(endOfDay(draft.to)) })
+      setApplied(dayBounds({ from: draft.from, to: draft.to }))
     }
     setAppliedCategory(draftCategory)
     setAppliedPayment(draftPayment)
@@ -234,10 +230,8 @@ export function ExpensesPage(): React.JSX.Element {
                 <TableCell>{e.reference ?? '—'}</TableCell>
                 <TableCell>{e.recipient ?? '—'}</TableCell>
                 <TableCell>
-                  <span
-                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
-                    style={{ backgroundColor: categoryColor(e.categoryId) }}
-                  >
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="inline-block size-2.5 rounded-full" style={{ backgroundColor: categoryColor(e.categoryId) }} />
                     {e.categoryName ?? t('expenses.other')}
                   </span>
                 </TableCell>

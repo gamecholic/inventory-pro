@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { Card, CardContent } from '@/components/ui/card'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
-import { formatMoney } from '@shared/money'
+import { chartMoneyFormatter, formatMoney } from '@shared/money'
 import type { RangeInput } from '@shared/analytics'
 import { useDiscountReport } from '@/hooks/useReports'
 import { useSettings } from '@/hooks/useSettings'
@@ -59,7 +59,7 @@ export function DiscountReport({ range }: { range: RangeInput }): React.JSX.Elem
           <CartesianGrid vertical={false} />
           <XAxis dataKey="day" tickLine={false} axisLine={false} tickMargin={8} minTickGap={48} />
           <YAxis tickLine={false} axisLine={false} width={64} />
-          <ChartTooltip content={<ChartTooltipContent formatter={(v) => formatMoney(Number(v), currency)} />} />
+          <ChartTooltip content={<ChartTooltipContent formatter={chartMoneyFormatter(currency)} />} />
           <Bar dataKey="discount" fill="var(--color-discount)" radius={4} />
         </BarChart>
       </ChartContainer>

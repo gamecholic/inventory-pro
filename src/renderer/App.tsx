@@ -17,18 +17,21 @@ import { ReportsPage } from '@/pages/reports/ReportsPage'
 import { SalesPage } from '@/pages/sales/SalesPage'
 import { SettingsPage } from '@/pages/settings/SettingsPage'
 import { StockPage } from '@/pages/stock/StockPage'
-import { routes } from '@/routes'
+import { routes, type AppRoute } from '@/routes'
+
+const PAGES: Record<AppRoute['key'], () => React.JSX.Element> = {
+  dashboard: () => <DashboardPage />,
+  settings: () => <SettingsPage />,
+  products: () => <ProductsPage />,
+  stock: () => <StockPage />,
+  pos: () => <PosPage />,
+  sales: () => <SalesPage />,
+  expenses: () => <ExpensesPage />,
+  reports: () => <ReportsPage />
+}
 
 function pageFor(key: string): React.JSX.Element {
-  if (key === 'dashboard') return <DashboardPage />
-  if (key === 'settings') return <SettingsPage />
-  if (key === 'products') return <ProductsPage />
-  if (key === 'stock') return <StockPage />
-  if (key === 'pos') return <PosPage />
-  if (key === 'sales') return <SalesPage />
-  if (key === 'expenses') return <ExpensesPage />
-  if (key === 'reports') return <ReportsPage />
-  return <Placeholder titleKey={key} />
+  return PAGES[key as AppRoute['key']]?.() ?? <Placeholder titleKey={key} />
 }
 
 /** Applies the persisted language immediately, including on boot (features §1.2). */

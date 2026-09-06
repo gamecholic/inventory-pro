@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatMoney, round2 } from './money'
+import { chartMoneyFormatter, formatMoney, round2 } from './money'
 
 describe('round2', () => {
   it('rounds repeating decimals to cents', () => {
@@ -15,5 +15,9 @@ describe('formatMoney', () => {
     expect(formatMoney(25, 'EUR')).toBe('€25.00')
     expect(formatMoney(25, 'GBP')).toBe('£25.00')
     expect(formatMoney(71.666666, 'TRY')).toBe('₺71.67')
+  })
+
+  it('builds chart tooltip formatters', () => {
+    expect(chartMoneyFormatter('USD')(42.5)).toBe('$42.50')
   })
 })

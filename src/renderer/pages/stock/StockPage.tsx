@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatMoney } from '@shared/money'
@@ -39,23 +40,24 @@ export function StockPage(): React.JSX.Element {
             <p className="p-4 text-center text-sm text-muted-foreground">{t('stock.noResults')}</p>
           ) : (
             (data ?? []).map((p) => (
-              <button
+              <Button
                 key={p.id}
                 type="button"
+                variant="outline"
                 onClick={() => select(p)}
-                className={`rounded-lg border p-3 text-left transition-colors ${
-                  p.id === selectedId ? 'border-primary ring-1 ring-ring' : 'border-border hover:bg-muted/50'
+                className={`h-auto flex-col items-stretch gap-1 p-3 text-left font-normal ${
+                  p.id === selectedId ? 'border-primary ring-1 ring-ring' : ''
                 }`}
               >
-                <p className="font-bold">{p.name}</p>
-                {p.barcode && <p className="text-xs text-muted-foreground">{p.barcode}</p>}
-                <p className="mt-1 text-sm">
+                <span className="font-bold">{p.name}</span>
+                {p.barcode && <span className="text-xs text-muted-foreground">{p.barcode}</span>}
+                <span className="mt-1 text-sm">
                   <StockBadge qty={p.stockQty} unit={p.unit} threshold={p.minStock} />
-                </p>
-                <p className="text-sm text-muted-foreground">
+                </span>
+                <span className="text-sm text-muted-foreground">
                   {t('stock.costIs')}: {formatMoney(p.costPrice, currency)}
-                </p>
-              </button>
+                </span>
+              </Button>
             ))
           )}
         </div>

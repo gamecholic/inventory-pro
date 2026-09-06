@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
-import { formatMoney } from '@shared/money'
+import { chartMoneyFormatter, formatMoney } from '@shared/money'
 import { useMonthlyExpensesTrend } from '@/hooks/useReports'
 import { useSettings } from '@/hooks/useSettings'
 import { Panel } from './Panel'
@@ -30,7 +30,7 @@ export function ExpensesTrendPanel(): React.JSX.Element {
             <CartesianGrid vertical={false} />
             <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
             <YAxis tickLine={false} axisLine={false} width={64} />
-            <ChartTooltip content={<ChartTooltipContent formatter={(v) => formatMoney(Number(v), currency)} />} />
+            <ChartTooltip content={<ChartTooltipContent formatter={chartMoneyFormatter(currency)} />} />
             <Bar dataKey="total" fill="var(--color-total)" radius={4} />
           </BarChart>
         </ChartContainer>

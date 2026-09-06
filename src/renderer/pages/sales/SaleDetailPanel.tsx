@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Sheet,
   SheetContent,
@@ -86,7 +87,7 @@ export function SaleDetailPanel({
           if (!o) onClose()
         }}
       >
-        <SheetContent className="overflow-y-auto sm:max-w-md">
+        <SheetContent className="m-4 h-[calc(100vh-2rem)] rounded-2xl sm:max-w-md">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
               {t('sales.saleDetails')}
@@ -98,7 +99,8 @@ export function SaleDetailPanel({
             </SheetTitle>
           </SheetHeader>
           {detail && (
-            <div className="flex flex-col gap-4 text-sm">
+            <ScrollArea className="mb-4 min-h-0 flex-1">
+            <div className="mr-4 ml-4 flex flex-col gap-2 text-sm">
               <div className="flex flex-col gap-0.5 rounded-lg bg-muted/40 p-4">
                 {business?.name !== '' && <p className="text-base font-bold">{business?.name}</p>}
                 {business?.address !== '' && (
@@ -179,6 +181,7 @@ export function SaleDetailPanel({
                   </>
                 )}
               </div>
+              
               <div className="grid grid-cols-2 gap-2">
                 <Button variant="outline" onClick={() => setPrint(true)}>
                   <Printer className="size-4" />
@@ -196,6 +199,7 @@ export function SaleDetailPanel({
                 )}
               </div>
             </div>
+            </ScrollArea>
           )}
         </SheetContent>
       </Sheet>

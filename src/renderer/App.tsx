@@ -9,6 +9,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SiteHeader } from '@/components/site-header'
 import { useSettings } from '@/hooks/useSettings'
+import { ExpensesPage } from '@/pages/expenses/ExpensesPage'
 import { ProductsPage } from '@/pages/products/ProductsPage'
 import { PosPage } from '@/pages/pos/PosPage'
 import { SalesPage } from '@/pages/sales/SalesPage'
@@ -22,6 +23,7 @@ function pageFor(key: string): React.JSX.Element {
   if (key === 'stock') return <StockPage />
   if (key === 'pos') return <PosPage />
   if (key === 'sales') return <SalesPage />
+  if (key === 'expenses') return <ExpensesPage />
   return <Placeholder titleKey={key} />
 }
 

@@ -67,6 +67,29 @@ export async function writeExcelBackup(filePath: string): Promise<void> {
   const itemsSheet = wb.addWorksheet('SaleItems')
   itemsSheet.columns = ITEM_COLUMNS.map((h) => ({ header: h, key: h, width: 16 }))
   for (const i of dump.sale_items) itemsSheet.addRow({ ...i })
+  const expCatSheet = wb.addWorksheet('ExpenseCategories')
+  expCatSheet.columns = [
+    { header: 'id', key: 'id', width: 8 },
+    { header: 'name', key: 'name', width: 30 },
+    { header: 'description', key: 'description', width: 50 },
+    { header: 'created_at', key: 'created_at', width: 28 }
+  ]
+  for (const c of dump.expense_categories) expCatSheet.addRow(c)
+  const expSheet = wb.addWorksheet('Expenses')
+  expSheet.columns = [
+    'id',
+    'date',
+    'amount',
+    'description',
+    'category_id',
+    'payment_method',
+    'recipient',
+    'reference',
+    'notes',
+    'created_at',
+    'updated_at'
+  ].map((h) => ({ header: h, key: h, width: 18 }))
+  for (const e of dump.expenses) expSheet.addRow({ ...e })
   await wb.xlsx.writeFile(filePath)
 }
 
@@ -111,6 +134,8 @@ export async function readExcelBackup(filePath: string): Promise<{ categories: n
   }
   const salesSheet = optSheet('Sales')
   const itemsSheet = optSheet('SaleItems')
+  const expCatSheet = optSheet('ExpenseCategories')
+  const expSheet = optSheet('Expenses')
   return replaceAll({
     app: 'inventory-pro',
     version: BACKUP_VERSION,
@@ -119,6 +144,8 @@ export async function readExcelBackup(filePath: string): Promise<{ categories: n
     categories: readRows(getSheet('Categories')),
     products: readRows(getSheet('Products')),
     sales: salesSheet ? readRows(salesSheet) : [],
-    sale_items: itemsSheet ? readRows(itemsSheet) : []
+    sale_items: itemsSheet ? readRows(itemsSheet) : [],
+    expense_categories: expCatSheet ? readRows(expCatSheet) : [],
+    expenses: expSheet ? readRows(expSheet) : []
   })
 }

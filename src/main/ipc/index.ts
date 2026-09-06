@@ -3,6 +3,7 @@ import { defaultBackupPath } from '../db/backup'
 import { writeExcelBackup } from '../db/excel'
 import { registerBackupIpc } from './backup'
 import { registerCatalogIpc } from './catalog'
+import { registerExpensesIpc } from './expenses'
 import { registerSalesIpc } from './sales'
 import { registerSettingsIpc } from './settings'
 
@@ -12,6 +13,7 @@ export function registerIpc(): void {
   registerSettingsIpc()
   registerBackupIpc()
   registerCatalogIpc()
+  registerExpensesIpc()
   registerSalesIpc()
 }
 

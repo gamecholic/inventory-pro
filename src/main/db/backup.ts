@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { settingsValues, withDefaults, type SettingsValues } from '../../shared/settings'
 import { toISO } from '../../shared/dates'
 import { getDb, getSqlite } from './client'
-import { categories, products, saleItems, sales, settings } from './schema'
+import { categories, expenseCategories, expenses, products, saleItems, sales, settings } from './schema'
 import { seedSettings } from './settingsStore'
 
 const BACKUP_VERSION = 2
@@ -20,7 +20,9 @@ const backupFile = z.object({
   categories: z.array(rowRecord),
   products: z.array(rowRecord),
   sales: z.array(rowRecord).default([]),
-  sale_items: z.array(rowRecord).default([])
+  sale_items: z.array(rowRecord).default([]),
+  expense_categories: z.array(rowRecord).default([]),
+  expenses: z.array(rowRecord).default([])
 })
 export type BackupFile = z.infer<typeof backupFile>
 
@@ -30,6 +32,8 @@ export interface TableDump {
   products: Array<typeof products.$inferSelect>
   sales: Array<typeof sales.$inferSelect>
   sale_items: Array<typeof saleItems.$inferSelect>
+  expense_categories: Array<typeof expenseCategories.$inferSelect>
+  expenses: Array<typeof expenses.$inferSelect>
 }
 
 /** Read every user table. Dates/amounts stay as stored; exportedAt is ISO8601 UTC. */
@@ -48,7 +52,9 @@ export function collectAll(): TableDump {
     categories: db.select().from(categories).all(),
     products: db.select().from(products).all(),
     sales: db.select().from(sales).all(),
-    sale_items: db.select().from(saleItems).all()
+    sale_items: db.select().from(saleItems).all(),
+    expense_categories: db.select().from(expenseCategories).all(),
+    expenses: db.select().from(expenses).all()
   }
 }
 
@@ -63,6 +69,8 @@ export function replaceAll(data: unknown): { categories: number; products: numbe
   const run = sqlite.transaction(() => {
     sqlite.prepare('DELETE FROM sale_items').run()
     sqlite.prepare('DELETE FROM sales').run()
+    sqlite.prepare('DELETE FROM expenses').run()
+    sqlite.prepare('DELETE FROM expense_categories').run()
     sqlite.prepare('DELETE FROM products').run()
     sqlite.prepare('DELETE FROM categories').run()
     sqlite.prepare('DELETE FROM settings').run()
@@ -136,6 +144,33 @@ export function replaceAll(data: unknown): { categories: number; products: numbe
         num(i.line_total, 0)
       )
     }
+    const insertExpCat = sqlite.prepare('INSERT INTO expense_categories (id, name, description, created_at) VALUES (?, ?, ?, ?)')
+    for (const c of parsed.expense_categories) {
+      insertExpCat.run(
+        typeof c.id === 'number' ? c.id : null,
+        typeof c.name === 'string' ? c.name : '',
+        typeof c.description === 'string' ? c.description : null,
+        typeof c.created_at === 'string' ? c.created_at : now
+      )
+    }
+    const insertExp = sqlite.prepare(
+      'INSERT INTO expenses (id, date, amount, description, category_id, payment_method, recipient, reference, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    )
+    for (const e of parsed.expenses) {
+      insertExp.run(
+        typeof e.id === 'number' ? e.id : null,
+        typeof e.date === 'string' ? e.date : now,
+        num(e.amount, 0),
+        typeof e.description === 'string' ? e.description : '',
+        typeof e.category_id === 'number' ? e.category_id : null,
+        typeof e.payment_method === 'string' ? e.payment_method : 'cash',
+        str(e.recipient),
+        str(e.reference),
+        str(e.notes),
+        typeof e.created_at === 'string' ? e.created_at : now,
+        typeof e.updated_at === 'string' ? e.updated_at : now
+      )
+    }
   })
   run()
   return { categories: parsed.categories.length, products: parsed.products.length }
@@ -146,6 +181,8 @@ export function resetDatabase(): void {
   const sqlite = getSqlite()
   sqlite.prepare('DELETE FROM sale_items').run()
   sqlite.prepare('DELETE FROM sales').run()
+  sqlite.prepare('DELETE FROM expenses').run()
+  sqlite.prepare('DELETE FROM expense_categories').run()
   sqlite.prepare('DELETE FROM products').run()
   sqlite.prepare('DELETE FROM categories').run()
   sqlite.prepare('DELETE FROM settings').run()

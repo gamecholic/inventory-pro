@@ -12,6 +12,13 @@ import type {
 import type { StockAdjustInput } from '../shared/stock'
 import type { CheckoutInput, Receipt } from '../shared/sale'
 import type { SaleDetail, SaleList, SaleListFilter } from '../shared/sales'
+import type {
+  ExpenseCategoryInput,
+  ExpenseCategoryRow,
+  ExpenseFilter,
+  ExpenseInput,
+  ExpenseRow
+} from '../shared/expenses'
 import type { SettingsSection, SettingsValues } from '../shared/settings'
 
 export interface ImportResult {
@@ -56,6 +63,21 @@ const api = {
   stock: {
     adjust: (input: StockAdjustInput): Promise<{ product: ProductRow; reason: string }> =>
       ipcRenderer.invoke('stock:adjust', input)
+  },
+  expenses: {
+    list: (filter: ExpenseFilter): Promise<ExpenseRow[]> => ipcRenderer.invoke('expenses:list', filter),
+    create: (input: ExpenseInput): Promise<ExpenseRow> => ipcRenderer.invoke('expenses:create', input),
+    update: (id: number, input: ExpenseInput): Promise<ExpenseRow> =>
+      ipcRenderer.invoke('expenses:update', { ...input, id }),
+    remove: (id: number): Promise<boolean> => ipcRenderer.invoke('expenses:delete', { id })
+  },
+  expenseCategories: {
+    list: (): Promise<ExpenseCategoryRow[]> => ipcRenderer.invoke('expense-categories:list'),
+    create: (input: ExpenseCategoryInput): Promise<ExpenseCategoryRow> =>
+      ipcRenderer.invoke('expense-categories:create', input),
+    update: (id: number, input: ExpenseCategoryInput): Promise<ExpenseCategoryRow> =>
+      ipcRenderer.invoke('expense-categories:update', { ...input, id }),
+    remove: (id: number): Promise<boolean> => ipcRenderer.invoke('expense-categories:delete', { id })
   },
   sales: {
     complete: (input: CheckoutInput): Promise<Receipt> => ipcRenderer.invoke('sales:complete', input),

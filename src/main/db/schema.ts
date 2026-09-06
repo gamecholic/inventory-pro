@@ -25,6 +25,29 @@ export const suppliers = sqliteTable('suppliers', {
   updatedAt: text('updated_at').notNull()
 })
 
+/** Expense categories, separate from product categories (features §7.3). */
+export const expenseCategories = sqliteTable('expense_categories', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  description: text('description'),
+  createdAt: text('created_at').notNull()
+})
+
+/** Features §7.2 — no recurrence, no attachments. */
+export const expenses = sqliteTable('expenses', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  date: text('date').notNull(),
+  amount: real('amount').notNull(),
+  description: text('description').notNull(),
+  categoryId: integer('category_id').references(() => expenseCategories.id),
+  paymentMethod: text('payment_method').notNull().default('cash'),
+  recipient: text('recipient'),
+  reference: text('reference'),
+  notes: text('notes'),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull()
+})
+
 export const products = sqliteTable('products', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),

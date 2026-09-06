@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Bar, BarChart, CartesianGrid, Legend, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import {
   Table,
   TableBody,

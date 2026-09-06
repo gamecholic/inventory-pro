@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
-import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 import { chartMoneyFormatter, formatMoney, round2 } from '@shared/money'
 import { currentMonthRange, useCardFeeReport, usePaymentReport } from '@/hooks/useReports'
 import { useSettings } from '@/hooks/useSettings'

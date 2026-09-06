@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { subDays } from 'date-fns'
 import { enUS, tr } from 'date-fns/locale'
 import { format } from 'date-fns'
-import { Bar, BarChart, CartesianGrid, Legend, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import {
   Select,
   SelectContent,

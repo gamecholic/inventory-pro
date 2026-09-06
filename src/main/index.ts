@@ -25,7 +25,7 @@ function createWindow(): void {
   // Backup prompt on close (features §1.8). Reads the live setting every time.
   mainWindow.on('close', (event) => {
     if (closingAfterBackupChoice || mainWindow?.isDestroyed()) return
-    let backupOnClose = false
+    let backupOnClose: boolean
     try {
       backupOnClose = getSettings().general.backupOnClose
     } catch {

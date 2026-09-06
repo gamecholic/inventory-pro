@@ -65,7 +65,6 @@ export function PaymentDialog({
   const title = method === 'cash' ? t('pos.payCashTitle') : method === 'card' ? t('pos.payCardTitle') : t('pos.paySplitTitle')
 
   const lines = items.map((i) => ({ productId: i.product.id, qty: i.qty }))
-  const baseDiscount = { type: discountType, value: discountValue } as const
 
   const checkout = (override?: {
     discountValue?: number

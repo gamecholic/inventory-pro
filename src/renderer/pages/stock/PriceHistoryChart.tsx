@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
+import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 import { chartMoneyFormatter, formatMoney } from '@shared/money'
 import { formatDateTime } from '@shared/dates'
 import { usePriceHistory } from '@/hooks/useStock'
@@ -46,6 +46,7 @@ export function PriceHistoryChart({ productId }: { productId: number }): React.J
             <ChartTooltip
               content={<ChartTooltipContent formatter={chartMoneyFormatter(currency)} />}
             />
+            <ChartLegend content={<ChartLegendContent />} />
             <Line type="monotone" dataKey="cost" stroke="var(--color-cost)" strokeWidth={2} dot={false} />
             <Line type="monotone" dataKey="selling" stroke="var(--color-selling)" strokeWidth={2} dot={false} />
           </LineChart>

@@ -2,7 +2,6 @@ import { X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -15,8 +14,6 @@ import { formatMoney, round2 } from '@shared/money'
 import { unitShort } from '@shared/units'
 import { useCartStore } from '@/stores/cart'
 import { useSettings } from '@/hooks/useSettings'
-
-const DISCOUNT_TYPES: DiscountType[] = ['fixed', 'percent', 'settotal']
 
 /** Features §3.5 + §3.7 — cart lines, discount controls, totals, pay buttons. */
 export function CartPanel({ onPay }: { onPay: (method: PaymentMethod) => void }): React.JSX.Element {

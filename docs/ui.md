@@ -1,7 +1,8 @@
 # UI — inventory-pro (shadcn-only)
 
 ## 1. Rule
-Every UI element uses shadcn/ui primitives + theme CSS vars. No hard-coded colors, no non-shadcn chart/form/table libs. Keeps dark/light free.
+Every UI element uses shadcn/ui primitives + theme CSS vars. No hard-coded colors that break dark/light, no non-shadcn chart/form/table libs.
+Exception: POS payment buttons keep the master app's fixed hues (cash emerald-500, card blue-500, split indigo-500, white text) — readable in both themes.
 
 ## 1b. App shell (shadcn dashboard example)
 `App.tsx` follows `shadcn-ui/ui/apps/v4` dashboard: `SidebarProvider` with `--sidebar-width`/`--header-height` vars, `AppSidebar` (brand header + route nav), `SidebarInset` + sticky `SiteHeader` (trigger + translated page title), content in `@container/main > flex flex-col gap-4 py-4 md:gap-6 md:py-6`, page blocks padded `px-4 lg:px-6`. Icons: Lucide only (per `components.json`), not Tabler. No `NavUser` — single-user, no auth. Theme lives in Settings > General, not the header.

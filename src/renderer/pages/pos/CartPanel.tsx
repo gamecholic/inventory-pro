@@ -120,13 +120,25 @@ export function CartPanel({ onPay }: { onPay: (method: PaymentMethod) => void })
           <span>{formatMoney(total, currency)}</span>
         </div>
         <div className="grid grid-cols-3 gap-2">
-          <Button disabled={empty} onClick={() => onPay('cash')}>
+          <Button
+            disabled={empty}
+            className="bg-emerald-500 text-white hover:bg-emerald-600"
+            onClick={() => onPay('cash')}
+          >
             {t('pos.cashPayment')}
           </Button>
-          <Button disabled={empty} onClick={() => onPay('card')}>
+          <Button
+            disabled={empty}
+            className="bg-blue-500 text-white hover:bg-blue-600"
+            onClick={() => onPay('card')}
+          >
             {t('pos.cardPayment')}
           </Button>
-          <Button disabled={empty} onClick={() => onPay('split')}>
+          <Button
+            disabled={empty}
+            className="bg-indigo-500 text-white hover:bg-indigo-600"
+            onClick={() => onPay('split')}
+          >
             {t('pos.splitPayment')}
           </Button>
         </div>

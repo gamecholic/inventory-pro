@@ -21,6 +21,8 @@ export const channels = [
   'backup:export-excel',
   'backup:import-excel',
   'backup:import-legacy-excel',
+  'backup:dir',
+  'backup:select-dir',
   'updater:check',
   'updater:download',
   'updater:progress',

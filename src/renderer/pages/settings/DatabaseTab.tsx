@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -17,6 +18,7 @@ import {
   AlertDialogTrigger
 } from '@/components/ui/alert-dialog'
 import { useSettings, useUpdateSettings } from '@/hooks/useSettings'
+import { backupDirKey, useBackupDir } from '@/hooks/useBackupDir'
 
 type BackupAction = 'export-json' | 'import-json' | 'export-excel' | 'import-excel' | 'import-legacy-excel' | 'reset'
 
@@ -76,6 +78,48 @@ function ConfirmAction({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  )
+}
+
+/** Close-backup target folder: shown only while backup-on-close is on. */
+function BackupFolderRow(): React.JSX.Element {
+  const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  const update = useUpdateSettings()
+  const { data: dir } = useBackupDir()
+
+  const saveDir = (backupDir: string): void => {
+    update.mutate(
+      { section: 'general', patch: { backupDir } },
+      { onSuccess: () => void queryClient.invalidateQueries({ queryKey: backupDirKey }) }
+    )
+  }
+
+  const browse = (): void => {
+    void window.api.backup.selectDir().then((picked) => {
+      if (picked) saveDir(picked)
+    })
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-4 border-t border-border pt-4">
+      <div className="min-w-0">
+        <p className="font-medium">{t('settings.db.backupFolder')}</p>
+        <p className="truncate text-sm text-muted-foreground" title={dir?.resolved}>
+          {dir?.resolved ?? '…'}
+        </p>
+      </div>
+      <div className="flex shrink-0 gap-2">
+        {dir && dir.custom !== '' && (
+          <Button variant="ghost" size="sm" disabled={update.isPending} onClick={() => saveDir('')}>
+            {t('settings.db.useDefault')}
+          </Button>
+        )}
+        <Button variant="outline" size="sm" disabled={update.isPending} onClick={browse}>
+          {t('settings.db.changeFolder')}
+        </Button>
+      </div>
+    </div>
   )
 }
 
@@ -204,17 +248,20 @@ export function DatabaseTab(): React.JSX.Element {
         </CardContent>
       </Card>
       <Card>
-        <CardContent className="flex items-center justify-between gap-4 pt-6">
-          <div>
-            <Label htmlFor="backupOnClose">{t('settings.db.backupOnClose')}</Label>
-            <CardDescription>{t('settings.db.backupOnCloseDesc')}</CardDescription>
+        <CardContent className="flex flex-col gap-4 pt-6">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label htmlFor="backupOnClose">{t('settings.db.backupOnClose')}</Label>
+              <CardDescription>{t('settings.db.backupOnCloseDesc')}</CardDescription>
+            </div>
+            <Switch
+              id="backupOnClose"
+              checked={data?.general.backupOnClose ?? false}
+              disabled={update.isPending}
+              onCheckedChange={(checked) => update.mutate({ section: 'general', patch: { backupOnClose: checked } })}
+            />
           </div>
-          <Switch
-            id="backupOnClose"
-            checked={data?.general.backupOnClose ?? false}
-            disabled={update.isPending}
-            onCheckedChange={(checked) => update.mutate({ section: 'general', patch: { backupOnClose: checked } })}
-          />
+          {data?.general.backupOnClose === true && <BackupFolderRow />}
         </CardContent>
       </Card>
     </div>

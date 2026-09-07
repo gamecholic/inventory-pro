@@ -28,6 +28,7 @@ describe('settings schemas', () => {
 
   it('fills missing sections/keys from defaults (forward-compatible)', () => {
     expect(withDefaults({})).toEqual(defaultSettings)
+    expect(withDefaults({}).general.backupDir).toBe('')
     expect(withDefaults({ general: { language: 'tr' } }).general.language).toBe('tr')
     expect(withDefaults({ general: { language: 'tr' } }).general.currency).toBe('USD')
     expect(withDefaults(null)).toEqual(defaultSettings)

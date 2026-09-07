@@ -1,10 +1,12 @@
 import { dialog, ipcMain } from 'electron'
 import {
   fromBackupJson,
+  getBackupDirInfo,
   readTextFile,
   resetDatabase,
   toBackupJson,
-  writeTextFile
+  writeTextFile,
+  type BackupDirInfo
 } from '../db/backup'
 import { readExcelBackup, writeExcelBackup } from '../db/excel'
 import { readLegacyExcelBackup } from '../db/legacyExcel'
@@ -68,5 +70,16 @@ export function registerBackupIpc(): void {
   ipcMain.handle('db:reset', () => {
     resetDatabase()
     return true
+  })
+
+  ipcMain.handle('backup:dir', (): BackupDirInfo => getBackupDirInfo())
+
+  ipcMain.handle('backup:select-dir', async (): Promise<string | null> => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: 'Choose backup folder',
+      properties: ['openDirectory']
+    })
+    if (canceled || filePaths.length === 0) return null
+    return filePaths[0] as string
   })
 }

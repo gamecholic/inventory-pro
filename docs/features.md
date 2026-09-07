@@ -821,7 +821,9 @@ Every option the user sees:
   `Reset Database`.
 - **Backup on close (optional)**: when enabled, the app asks on every close
   whether to export an Excel backup first. See `1.8 Backup Prompt on App
-  Close` for the Yes / No / Cancel behavior.
+  Close` for the Yes / No / Cancel behavior. The target folder is shown
+  below the toggle and can be changed via a folder picker (empty = app
+  default, reversible via `Use default`).
 - Loading messages during operations: exporting/importing JSON/Excel,
   resetting database.
 

@@ -6,7 +6,7 @@ import { settingsValues, withDefaults, type SettingsValues } from '../../shared/
 import { toISO } from '../../shared/dates'
 import { getDb, getSqlite } from './client'
 import { categories, expenseCategories, expenses, products, saleItems, sales, settings, stockAdjustments, suppliers } from './schema'
-import { seedSettings } from './settingsStore'
+import { getSettings, seedSettings } from './settingsStore'
 
 const BACKUP_VERSION = 3
 export { BACKUP_VERSION }
@@ -378,10 +378,26 @@ export function fromBackupJson(text: string): { categories: number; products: nu
 }
 
 export function defaultBackupPath(): string {
-  const dir = join(app.getPath('userData'), 'backups')
-  if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
   const stamp = toISO(new Date()).replace(/[-:]/g, '').replace('T', '-').slice(0, 15)
-  return join(dir, `inventory-${stamp}.xlsx`)
+  return join(backupDir(), `inventory-${stamp}.xlsx`)
+}
+
+/** Close-backup target: custom folder setting, else app-managed default. Created on demand. */
+export function backupDir(): string {
+  const custom = getSettings().general.backupDir.trim()
+  const dir = custom !== '' ? custom : join(app.getPath('userData'), 'backups')
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+  return dir
+}
+
+/** Custom folder ('' = default) plus the resolved folder actually used. */
+export interface BackupDirInfo {
+  custom: string
+  resolved: string
+}
+
+export function getBackupDirInfo(): BackupDirInfo {
+  return { custom: getSettings().general.backupDir.trim(), resolved: backupDir() }
 }
 
 export function writeTextFile(filePath: string, text: string): void {

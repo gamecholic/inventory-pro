@@ -7,7 +7,9 @@ export const generalSettings = z.object({
   dateFormat: z.enum(['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD']),
   lowStockNotifications: z.boolean(),
   cardFeePercent: z.number().min(0).max(100),
-  backupOnClose: z.boolean()
+  backupOnClose: z.boolean(),
+  /** Custom close-backup folder. Empty = app-managed default. Chosen via folder picker (§9.4). */
+  backupDir: z.string().max(500)
 })
 
 /** Features §9.2 — Business Information. All optional, shown on receipts when set (§1.4). */
@@ -55,7 +57,8 @@ export const defaultSettings: SettingsValues = {
     dateFormat: 'MM/DD/YYYY',
     lowStockNotifications: true,
     cardFeePercent: 0.68,
-    backupOnClose: false
+    backupOnClose: false,
+    backupDir: ''
   },
   business: { name: '', address: '', phone: '', email: '', taxId: '' },
   receipt: { header: '', footer: 'Thank you for your purchase!', showLogo: false }

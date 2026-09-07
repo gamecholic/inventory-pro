@@ -48,6 +48,11 @@ export interface ImportResult {
   products: number
 }
 
+export interface BackupDirInfo {
+  custom: string
+  resolved: string
+}
+
 const api = {
   ping: (): Promise<string> => ipcRenderer.invoke('app:ping'),
   version: (): Promise<string> => ipcRenderer.invoke('app:version'),
@@ -61,7 +66,9 @@ const api = {
     importJson: (): Promise<ImportResult | null> => ipcRenderer.invoke('backup:import-json'),
     exportExcel: (): Promise<string | null> => ipcRenderer.invoke('backup:export-excel'),
     importExcel: (): Promise<ImportResult | null> => ipcRenderer.invoke('backup:import-excel'),
-    importLegacyExcel: (): Promise<ImportResult | null> => ipcRenderer.invoke('backup:import-legacy-excel')
+    importLegacyExcel: (): Promise<ImportResult | null> => ipcRenderer.invoke('backup:import-legacy-excel'),
+    dir: (): Promise<BackupDirInfo> => ipcRenderer.invoke('backup:dir'),
+    selectDir: (): Promise<string | null> => ipcRenderer.invoke('backup:select-dir')
   },
   db: {
     reset: (): Promise<boolean> => ipcRenderer.invoke('db:reset')

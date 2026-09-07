@@ -9,7 +9,7 @@ Status: [DECIDED] = agreed, not locked. [OPEN] = needs decision.
 - [DECIDED] Validation: Zod schemas in `shared/` for forms + IPC payloads, both sides.
 - [DECIDED] Backup: ExcelJS + JSON dump in main (§9.4, §1.8 close-intercept). Import replaces data after confirm + reload. The old-app Excel import (`main/db/legacyExcel.ts`) maps legacy sheets/columns into the same backup contract, then reuses `replaceAll()`.
 - [DECIDED] Print: one HTML receipt template shared by POS (§3.11) + Sales History (§6.4) → `BrowserWindow.print()`. No thermal.
-- [DECIDED] Tests: Vitest (unit: discount/split math §3.7–3.10, normalizeTR, cost-averaging) + Playwright (E2E: POS sale flow first).
+- [DECIDED] Tests: Vitest (unit: discount/split math §3.7–3.10, normalizeTR, cost-averaging) + Playwright (E2E: POS sale flow first). Main-process tests run against an electron stub (vitest alias), never the real binary.
 - [DECIDED] Dates at API boundary: every IPC request/response carries dates as ISO8601 UTC strings (`z.string().datetime()`). Renderer converts Date/preset → ISO at the edge via `shared/dates.toISO()`; main parses/stores/filters in UTC and returns ISO. SQLite stores ISO text. No local-format or epoch-ms on the wire. This kills TZ bugs in dashboard/report/chart filters.
 
 ## 2. Layout

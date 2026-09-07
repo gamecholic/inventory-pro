@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { defaultSettings, generalSettings, type SettingsValues } from '@shared/settings'
 import { settingsKey, useSettings, useUpdateSettings } from '@/hooks/useSettings'
+import { useAppVersion } from '@/hooks/useAppVersion'
 
 const CURRENCIES = [
   { value: 'USD', label: 'USD ($)' },
@@ -47,6 +48,7 @@ export function GeneralTab(): React.JSX.Element {
   const { data } = useSettings()
   const update = useUpdateSettings()
   const queryClient = useQueryClient()
+  const { data: appVersion } = useAppVersion()
   const [resetting, setResetting] = useState(false)
 
   const form = useForm({
@@ -219,6 +221,9 @@ export function GeneralTab(): React.JSX.Element {
           </CardFooter>
         </Card>
       </form>
+      {appVersion ? (
+        <p className="text-right text-xs text-muted-foreground">{t('settings.version', { version: appVersion })}</p>
+      ) : null}
     </div>
   )
 }

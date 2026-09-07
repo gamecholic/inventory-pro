@@ -1,6 +1,10 @@
 import { app, ipcMain } from 'electron'
-import { autoUpdater } from 'electron-updater'
+import pkg from 'electron-updater'
 import { updaterCheck, updaterProgress, type UpdaterCheck, type UpdaterProgress } from '../../shared/updater'
+
+// electron-updater is CommonJS with a lazily-defined export: Node's ESM loader
+// cannot see the named export, so go through the default export (CJS module object).
+const { autoUpdater } = pkg
 
 let lastPercent = 0
 

@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import { join } from 'node:path'
 import Database from 'better-sqlite3'
@@ -234,4 +234,8 @@ describe('analytics', () => {
     expect(months).toHaveLength(12)
     expect(months.reduce((s, m) => s + m.sales, 0)).toBe(1)
   })
+})
+
+afterAll(() => {
+  sqlite.close()
 })

@@ -32,7 +32,9 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Node 20 + better-sqlite3 + vitest workers crash on Windows;
+          # Node 22+ does not reproduce it. Keep in sync with the local dev runtime.
+          node-version: 22
           cache: npm
       - run: npm ci
       - run: npm run typecheck

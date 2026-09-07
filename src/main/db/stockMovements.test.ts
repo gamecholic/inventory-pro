@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import { join } from 'node:path'
 import Database from 'better-sqlite3'
@@ -113,4 +113,8 @@ describe('stock movement log', () => {
     const stock = db.select().from(schema.products).where(eq(schema.products.id, productId)).get()?.stockQty
     expect(stock).toBe(10)
   })
+})
+
+afterAll(() => {
+  sqlite.close()
 })

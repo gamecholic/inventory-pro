@@ -11,6 +11,16 @@ export const en = {
         settings: 'Settings'
       },
       app: { name: 'Inventory Pro', comingSoon: 'Coming soon' },
+      updates: {
+        title: 'Updates Available',
+        message: 'Version {{version}} is ready to download.',
+        download: 'Download & Install',
+        downloading: 'Downloading… {{percent}}%',
+        downloaded: 'Update downloaded. Restart the app to apply it.',
+        restart: 'Restart Now',
+        failed: 'Update failed',
+        close: 'Dismiss'
+      },
       dashboard: {
         welcome: 'Welcome',
         failed: 'Failed to load',

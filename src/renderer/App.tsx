@@ -8,6 +8,7 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SiteHeader } from '@/components/site-header'
+import { UpdateCard } from '@/components/update-card'
 import { useSettings } from '@/hooks/useSettings'
 import { DashboardPage } from '@/pages/dashboard/DashboardPage'
 import { ExpensesPage } from '@/pages/expenses/ExpensesPage'
@@ -73,6 +74,7 @@ function Shell(): React.JSX.Element {
       <AppSidebar routes={routes} />
       <SidebarInset className="md:peer-data-[variant=inset]:overflow-clip">
         <SiteHeader title={t(`nav.${active.key}`)} />
+        <UpdateCard />
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">

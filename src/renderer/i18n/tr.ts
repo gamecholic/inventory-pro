@@ -11,6 +11,16 @@ export const tr = {
         settings: 'Ayarlar'
       },
       app: { name: 'Inventory Pro', comingSoon: 'Çok yakında' },
+      updates: {
+        title: 'Güncelleme Mevcut',
+        message: '{{version}} sürümü indirilebilir.',
+        download: 'İndir ve Kur',
+        downloading: 'İndiriliyor… %{{percent}}',
+        downloaded: 'Güncelleme indirildi. Uygulamak için uygulamayı yeniden başlatın.',
+        restart: 'Şimdi Yeniden Başlat',
+        failed: 'Güncelleme başarısız oldu',
+        close: 'Kapat'
+      },
       dashboard: {
         welcome: 'Hoş geldiniz',
         failed: 'Yüklenemedi',

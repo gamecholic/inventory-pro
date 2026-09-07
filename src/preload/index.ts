@@ -40,6 +40,7 @@ import type {
   ExpenseRow
 } from '../shared/expenses'
 import type { SettingsSection, SettingsValues } from '../shared/settings'
+import type { UpdaterCheck, UpdaterProgress } from '../shared/updater'
 
 export interface ImportResult {
   filePath: string
@@ -63,6 +64,12 @@ const api = {
   },
   db: {
     reset: (): Promise<boolean> => ipcRenderer.invoke('db:reset')
+  },
+  updater: {
+    check: (): Promise<UpdaterCheck> => ipcRenderer.invoke('updater:check'),
+    download: (): Promise<UpdaterCheck> => ipcRenderer.invoke('updater:download'),
+    progress: (): Promise<UpdaterProgress> => ipcRenderer.invoke('updater:progress'),
+    install: (): Promise<boolean> => ipcRenderer.invoke('updater:install')
   },
   products: {
     list: (filter: ProductListFilter): Promise<ProductList> => ipcRenderer.invoke('products:list', filter),

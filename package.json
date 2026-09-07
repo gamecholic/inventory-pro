@@ -3,14 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "main": "out/main/index.js",
-  "directories": {
-    "doc": "docs"
-  },
   "scripts": {
     "test": "vitest run",
     "dev": "electron-vite dev",
     "dev:renderer": "vite --config vite.renderer.config.ts --port 5173",
     "build": "electron-vite build",
+    "dist:win": "npm run build && electron-builder --win --publish never",
+    "release:win": "npm run build && electron-builder --win --publish always",
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "test:e2e": "playwright test",

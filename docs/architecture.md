@@ -3,7 +3,7 @@
 Status: [DECIDED] = agreed, not locked. [OPEN] = needs decision.
 
 ## 1. Stack
-- [DECIDED] Shell: Electron + electron-builder (NSIS) + electron-updater, GitHub Releases provider (`publish: {provider: github, owner, repo}` explicit). Update card (features §1.6) polls on launch.
+- [DECIDED] Shell: Electron + electron-builder (NSIS) + electron-updater, GitHub Releases provider (`publish: {provider: github, owner, repo}` explicit). Update card (features §1.6) polls on launch. Releases are cut by manually running `.github/workflows/release.yml` (patch/minor/major input bumps the version, builds Windows NSIS + `latest.yml`, pushes the version commit/tag, attaches assets to the Release).
 - [DECIDED] Frontend: Vite + React + TypeScript + React Router (8 routes) + Zustand (ephemeral: cart, selection, filters) + TanStack Query over IPC (query keys per page/filter, invalidate on mutations).
 - [DECIDED] DB: SQLite file per shop, better-sqlite3 in main only, Drizzle ORM + migrations. Sale completion = one transaction (insert sale + lines, decrement stock). Cost-averaging (§5.3) computed in main.
 - [DECIDED] Validation: Zod schemas in `shared/` for forms + IPC payloads, both sides.
@@ -15,7 +15,7 @@ Status: [DECIDED] = agreed, not locked. [OPEN] = needs decision.
 ## 2. Layout
 ```
 main/db/{client,schema,settingsStore,backup,excel,legacyExcel,categories,suppliers,products,stock,sales}.ts
-main/ipc/{index,settings,backup,catalog,sales}.ts  (./ipc resolves to index)
+main/ipc/{index,settings,backup,catalog,sales,updater}.ts  (./ipc resolves to index)
 preload/ (window.api.* only)
 renderer/pages/{dashboard,pos,products,stock,sales,expenses,reports,settings}
 renderer/{hooks,stores,components,lib}  renderer/i18n/{en,tr}.ts
@@ -41,7 +41,6 @@ Single-user offline-first, no auth/cloud. No hold/park sale (§3.12), no bulk pr
 - Expense category manager dialog (§7.1 names only Add buttons; edit/delete needs a list).
 - Sales/expenses default filter window is Last 1 Month, not last-30-days/current-month (§6.2, §7.4).
 - Tax rows omitted everywhere: no tax source exists, so `> 0` never fires (§6.3, §6.4).
-- Still open, not deviated: update notification card (§1.6) — to be built.
 
 ## 6. Legacy import mapping (old-app Excel → current DB)
 - Source sheets use lowercase names (`categories`, `products`, `sales`, `sale_items`, `expense_categories`, `expenses`, `stock_adjustments`, `product_price_history`, `settings`); required: categories, products, sales, sale_items, settings.

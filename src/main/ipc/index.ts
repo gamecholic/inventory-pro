@@ -7,6 +7,7 @@ import { registerCatalogIpc } from './catalog'
 import { registerExpensesIpc } from './expenses'
 import { registerSalesIpc } from './sales'
 import { registerSettingsIpc } from './settings'
+import { registerUpdaterIpc } from './updater'
 
 /** All IPC handlers. Payloads validated with Zod in main; renderer shows thrown messages. */
 export function registerIpc(): void {
@@ -17,6 +18,7 @@ export function registerIpc(): void {
   registerExpensesIpc()
   registerAnalyticsIpc()
   registerSalesIpc()
+  registerUpdaterIpc()
 }
 
 export { defaultBackupPath, writeExcelBackup }

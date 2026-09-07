@@ -2,6 +2,9 @@
 # Publishes Windows NSIS installers to GitHub Releases, which electron-updater polls.
 appId: com.inventorypro.app
 productName: Inventory Pro
+# Explicit space-free name: with spaces in productName the builder writes one
+# sanitized name into latest.yml and a different one to disk, breaking updates.
+artifactName: Inventory-Pro-Setup-${version}.${ext}
 directories:
   output: dist
 files:

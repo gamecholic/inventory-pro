@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useSettings, useUpdateSettings } from '@/hooks/useSettings'
 import { backupDirKey, useBackupDir } from '@/hooks/useBackupDir'
+import { dbDirKey, useDbDir } from '@/hooks/useDbDir'
 
 type BackupAction = 'export-json' | 'import-json' | 'export-excel' | 'import-excel' | 'import-legacy-excel' | 'reset'
 
@@ -142,6 +143,76 @@ function BackupFolderRow(): React.JSX.Element {
   )
 }
 
+/** Database file in use: first element of the Database card. Changes apply on restart. */
+function DbLocationRow(): React.JSX.Element {
+  const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  const { data: dir } = useDbDir()
+  const [saving, setSaving] = useState(false)
+
+  const saveDir = (dbDir: string): void => {
+    setSaving(true)
+    void window.api.db
+      .setDir(dbDir)
+      .then(
+        (info) => {
+          queryClient.setQueryData(dbDirKey, info)
+          toast.success(t('settings.db.restartRequired'))
+        },
+        (error: unknown) => {
+          toast.error(error instanceof Error ? error.message : t('settings.db.importFailed'))
+        }
+      )
+      .finally(() => setSaving(false))
+  }
+
+  const browse = (): void => {
+    void window.api.db.selectDir().then((picked) => {
+      if (picked) saveDir(picked)
+    })
+  }
+
+  const openFolder = (): void => {
+    void window.api.db.openDir().then((ok) => {
+      if (!ok) toast.error(t('settings.db.openFolderFailed'))
+    })
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-4 border-b border-border py-4">
+      <div className="min-w-0">
+        <p className="font-medium">{t('settings.db.dbLocation')}</p>
+        <p className="text-sm text-muted-foreground">{t('settings.db.dbLocationDesc')}</p>
+        <div className="flex min-w-0 items-center gap-1">
+          <p className="truncate text-sm text-muted-foreground" title={dir?.resolved}>
+            {dir?.resolved ?? '…'}
+          </p>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7 shrink-0"
+            aria-label={t('settings.db.openFolder')}
+            title={t('settings.db.openFolder')}
+            onClick={openFolder}
+          >
+            <FolderOpen className="size-4" />
+          </Button>
+        </div>
+      </div>
+      <div className="flex shrink-0 gap-2">
+        {dir && dir.custom !== '' && (
+          <Button variant="ghost" size="sm" disabled={saving} onClick={() => saveDir('')}>
+            {t('settings.db.useDefault')}
+          </Button>
+        )}
+        <Button variant="outline" size="sm" disabled={saving} onClick={browse}>
+          {t('settings.db.changeFolder')}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 /** Features §9.4 — JSON/Excel backup/restore, reset, backup-on-close. */
 export function DatabaseTab(): React.JSX.Element {
   const { t } = useTranslation()
@@ -209,6 +280,7 @@ export function DatabaseTab(): React.JSX.Element {
           <CardTitle>{t('settings.tabs.database')}</CardTitle>
         </CardHeader>
         <CardContent>
+          <DbLocationRow />
           <ActionRow title={t('settings.db.exportJson')} desc={t('settings.db.exportJsonDesc')}>
             <Button variant="outline" disabled={busy !== null} onClick={() => runExport('export-json')}>
               {busy === 'export-json' ? t('settings.db.working') : t('settings.db.exportJson')}

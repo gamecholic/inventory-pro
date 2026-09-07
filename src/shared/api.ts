@@ -24,6 +24,10 @@ export const channels = [
   'backup:dir',
   'backup:select-dir',
   'backup:open-dir',
+  'db:dir',
+  'db:select-dir',
+  'db:set-dir',
+  'db:open-dir',
   'updater:check',
   'updater:download',
   'updater:progress',
@@ -78,3 +82,6 @@ export const channels = [
 export type Channel = (typeof channels)[number]
 
 export const idInput = z.object({ id: z.number().int().positive() })
+
+/** Database folder picker result: empty string resets to the app default. */
+export const dbDirInput = z.object({ dir: z.string().max(500) })

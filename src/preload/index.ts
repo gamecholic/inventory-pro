@@ -53,6 +53,11 @@ export interface BackupDirInfo {
   resolved: string
 }
 
+export interface DbInfo {
+  custom: string
+  resolved: string
+}
+
 const api = {
   ping: (): Promise<string> => ipcRenderer.invoke('app:ping'),
   version: (): Promise<string> => ipcRenderer.invoke('app:version'),
@@ -72,7 +77,11 @@ const api = {
     openDir: (): Promise<boolean> => ipcRenderer.invoke('backup:open-dir')
   },
   db: {
-    reset: (): Promise<boolean> => ipcRenderer.invoke('db:reset')
+    reset: (): Promise<boolean> => ipcRenderer.invoke('db:reset'),
+    dir: (): Promise<DbInfo> => ipcRenderer.invoke('db:dir'),
+    selectDir: (): Promise<string | null> => ipcRenderer.invoke('db:select-dir'),
+    setDir: (dir: string): Promise<DbInfo> => ipcRenderer.invoke('db:set-dir', { dir }),
+    openDir: (): Promise<boolean> => ipcRenderer.invoke('db:open-dir')
   },
   updater: {
     check: (): Promise<UpdaterCheck> => ipcRenderer.invoke('updater:check'),

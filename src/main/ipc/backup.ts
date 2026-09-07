@@ -1,4 +1,6 @@
-import { dialog, ipcMain, shell } from 'electron'
+import { app, dialog, ipcMain, shell } from 'electron'
+import { dbDirInput } from '../../shared/api'
+import { getCustomDbDir, getDbInfo, setDbDir, type DbInfo } from '../db/client'
 import {
   backupDir,
   fromBackupJson,
@@ -71,6 +73,25 @@ export function registerBackupIpc(): void {
   ipcMain.handle('db:reset', () => {
     resetDatabase()
     return true
+  })
+
+  ipcMain.handle('db:dir', (): DbInfo => getDbInfo())
+
+  ipcMain.handle('db:select-dir', async (): Promise<string | null> => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: 'Choose database folder',
+      properties: ['openDirectory']
+    })
+    if (canceled || filePaths.length === 0) return null
+    return filePaths[0] as string
+  })
+
+  ipcMain.handle('db:set-dir', (_event, input: unknown): DbInfo => setDbDir(dbDirInput.parse(input).dir))
+
+  ipcMain.handle('db:open-dir', async (): Promise<boolean> => {
+    const custom = getCustomDbDir()
+    const error = await shell.openPath(custom !== '' ? custom : app.getPath('userData'))
+    return error === ''
   })
 
   ipcMain.handle('backup:dir', (): BackupDirInfo => getBackupDirInfo())

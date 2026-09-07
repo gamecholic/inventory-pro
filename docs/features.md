@@ -801,6 +801,11 @@ shown on the current Settings page.
 
 Every option the user sees:
 
+- **Database location**: shows the database file currently in use.
+  `Change…` picks another folder via folder picker (an existing
+  `inventory.db` there will be used, otherwise a fresh one is created);
+  `Use default` points back at the app folder. A change applies on the
+  next restart; the current file is never moved or copied.
 - **Export Data to JSON**: creates a JSON backup file of all data, useful for
   transferring to another device. Button `Export to JSON`.
 - **Import Data from JSON**: imports from a JSON backup file via file picker.

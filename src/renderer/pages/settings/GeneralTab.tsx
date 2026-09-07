@@ -218,12 +218,14 @@ export function GeneralTab(): React.JSX.Element {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+            {appVersion ? (
+              <span className="ml-auto text-xs text-muted-foreground">
+                {t('settings.version', { version: appVersion })}
+              </span>
+            ) : null}
           </CardFooter>
         </Card>
       </form>
-      {appVersion ? (
-        <p className="text-right text-xs text-muted-foreground">{t('settings.version', { version: appVersion })}</p>
-      ) : null}
     </div>
   )
 }

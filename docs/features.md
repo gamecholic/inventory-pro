@@ -773,7 +773,7 @@ Customization, Database Management.
   to compute net card amounts shown on Dashboard and Reports.
 - Buttons: `Save Changes` + `Reset Settings` (danger: resets all settings to
   defaults, does not delete data, asks for confirmation).
-- Read-only app version, muted and right-aligned at the bottom of the tab.
+- Read-only app version, muted and right-aligned in the card footer.
 
 Note: tax-setting labels (enable tax calculation, default tax rate %, tax
 name such as Sales Tax/VAT/GST) exist in the app's wording but no Tax tab is

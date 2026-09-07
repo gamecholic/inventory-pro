@@ -810,6 +810,11 @@ Every option the user sees:
 - **Import Data from Excel**: imports from a spreadsheet via file picker.
   Confirmation warns it replaces current data. App reloads on success.
   Button `Import from Excel`.
+- **Import Data from old app Excel**: imports a spreadsheet exported by the
+  previous Inventory Pro app via file picker. The workbook is converted to
+  the current database format. Confirmation warns it replaces current data.
+  App reloads on success; an invalid file shows the reason and current data
+  is left untouched. Button `Import from old app Excel`.
 - **Reset Database** (danger, red): warning that all data will be deleted and
   cannot be undone. Confirmation required. App reloads on success. Button
   `Reset Database`.

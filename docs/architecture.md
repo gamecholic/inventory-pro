@@ -7,14 +7,14 @@ Status: [DECIDED] = agreed, not locked. [OPEN] = needs decision.
 - [DECIDED] Frontend: Vite + React + TypeScript + React Router (8 routes) + Zustand (ephemeral: cart, selection, filters) + TanStack Query over IPC (query keys per page/filter, invalidate on mutations).
 - [DECIDED] DB: SQLite file per shop, better-sqlite3 in main only, Drizzle ORM + migrations. Sale completion = one transaction (insert sale + lines, decrement stock). Cost-averaging (§5.3) computed in main.
 - [DECIDED] Validation: Zod schemas in `shared/` for forms + IPC payloads, both sides.
-- [DECIDED] Backup: ExcelJS + JSON dump in main (§9.4, §1.8 close-intercept). Import replaces data after confirm + reload.
+- [DECIDED] Backup: ExcelJS + JSON dump in main (§9.4, §1.8 close-intercept). Import replaces data after confirm + reload. The old-app Excel import (`main/db/legacyExcel.ts`) maps legacy sheets/columns into the same backup contract, then reuses `replaceAll()`.
 - [DECIDED] Print: one HTML receipt template shared by POS (§3.11) + Sales History (§6.4) → `BrowserWindow.print()`. No thermal.
 - [DECIDED] Tests: Vitest (unit: discount/split math §3.7–3.10, normalizeTR, cost-averaging) + Playwright (E2E: POS sale flow first).
 - [DECIDED] Dates at API boundary: every IPC request/response carries dates as ISO8601 UTC strings (`z.string().datetime()`). Renderer converts Date/preset → ISO at the edge via `shared/dates.toISO()`; main parses/stores/filters in UTC and returns ISO. SQLite stores ISO text. No local-format or epoch-ms on the wire. This kills TZ bugs in dashboard/report/chart filters.
 
 ## 2. Layout
 ```
-main/db/{client,schema,settingsStore,backup,excel,categories,suppliers,products,stock,sales}.ts
+main/db/{client,schema,settingsStore,backup,excel,legacyExcel,categories,suppliers,products,stock,sales}.ts
 main/ipc/{index,settings,backup,catalog,sales}.ts  (./ipc resolves to index)
 preload/ (window.api.* only)
 renderer/pages/{dashboard,pos,products,stock,sales,expenses,reports,settings}
@@ -42,3 +42,11 @@ Single-user offline-first, no auth/cloud. No hold/park sale (§3.12), no bulk pr
 - Sales/expenses default filter window is Last 1 Month, not last-30-days/current-month (§6.2, §7.4).
 - Tax rows omitted everywhere: no tax source exists, so `> 0` never fires (§6.3, §6.4).
 - Still open, not deviated: update notification card (§1.6) — to be built.
+
+## 6. Legacy import mapping (old-app Excel → current DB)
+- Source sheets use lowercase names (`categories`, `products`, `sales`, `sale_items`, `expense_categories`, `expenses`, `stock_adjustments`, `product_price_history`, `settings`); required: categories, products, sales, sale_items, settings.
+- Core column mappings: `stock_quantity` → `stock_qty`, `min_stock_threshold` → `min_stock`, `receipt_number` → `receipt_no`, `discount_amount` → `discount`, `total_amount` → `total`, `quantity` → `qty`, `total_price` → `line_total`, `historical_cost_price` → `unit_cost`, `expense_date` → `date`, `reference_number` → `reference`.
+- Status flags: `is_deleted`/`deleted_at` → `archived_at`; `is_returned` → sale `status` (`canceled` + `canceled_at` parsed from the `CANCELED:` note timestamp, else `updated_at`). Stock-adjustment `reference` is merged into the current `reason` text.
+- Settings: legacy key/value/type rows map onto the nested sections (language, currency, date format, notifications, card fee, business identity, receipt header/footer); unmapped keys fall back to current defaults. Expense `transfer`/`bankTransfer`/`bank_transfer` → `bank`, anything outside the current payment lists → `other`. Sales accept only cash/card/split and reject anything else before any write.
+- Price history: legacy `product_price_history` rows become zero-quantity priced `stock_adjustments` (the stock price chart reads that table); one `initial` baseline per product (current stock minus legacy movements, at current prices) anchors the chart. The chart orders by (`created_at`, `id`).
+- Intentionally unsupported (no current column): supplier `tax_id`/`website`/`notes`, product `image_path`, sale `cashier`/split details, expense `receipt_image_path`, category `updated_at`.

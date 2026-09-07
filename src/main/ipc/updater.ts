@@ -18,8 +18,10 @@ export function registerUpdaterIpc(): void {
   ipcMain.handle('updater:check', async (): Promise<UpdaterCheck> => {
     if (!app.isPackaged) return { status: 'up-to-date' }
     try {
+      // checkForUpdates resolves in both cases — only isUpdateAvailable tells
+      // them apart. Treating any result as "available" shows phantom updates.
       const result = await autoUpdater.checkForUpdates()
-      if (result?.updateInfo) {
+      if (result?.isUpdateAvailable) {
         return updaterCheck.parse({ status: 'available', version: result.updateInfo.version })
       }
       return { status: 'up-to-date' }
@@ -34,7 +36,11 @@ export function registerUpdaterIpc(): void {
       await autoUpdater.downloadUpdate()
       return { status: 'downloaded' }
     } catch (error) {
-      return { status: 'error', message: error instanceof Error ? error.message : String(error) }
+      const raw = error instanceof Error ? error.message : String(error)
+      // Reached only when no update was ever found (check gates this first).
+      const message =
+        raw === 'Please check update first' ? 'No update is ready to download. Please check for updates and try again.' : raw
+      return { status: 'error', message }
     }
   })
 

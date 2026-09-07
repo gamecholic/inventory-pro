@@ -5,6 +5,7 @@ import { ThemeProvider } from 'next-themes'
 import { useTranslation } from 'react-i18next'
 import { Toaster } from '@/components/ui/sonner'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SiteHeader } from '@/components/site-header'
@@ -64,6 +65,7 @@ function Shell(): React.JSX.Element {
 
   return (
     <SidebarProvider
+      className="flex h-screen w-screen overflow-hidden flex-col md:flex-row"
       style={
         {
           '--sidebar-width': 'calc(var(--spacing) * 64)',
@@ -72,20 +74,22 @@ function Shell(): React.JSX.Element {
       }
     >
       <AppSidebar routes={routes} />
-      <SidebarInset className="md:peer-data-[variant=inset]:overflow-clip">
-        <SiteHeader title={t(`nav.${active.key}`)} />
-        <UpdateCard />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
-            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-              <Routes>
-                {routes.map((r) => (
-                  <Route key={r.key} path={r.path} element={pageFor(r.key)} />
-                ))}
-              </Routes>
+      <SidebarInset className="min-h-0 overflow-hidden md:peer-data-[variant=inset]:overflow-clip">
+        <ScrollArea className="mb-2 h-full min-h-0 flex-1">
+          <SiteHeader title={t(`nav.${active.key}`)} />
+          <UpdateCard />
+          <div className="flex flex-1 flex-col">
+            <div className="@container/main flex flex-1 flex-col gap-2">
+              <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+                <Routes>
+                  {routes.map((r) => (
+                    <Route key={r.key} path={r.path} element={pageFor(r.key)} />
+                  ))}
+                </Routes>
+              </div>
             </div>
           </div>
-        </div>
+        </ScrollArea>
       </SidebarInset>
     </SidebarProvider>
   )

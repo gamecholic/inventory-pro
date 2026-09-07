@@ -463,6 +463,8 @@ export const en = {
           backupFolder: 'Backup folder',
           changeFolder: 'Change…',
           useDefault: 'Use default',
+          openFolder: 'Open folder',
+          openFolderFailed: 'Could not open the folder',
           importTitle: 'Replace current data?',
           importDesc: 'Importing replaces all current data. This cannot be undone.',
           importLegacyTitle: 'Replace current data with old app data?',

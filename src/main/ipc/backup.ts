@@ -1,5 +1,6 @@
-import { dialog, ipcMain } from 'electron'
+import { dialog, ipcMain, shell } from 'electron'
 import {
+  backupDir,
   fromBackupJson,
   getBackupDirInfo,
   readTextFile,
@@ -81,5 +82,10 @@ export function registerBackupIpc(): void {
     })
     if (canceled || filePaths.length === 0) return null
     return filePaths[0] as string
+  })
+
+  ipcMain.handle('backup:open-dir', async (): Promise<boolean> => {
+    const error = await shell.openPath(backupDir())
+    return error === ''
   })
 }

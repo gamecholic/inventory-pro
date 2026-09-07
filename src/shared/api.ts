@@ -23,6 +23,7 @@ export const channels = [
   'backup:import-legacy-excel',
   'backup:dir',
   'backup:select-dir',
+  'backup:open-dir',
   'updater:check',
   'updater:download',
   'updater:progress',

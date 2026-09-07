@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
+import { FolderOpen } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -101,13 +102,31 @@ function BackupFolderRow(): React.JSX.Element {
     })
   }
 
+  const openFolder = (): void => {
+    void window.api.backup.openDir().then((ok) => {
+      if (!ok) toast.error(t('settings.db.openFolderFailed'))
+    })
+  }
+
   return (
     <div className="flex items-center justify-between gap-4 border-t border-border pt-4">
       <div className="min-w-0">
         <p className="font-medium">{t('settings.db.backupFolder')}</p>
-        <p className="truncate text-sm text-muted-foreground" title={dir?.resolved}>
-          {dir?.resolved ?? '…'}
-        </p>
+        <div className="flex min-w-0 items-center gap-1">
+          <p className="truncate text-sm text-muted-foreground" title={dir?.resolved}>
+            {dir?.resolved ?? '…'}
+          </p>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7 shrink-0"
+            aria-label={t('settings.db.openFolder')}
+            title={t('settings.db.openFolder')}
+            onClick={openFolder}
+          >
+            <FolderOpen className="size-4" />
+          </Button>
+        </div>
       </div>
       <div className="flex shrink-0 gap-2">
         {dir && dir.custom !== '' && (

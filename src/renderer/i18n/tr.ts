@@ -463,6 +463,8 @@ export const tr = {
           backupFolder: 'Yedek klasörü',
           changeFolder: 'Değiştir…',
           useDefault: 'Varsayılanı kullan',
+          openFolder: 'Klasörü aç',
+          openFolderFailed: 'Klasör açılamadı',
           importTitle: 'Mevcut veriler değiştirilsin mi?',
           importDesc: 'İçe aktarma tüm mevcut verilerin yerine geçer. Geri alınamaz.',
           importLegacyTitle: 'Mevcut veriler eski uygulama verileriyle değiştirilsin mi?',

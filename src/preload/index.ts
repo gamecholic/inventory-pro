@@ -68,7 +68,8 @@ const api = {
     importExcel: (): Promise<ImportResult | null> => ipcRenderer.invoke('backup:import-excel'),
     importLegacyExcel: (): Promise<ImportResult | null> => ipcRenderer.invoke('backup:import-legacy-excel'),
     dir: (): Promise<BackupDirInfo> => ipcRenderer.invoke('backup:dir'),
-    selectDir: (): Promise<string | null> => ipcRenderer.invoke('backup:select-dir')
+    selectDir: (): Promise<string | null> => ipcRenderer.invoke('backup:select-dir'),
+    openDir: (): Promise<boolean> => ipcRenderer.invoke('backup:open-dir')
   },
   db: {
     reset: (): Promise<boolean> => ipcRenderer.invoke('db:reset')

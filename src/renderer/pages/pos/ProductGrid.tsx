@@ -2,6 +2,7 @@ import { useState, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { normalizeTR } from '@shared/normalizeTR'
 import { formatMoney } from '@shared/money'
 import { unitShort } from '@shared/units'
@@ -58,7 +59,7 @@ export function ProductGrid({
         />
         <Button type="submit">{t('pos.search')}</Button>
       </div>
-      <div>
+      <div className="border-border relative gap-2 rounded-lg border px-2 py-1">
         <Button
           type="button"
           variant="ghost"
@@ -69,25 +70,27 @@ export function ProductGrid({
           {t('pos.categories')} {expanded ? '▾' : '▸'}
         </Button>
         {expanded && (
-          <div className="mt-2 flex flex-wrap gap-2">
-            <Button
-              size="sm"
-              variant={categoryId === null ? 'default' : 'outline'}
-              onClick={() => onCategoryChange(null)}
-            >
-              {t('pos.all')}
-            </Button>
-            {categories.map((c) => (
+          <ScrollArea className="mt-2 h-32 max-h-32">
+            <div className="flex flex-wrap gap-2 pr-3">
               <Button
-                key={c.id}
                 size="sm"
-                variant={categoryId === c.id ? 'default' : 'outline'}
-                onClick={() => onCategoryChange(c.id)}
+                variant={categoryId === null ? 'default' : 'outline'}
+                onClick={() => onCategoryChange(null)}
               >
-                {c.name}
+                {t('pos.all')}
               </Button>
-            ))}
-          </div>
+              {categories.map((c) => (
+                <Button
+                  key={c.id}
+                  size="sm"
+                  variant={categoryId === c.id ? 'default' : 'outline'}
+                  onClick={() => onCategoryChange(c.id)}
+                >
+                  {c.name}
+                </Button>
+              ))}
+            </div>
+          </ScrollArea>
         )}
       </div>
       {catalog.length === 0 ? (
@@ -95,7 +98,8 @@ export function ProductGrid({
       ) : filtered.length === 0 ? (
         <p className="rounded-lg border border-border p-8 text-center text-muted-foreground">{t('pos.noResults')}</p>
       ) : (
-        <div data-testid="product-grid" className="grid min-h-0 grid-cols-2 content-start gap-2 overflow-y-auto pr-1 lg:flex-1 xl:grid-cols-3">
+        <ScrollArea className="min-h-0 lg:flex-1">
+          <div data-testid="product-grid" className="grid min-h-0 grid-cols-2 content-start gap-2 pr-3 xl:grid-cols-3">
           {filtered.map((p) => {
             const out = p.stockQty <= 0
             return (
@@ -119,7 +123,8 @@ export function ProductGrid({
               </Button>
             )
           })}
-        </div>
+          </div>
+        </ScrollArea>
       )}
     </div>
   )

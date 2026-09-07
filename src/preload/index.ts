@@ -50,6 +50,7 @@ export interface ImportResult {
 
 const api = {
   ping: (): Promise<string> => ipcRenderer.invoke('app:ping'),
+  version: (): Promise<string> => ipcRenderer.invoke('app:version'),
   settings: {
     get: (): Promise<SettingsValues> => ipcRenderer.invoke('settings:get'),
     update: (section: SettingsSection, patch: Record<string, unknown>): Promise<SettingsValues> =>

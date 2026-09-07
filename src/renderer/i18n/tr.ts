@@ -434,6 +434,7 @@ export const tr = {
         resetDesc: 'Tüm ayarlar varsayılanlara döner. Verileriniz silinmez.',
         cancel: 'Vazgeç',
         confirm: 'Onayla',
+        version: 'Sürüm {{version}}',
         businessName: 'İşletme Adı',
         address: 'Adres',
         phone: 'Telefon Numarası',

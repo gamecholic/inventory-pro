@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron'
+import { app, ipcMain } from 'electron'
 import { defaultBackupPath } from '../db/backup'
 import { writeExcelBackup } from '../db/excel'
 import { registerAnalyticsIpc } from './analytics'
@@ -12,6 +12,7 @@ import { registerUpdaterIpc } from './updater'
 /** All IPC handlers. Payloads validated with Zod in main; renderer shows thrown messages. */
 export function registerIpc(): void {
   ipcMain.handle('app:ping', () => 'pong')
+  ipcMain.handle('app:version', () => app.getVersion())
   registerSettingsIpc()
   registerBackupIpc()
   registerCatalogIpc()

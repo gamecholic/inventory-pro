@@ -761,7 +761,8 @@ products.
 ## 9. Settings
 
 Left tab navigation with 4 sections: General, Business Information, Receipt
-Customization, Database Management.
+Customization, Database Management. A read-only app version line is shown
+below the sections on every tab.
 
 ### 9.1 General Tab
 

@@ -434,6 +434,7 @@ export const en = {
         resetDesc: 'All settings return to defaults. Your data is not deleted.',
         cancel: 'Cancel',
         confirm: 'Confirm',
+        version: 'Version {{version}}',
         businessName: 'Business Name',
         address: 'Address',
         phone: 'Phone Number',

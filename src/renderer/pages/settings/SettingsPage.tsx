@@ -1,9 +1,18 @@
 import { useTranslation } from 'react-i18next'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useAppVersion } from '@/hooks/useAppVersion'
 import { BusinessTab } from './BusinessTab'
 import { DatabaseTab } from './DatabaseTab'
 import { GeneralTab } from './GeneralTab'
 import { ReceiptTab } from './ReceiptTab'
+
+/** Read-only packaged version below the tabs. */
+function AppVersion(): React.JSX.Element | null {
+  const { t } = useTranslation()
+  const { data: version } = useAppVersion()
+  if (!version) return null
+  return <p className="px-4 text-sm text-muted-foreground lg:px-6">{t('settings.version', { version })}</p>
+}
 
 /** Features §9 — four sections, left-aligned tab navigation. */
 export function SettingsPage(): React.JSX.Element {
@@ -38,6 +47,7 @@ export function SettingsPage(): React.JSX.Element {
           <DatabaseTab />
         </TabsContent>
       </Tabs>
+      <AppVersion />
     </div>
   )
 }

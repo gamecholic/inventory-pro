@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { subDays } from 'date-fns'
 import { enUS, tr } from 'date-fns/locale'
@@ -45,7 +45,10 @@ export function WeekdayPanel(): React.JSX.Element {
   const { t, i18n } = useTranslation()
   const { data: settings } = useSettings()
   const [period, setPeriod] = useState<Period>('month')
-  const { data, isPending, isError, refetch } = useWeekdayAverages(rangeFor(period))
+  // Memoized: rangeFor() embeds the current timestamp, so rebuilding it every
+  // render would change the query key and refetch in a loop.
+  const range = useMemo(() => rangeFor(period), [period])
+  const { data, isPending, isError, refetch } = useWeekdayAverages(range)
   const currency = settings?.general.currency ?? 'USD'
   const labels = weekdayLabels(i18n.language === 'tr' ? 'tr' : 'en')
 

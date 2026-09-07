@@ -18,6 +18,13 @@ React Hook Form + `@hookform/resolvers/zod` + shadcn `Form/Input/Select/Dialog/T
 ## 4. Charts
 Recharts v3 via shadcn `chart` block only: `ChartContainer`, `ChartTooltipContent`, `ChartLegendContent`, `ChartConfig`. Covers all 10 dashboard panels (§2) + 5 reports (§8): bars, grouped bars, dual-axis, doughnut/pie with pie/bar toggle.
 
+### Query input stability
+Keep TanStack Query inputs stable between renders. Date-range builders that use
+the current time must be memoized with only their actual period or filter
+dependencies before being passed to a query hook. Do not call such builders
+directly inside hook arguments: the changing timestamp creates a new query key,
+which can cause repeated refetches and make charts or reports appear sluggish.
+
 ## 5. i18n / money / dates
 react-i18next (Vite-safe; next-intl is Next-only), EN/TR dictionaries in `renderer/i18n/{en,tr}.ts`, instant switch in Settings. Money via `shared/money.formatMoney()` (pinned `$ € £ ₺` per §1.3, never raw Intl currency); display dates format ISO → store format in renderer only (`shared/dates.formatISO()`). Filters/pickers send ISO8601 UTC to the API — never formatted strings. `normalizeTR()` (ğ→g ş→s ç→c ö→o ü→u ı/İ→i) wraps every product search (§3.1, §4.3, §5.1).
 

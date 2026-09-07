@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { subDays } from 'date-fns'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
@@ -50,7 +50,10 @@ export function TopSellingPanel(): React.JSX.Element {
   const [sort, setSort] = useState<Sort>('revenue')
   const [limit, setLimit] = useState(10)
   const [period, setPeriod] = useState<Period>('month')
-  const { data, isPending, isError, refetch } = useTopProductsReport({ ...rangeFor(period), sort, limit })
+  // Memoized: rangeFor() embeds the current timestamp, so rebuilding it every
+  // render would change the query key and refetch in a loop.
+  const input = useMemo(() => ({ ...rangeFor(period), sort, limit }), [period, sort, limit])
+  const { data, isPending, isError, refetch } = useTopProductsReport(input)
   const currency = settings?.general.currency ?? 'USD'
 
   const config = { value: { label: t('reportPage.value'), color: 'var(--chart-2)' } } satisfies ChartConfig

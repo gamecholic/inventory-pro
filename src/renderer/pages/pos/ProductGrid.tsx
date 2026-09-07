@@ -1,8 +1,10 @@
-import { useState, type RefObject } from 'react'
+import { type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { ChevronDown } from 'lucide-react'
 import { normalizeTR } from '@shared/normalizeTR'
 import { formatMoney } from '@shared/money'
 import { unitShort } from '@shared/units'
@@ -44,7 +46,6 @@ export function ProductGrid({
 }): React.JSX.Element {
   const { t } = useTranslation()
   const { data: settings } = useSettings()
-  const [expanded, setExpanded] = useState(false)
   const currency = settings?.general.currency ?? 'USD'
   const filtered = filterPosProducts(catalog, search, categoryId)
 
@@ -59,17 +60,14 @@ export function ProductGrid({
         />
         <Button type="submit">{t('pos.search')}</Button>
       </div>
-      <div className="border-border relative gap-2 rounded-lg border px-2 py-1">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="px-1 text-muted-foreground hover:text-foreground"
-          onClick={() => setExpanded((e) => !e)}
-        >
-          {t('pos.categories')} {expanded ? '▾' : '▸'}
-        </Button>
-        {expanded && (
+      <Collapsible className="border-border relative gap-2 rounded-lg border px-2 py-1">
+        <CollapsibleTrigger asChild>
+          <Button type="button" variant="ghost" size="sm" className="w-full group px-1 flex items-center justify-between text-muted-foreground hover:text-foreground">
+            {t('pos.categories')}
+            <ChevronDown className="transition-transform group-data-[state=open]:rotate-180" />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
           <ScrollArea className="mt-2 h-32 max-h-32">
             <div className="flex flex-wrap gap-2 pr-3">
               <Button
@@ -91,8 +89,8 @@ export function ProductGrid({
               ))}
             </div>
           </ScrollArea>
-        )}
-      </div>
+        </CollapsibleContent>
+      </Collapsible>
       {catalog.length === 0 ? (
         <p className="rounded-lg border border-border p-8 text-center text-muted-foreground">{t('pos.noProducts')}</p>
       ) : filtered.length === 0 ? (

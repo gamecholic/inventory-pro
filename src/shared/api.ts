@@ -19,6 +19,7 @@ export const channels = [
   'backup:import-json',
   'backup:export-excel',
   'backup:import-excel',
+  'backup:import-legacy-excel',
   'db:reset',
   'products:list',
   'products:create',

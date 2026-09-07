@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useSettings, useUpdateSettings } from '@/hooks/useSettings'
 
-type BackupAction = 'export-json' | 'import-json' | 'export-excel' | 'import-excel' | 'reset'
+type BackupAction = 'export-json' | 'import-json' | 'export-excel' | 'import-excel' | 'import-legacy-excel' | 'reset'
 
 function ActionRow({
   title,
@@ -103,9 +103,13 @@ export function DatabaseTab(): React.JSX.Element {
     }
   }
 
-  const runImport = (action: 'import-json' | 'import-excel'): void => {
+  const runImport = (action: 'import-json' | 'import-excel' | 'import-legacy-excel'): void => {
     setBusy(action)
-    const call = action === 'import-json' ? window.api.backup.importJson() : window.api.backup.importExcel()
+    const call = action === 'import-json'
+      ? window.api.backup.importJson()
+      : action === 'import-excel'
+        ? window.api.backup.importExcel()
+        : window.api.backup.importLegacyExcel()
     void call.then(
       (result) => {
         setBusy(null)
@@ -172,6 +176,17 @@ export function DatabaseTab(): React.JSX.Element {
               onConfirm={() => runImport('import-excel')}
             >
               {busy === 'import-excel' ? t('settings.db.working') : t('settings.db.importExcel')}
+            </ConfirmAction>
+          </ActionRow>
+          <ActionRow title={t('settings.db.importLegacyExcel')} desc={t('settings.db.importLegacyExcelDesc')}>
+            <ConfirmAction
+              title={t('settings.db.importLegacyTitle')}
+              desc={t('settings.db.importLegacyDesc')}
+              actionLabel={t('settings.confirm')}
+              busy={busy !== null}
+              onConfirm={() => runImport('import-legacy-excel')}
+            >
+              {busy === 'import-legacy-excel' ? t('settings.db.working') : t('settings.db.importLegacyExcel')}
             </ConfirmAction>
           </ActionRow>
           <ActionRow title={t('settings.db.resetDb')} desc={t('settings.db.resetDbDesc')}>

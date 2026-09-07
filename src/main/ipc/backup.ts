@@ -7,6 +7,7 @@ import {
   writeTextFile
 } from '../db/backup'
 import { readExcelBackup, writeExcelBackup } from '../db/excel'
+import { readLegacyExcelBackup } from '../db/legacyExcel'
 
 export function registerBackupIpc(): void {
   ipcMain.handle('backup:export-json', async () => {
@@ -50,6 +51,17 @@ export function registerBackupIpc(): void {
     })
     if (canceled || filePaths.length === 0) return null
     const counts = await readExcelBackup(filePaths[0] as string)
+    return { filePath: filePaths[0], ...counts }
+  })
+
+  ipcMain.handle('backup:import-legacy-excel', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: 'Import from old app Excel',
+      filters: [{ name: 'Excel', extensions: ['xlsx'] }],
+      properties: ['openFile']
+    })
+    if (canceled || filePaths.length === 0) return null
+    const counts = await readLegacyExcelBackup(filePaths[0] as string)
     return { filePath: filePaths[0], ...counts }
   })
 

@@ -58,7 +58,8 @@ const api = {
     exportJson: (): Promise<string | null> => ipcRenderer.invoke('backup:export-json'),
     importJson: (): Promise<ImportResult | null> => ipcRenderer.invoke('backup:import-json'),
     exportExcel: (): Promise<string | null> => ipcRenderer.invoke('backup:export-excel'),
-    importExcel: (): Promise<ImportResult | null> => ipcRenderer.invoke('backup:import-excel')
+    importExcel: (): Promise<ImportResult | null> => ipcRenderer.invoke('backup:import-excel'),
+    importLegacyExcel: (): Promise<ImportResult | null> => ipcRenderer.invoke('backup:import-legacy-excel')
   },
   db: {
     reset: (): Promise<boolean> => ipcRenderer.invoke('db:reset')

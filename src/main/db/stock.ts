@@ -24,7 +24,7 @@ export function getPriceHistory(productId: number, db = defaultHandles().db): Pr
     })
     .from(stockAdjustments)
     .where(eq(stockAdjustments.productId, productId))
-    .orderBy(asc(stockAdjustments.id))
+    .orderBy(asc(stockAdjustments.createdAt), asc(stockAdjustments.id))
     .all()
     .filter((r) => r.costPrice !== null || r.sellingPrice !== null)
 }

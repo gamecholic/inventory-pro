@@ -58,7 +58,6 @@ export function ReportsPage(): React.JSX.Element {
 
   return (
     <div className="px-4 lg:px-6">
-      <h2 className="mb-4 text-2xl font-semibold">{t('reportPage.title')}</h2>
       <div className="grid items-start gap-4 lg:grid-cols-[14rem_minmax(0,1fr)]">
         <div className="flex flex-col gap-4 rounded-lg border border-border p-3">
           <div className="flex flex-col gap-1">

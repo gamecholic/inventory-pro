@@ -55,12 +55,6 @@ export function SalesPage(): React.JSX.Element {
 
   return (
     <div className="px-4 lg:px-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">{t('sales.title')}</h2>
-        <Button variant="outline" size="icon" title={t('sales.refresh')} onClick={() => void refetch()}>
-          <RefreshCw className="size-4" />
-        </Button>
-      </div>
       <div className="mb-4 flex flex-wrap items-end gap-2">
         <DateRangePicker range={draft} onSelect={setDraft} />
         <Button
@@ -100,6 +94,9 @@ export function SalesPage(): React.JSX.Element {
             setPage(1)
           }}
         />
+        <Button variant="outline" size="icon" title={t('sales.refresh')} onClick={() => void refetch()}>
+          <RefreshCw className="size-4" />
+        </Button>
       </div>
 
       {isPending ? (

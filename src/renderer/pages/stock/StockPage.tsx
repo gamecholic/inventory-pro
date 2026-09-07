@@ -27,7 +27,6 @@ export function StockPage(): React.JSX.Element {
 
   return (
     <div className="flex flex-col gap-4 px-4 lg:h-[calc(100svh-var(--header-height)-4rem)] lg:px-6">
-      <h2 className="shrink-0 text-2xl font-semibold">{t('stock.title')}</h2>
       <div className="grid min-h-0 flex-1 items-start gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
         <div className="flex min-h-0 flex-col gap-2 lg:h-full"> 
           <Input placeholder={t('stock.search')} value={search} onChange={(e) => setSearch(e.target.value)} />

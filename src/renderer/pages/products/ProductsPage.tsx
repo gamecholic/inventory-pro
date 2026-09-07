@@ -19,22 +19,22 @@ export function ProductsPage(): React.JSX.Element {
 
   return (
     <div className="px-4 lg:px-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">{t('products.title')}</h2>
-        <Button onClick={() => addRef.current?.()}>{t(ADD_LABELS[tab as keyof typeof ADD_LABELS])}</Button>
-      </div>
+
       <Tabs value={tab} onValueChange={setTab} className="flex flex-col gap-4">
-        <TabsList className="w-fit gap-1 px-1.5">
-          <TabsTrigger value="list" className="px-4">
-            {t('products.tabs.list')}
-          </TabsTrigger>
-          <TabsTrigger value="categories" className="px-4">
-            {t('products.tabs.categories')}
-          </TabsTrigger>
-          <TabsTrigger value="suppliers" className="px-4">
-            {t('products.tabs.suppliers')}
-          </TabsTrigger>
-        </TabsList>
+        <div className="mb-4 flex items-center justify-between">
+          <TabsList className="w-fit gap-1 px-1.5">
+            <TabsTrigger value="list" className="px-4">
+              {t('products.tabs.list')}
+            </TabsTrigger>
+            <TabsTrigger value="categories" className="px-4">
+              {t('products.tabs.categories')}
+            </TabsTrigger>
+            <TabsTrigger value="suppliers" className="px-4">
+              {t('products.tabs.suppliers')}
+            </TabsTrigger>
+          </TabsList>
+          <Button onClick={() => addRef.current?.()}>{t(ADD_LABELS[tab as keyof typeof ADD_LABELS])}</Button>
+        </div>
         <TabsContent value="list">
           <ProductList registerAdd={registerAdd} />
         </TabsContent>

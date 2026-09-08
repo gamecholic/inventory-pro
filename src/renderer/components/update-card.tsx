@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Progress } from '@/components/ui/progress'
 import { useUpdaterCheck } from '@/hooks/useUpdater'
 
 type Phase = 'available' | 'downloading' | 'downloaded' | 'error'
@@ -75,9 +76,10 @@ export function UpdateCard(): React.JSX.Element | null {
             </Button>
           )}
           {phase === 'downloading' && (
-            <Button variant="outline" size="sm" disabled>
-              {t('updates.downloading', { percent })}
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Progress value={percent} />
+              <p className="text-xs text-muted-foreground text-center">{t('updates.downloading', { percent })}</p>
+            </div>
           )}
           {phase === 'downloaded' && (
             <Button variant="outline" size="sm" onClick={() => void window.api.updater.install()}>

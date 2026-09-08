@@ -167,6 +167,7 @@ export function GeneralTab(): React.JSX.Element {
                   <SelectItem value="system">{t('theme.system')}</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">{t('settings.themeHint')}</p>
             </div>
             <div className="flex items-center justify-between gap-4">
               <div>

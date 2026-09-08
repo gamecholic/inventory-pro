@@ -437,6 +437,7 @@ export const tr = {
         regionalDesc: 'Uygulamada kullanılan para birimi ve tarih biçimleri.',
         inventoryDesc: 'Stok uyarıları ve kart komisyonu varsayılanları.',
         languageHint: 'Hemen uygulanır ve kaydedilir.',
+        themeHint: 'Hemen uygulanır.',
         regionalPreview: 'Önizleme',
         lowStockDesc: 'Eşiğe düşen ürünler için satış sonrası uyarı göster.',
         startMaximizedDesc: 'Uygulamayı bir sonraki açılışta tam ekran başlat.',

@@ -437,6 +437,7 @@ export const en = {
         regionalDesc: 'Currency and date formats used across the app.',
         inventoryDesc: 'Stock warnings and card fee defaults.',
         languageHint: 'Applies and saves immediately.',
+        themeHint: 'Applies immediately.',
         regionalPreview: 'Preview',
         lowStockDesc: 'Show a warning after each sale that leaves a product at or below its threshold.',
         startMaximizedDesc: 'Open the app window maximized on next launch.',

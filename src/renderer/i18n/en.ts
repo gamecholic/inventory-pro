@@ -178,6 +178,7 @@ export const en = {
         search: 'Search expenses...',
         apply: 'Apply Filters',
         reset: 'Reset Filters',
+        filters: 'Filters',
         totalExpenses: 'Total Expenses',
         noExpenses: 'No expenses found.',
         deleteTitle: 'Delete this expense?',

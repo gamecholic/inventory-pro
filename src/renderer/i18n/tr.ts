@@ -178,6 +178,7 @@ export const tr = {
         search: 'Gider ara...',
         apply: 'Filtreleri Uygula',
         reset: 'Filtreleri Sıfırla',
+        filters: 'Filtreler',
         totalExpenses: 'Toplam Giderler',
         noExpenses: 'Gider bulunamadı.',
         deleteTitle: 'Bu gider silinsin mi?',

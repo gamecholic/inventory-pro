@@ -55,10 +55,10 @@ test('reports generate across types', async () => {
   await expect(page.getByText('$60.00').first()).toBeVisible()
 
   // Top products reuses the same backend with its own controls.
-  await page.getByRole('button', { name: 'Top Selling Products' }).click()
+  await page.getByRole('tab', { name: 'Top Selling Products' }).click()
   await expect(page.getByRole('cell', { name: 'E2E Rep Cola' })).toBeVisible()
 
   // Reorder insight needs no range.
-  await page.getByRole('button', { name: 'Reorder Suggestions' }).click()
+  await page.getByRole('tab', { name: 'Reorder Suggestions' }).click()
   await expect(page.getByRole('cell', { name: 'E2E Rep Cola' })).toBeVisible()
 })

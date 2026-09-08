@@ -1,7 +1,21 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { endOfDay, endOfMonth, startOfDay, startOfMonth } from 'date-fns'
+import {
+  Archive,
+  CreditCard,
+  Package,
+  Percent,
+  Receipt,
+  ShoppingBasket,
+  Tag,
+  TrendingUp,
+  Truck,
+  Wallet,
+  type LucideIcon
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { DateRange } from 'react-day-picker'
 import { DateRangePicker } from '@/components/date-range-picker'
 import { dayBounds, toISO } from '@shared/dates'
@@ -29,8 +43,20 @@ type ReportKey =
   | 'discounts'
   | 'cardFees'
 
-const SPEC_REPORTS: ReportKey[] = ['financial', 'topProducts', 'payment', 'supplier', 'category']
-const INSIGHT_REPORTS: ReportKey[] = ['reorder', 'deadStock', 'basket', 'discounts', 'cardFees']
+const SPEC_REPORTS: Array<{ key: ReportKey; icon: LucideIcon }> = [
+  { key: 'financial', icon: Wallet },
+  { key: 'topProducts', icon: TrendingUp },
+  { key: 'payment', icon: CreditCard },
+  { key: 'supplier', icon: Truck },
+  { key: 'category', icon: Tag }
+]
+const INSIGHT_REPORTS: Array<{ key: ReportKey; icon: LucideIcon }> = [
+  { key: 'reorder', icon: Package },
+  { key: 'deadStock', icon: Archive },
+  { key: 'basket', icon: ShoppingBasket },
+  { key: 'discounts', icon: Percent },
+  { key: 'cardFees', icon: Receipt }
+]
 
 /** §8 — report sidebar, draft range committed only via Generate Report. */
 export function ReportsPage(): React.JSX.Element {
@@ -45,31 +71,28 @@ export function ReportsPage(): React.JSX.Element {
     return { from: toISO(startOfDay(startOfMonth(now))), to: toISO(endOfDay(endOfMonth(now))) }
   })
 
-  const groupButton = (key: ReportKey): React.JSX.Element => (
-    <Button
-      key={key}
-      variant={report === key ? 'secondary' : 'ghost'}
-      className="justify-start"
-      onClick={() => setReport(key)}
-    >
+  const reportTrigger = ({ key, icon: Icon }: { key: ReportKey; icon: LucideIcon }): React.JSX.Element => (
+    <TabsTrigger key={key} value={key} className="justify-start gap-2 px-3">
+      <Icon />
       {t(`reportPage.${key}`)}
-    </Button>
+    </TabsTrigger>
   )
 
   return (
     <div className="px-4 lg:px-6">
-      <div className="grid items-start gap-4 lg:grid-cols-[14rem_minmax(0,1fr)]">
-        <div className="flex flex-col gap-4 rounded-lg border border-border p-3">
-          <div className="flex flex-col gap-1">
-            <p className="px-2 text-xs font-medium text-muted-foreground">{t('reportPage.types')}</p>
-            {SPEC_REPORTS.map(groupButton)}
-          </div>
-          <div className="flex flex-col gap-1">
-            <p className="px-2 text-xs font-medium text-muted-foreground">{t('reportPage.insights')}</p>
-            {INSIGHT_REPORTS.map(groupButton)}
-          </div>
-        </div>
-        <div className="flex min-w-0 flex-col gap-4">
+      <Tabs
+        orientation="vertical"
+        value={report}
+        onValueChange={(value) => setReport(value as ReportKey)}
+        className="flex-col gap-6 md:flex-row"
+      >
+        <TabsList className="h-fit w-full shrink-0 flex-col items-stretch gap-1 p-1.5 md:w-60">
+          <p className="px-3 pt-1 text-xs font-medium text-muted-foreground">{t('reportPage.types')}</p>
+          {SPEC_REPORTS.map(reportTrigger)}
+          <p className="px-3 pt-2 text-xs font-medium text-muted-foreground">{t('reportPage.insights')}</p>
+          {INSIGHT_REPORTS.map(reportTrigger)}
+        </TabsList>
+        <div className="flex min-w-0 flex-1 flex-col gap-4">
           {report !== 'reorder' && report !== 'deadStock' && (
             <div className="flex flex-wrap items-end gap-2">
               <DateRangePicker range={draft} onSelect={setDraft} />
@@ -84,18 +107,38 @@ export function ReportsPage(): React.JSX.Element {
               </Button>
             </div>
           )}
-          {report === 'financial' && <FinancialReport range={applied} />}
-          {report === 'topProducts' && <TopProductsReport range={applied} />}
-          {report === 'payment' && <PaymentReport range={applied} />}
-          {report === 'supplier' && <SupplierReport range={applied} />}
-          {report === 'category' && <CategoryReport range={applied} />}
-          {report === 'reorder' && <ReorderReport />}
-          {report === 'deadStock' && <DeadStockReport />}
-          {report === 'basket' && <BasketReport range={applied} />}
-          {report === 'discounts' && <DiscountReport range={applied} />}
-          {report === 'cardFees' && <CardFeeReport range={applied} />}
+          <TabsContent value="financial" className="mt-0">
+            <FinancialReport range={applied} />
+          </TabsContent>
+          <TabsContent value="topProducts" className="mt-0">
+            <TopProductsReport range={applied} />
+          </TabsContent>
+          <TabsContent value="payment" className="mt-0">
+            <PaymentReport range={applied} />
+          </TabsContent>
+          <TabsContent value="supplier" className="mt-0">
+            <SupplierReport range={applied} />
+          </TabsContent>
+          <TabsContent value="category" className="mt-0">
+            <CategoryReport range={applied} />
+          </TabsContent>
+          <TabsContent value="reorder" className="mt-0">
+            <ReorderReport />
+          </TabsContent>
+          <TabsContent value="deadStock" className="mt-0">
+            <DeadStockReport />
+          </TabsContent>
+          <TabsContent value="basket" className="mt-0">
+            <BasketReport range={applied} />
+          </TabsContent>
+          <TabsContent value="discounts" className="mt-0">
+            <DiscountReport range={applied} />
+          </TabsContent>
+          <TabsContent value="cardFees" className="mt-0">
+            <CardFeeReport range={applied} />
+          </TabsContent>
         </div>
-      </div>
+      </Tabs>
     </div>
   )
 }

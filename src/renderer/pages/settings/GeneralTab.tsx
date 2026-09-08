@@ -65,7 +65,10 @@ export function GeneralTab(): React.JSX.Element {
 
   const form = useForm({
     resolver: zodResolver(generalSettings),
-    values: data?.general ?? defaultSettings.general
+    values: data?.general ?? defaultSettings.general,
+    // The language autosave below refreshes `values` from the cache;
+    // keep any other unsaved edits the user already made.
+    resetOptions: { keepDirtyValues: true }
   })
   const isDirty = form.formState.isDirty
   const isSaving = update.isPending
@@ -133,8 +136,11 @@ export function GeneralTab(): React.JSX.Element {
                     value={field.value}
                     onValueChange={(value) => {
                       field.onChange(value)
-                      // Spec §1.2: language applies immediately, Save persists it.
+                      // Spec §1.2: language applies immediately. Persist it at
+                      // once too, so ApplySettings (App.tsx) and reloads agree
+                      // with the preview. Other edits still use Save.
                       void i18n.changeLanguage(value)
+                      update.mutate({ section: 'general', patch: { language: value } })
                     }}
                   >
                     <SelectTrigger id="language">

@@ -436,7 +436,7 @@ export const tr = {
         appearanceDesc: 'Dil, tema ve pencere davranışı.',
         regionalDesc: 'Uygulamada kullanılan para birimi ve tarih biçimleri.',
         inventoryDesc: 'Stok uyarıları ve kart komisyonu varsayılanları.',
-        languageHint: 'Hemen uygulanır. Kaydet kalıcı yapar.',
+        languageHint: 'Hemen uygulanır ve kaydedilir.',
         regionalPreview: 'Önizleme',
         lowStockDesc: 'Eşiğe düşen ürünler için satış sonrası uyarı göster.',
         startMaximizedDesc: 'Uygulamayı bir sonraki açılışta tam ekran başlat.',

@@ -436,7 +436,7 @@ export const en = {
         appearanceDesc: 'Language, theme and window behavior.',
         regionalDesc: 'Currency and date formats used across the app.',
         inventoryDesc: 'Stock warnings and card fee defaults.',
-        languageHint: 'Applies immediately. Save persists it.',
+        languageHint: 'Applies and saves immediately.',
         regionalPreview: 'Preview',
         lowStockDesc: 'Show a warning after each sale that leaves a product at or below its threshold.',
         startMaximizedDesc: 'Open the app window maximized on next launch.',

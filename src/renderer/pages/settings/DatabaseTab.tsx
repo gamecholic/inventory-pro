@@ -1,7 +1,16 @@
 import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
-import { FolderOpen } from 'lucide-react'
+import {
+  ArrowRightLeft,
+  Copy,
+  Database,
+  Download,
+  FolderOpen,
+  Loader2,
+  Trash2,
+  Upload
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -24,18 +33,33 @@ import { dbDirKey, useDbDir } from '@/hooks/useDbDir'
 
 type BackupAction = 'export-json' | 'import-json' | 'export-excel' | 'import-excel' | 'import-legacy-excel' | 'reset'
 
+function Working(): React.JSX.Element {
+  const { t } = useTranslation()
+  return (
+    <>
+      <Loader2 className="size-4 animate-spin" />
+      {t('settings.db.working')}
+    </>
+  )
+}
+
 function ActionRow({
+  icon,
   title,
   desc,
   children
 }: {
+  icon: ReactNode
   title: string
   desc: string
   children: ReactNode
 }): React.JSX.Element {
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-border py-4 last:border-b-0">
-      <div>
+    <div className="flex items-center gap-4 border-b border-border py-4 last:border-b-0">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+        {icon}
+      </span>
+      <div className="min-w-0 flex-1">
         <p className="font-medium">{title}</p>
         <p className="text-sm text-muted-foreground">{desc}</p>
       </div>
@@ -65,7 +89,7 @@ function ConfirmAction({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant={danger ? 'destructive' : 'outline'} disabled={busy}>
+        <Button variant={danger ? 'destructive' : 'outline'} disabled={busy} className="gap-2">
           {children}
         </Button>
       </AlertDialogTrigger>
@@ -80,6 +104,34 @@ function ConfirmAction({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  )
+}
+
+function PathLine({ path }: { path: string | undefined }): React.JSX.Element {
+  const { t } = useTranslation()
+  const copy = (): void => {
+    if (!path) return
+    void navigator.clipboard.writeText(path).then(
+      () => toast.success(t('settings.db.copied')),
+      () => toast.error(t('settings.db.openFolderFailed'))
+    )
+  }
+  return (
+    <div className="flex min-w-0 items-center gap-1">
+      <p className="truncate rounded bg-muted px-2 py-1 font-mono text-xs text-muted-foreground" title={path}>
+        {path ?? '…'}
+      </p>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="size-7 shrink-0"
+        aria-label={t('settings.db.copyPath')}
+        title={t('settings.db.copyPath')}
+        onClick={copy}
+      >
+        <Copy className="size-4" />
+      </Button>
+    </div>
   )
 }
 
@@ -114,9 +166,7 @@ function BackupFolderRow(): React.JSX.Element {
       <div className="min-w-0">
         <p className="font-medium">{t('settings.db.backupFolder')}</p>
         <div className="flex min-w-0 items-center gap-1">
-          <p className="truncate text-sm text-muted-foreground" title={dir?.resolved}>
-            {dir?.resolved ?? '…'}
-          </p>
+          <PathLine path={dir?.resolved} />
           <Button
             variant="ghost"
             size="icon"
@@ -179,14 +229,15 @@ function DbLocationRow(): React.JSX.Element {
   }
 
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-border py-4">
-      <div className="min-w-0">
+    <div className="flex items-center gap-4 border-b border-border py-4">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+        <Database className="size-4" />
+      </span>
+      <div className="min-w-0 flex-1">
         <p className="font-medium">{t('settings.db.dbLocation')}</p>
         <p className="text-sm text-muted-foreground">{t('settings.db.dbLocationDesc')}</p>
         <div className="flex min-w-0 items-center gap-1">
-          <p className="truncate text-sm text-muted-foreground" title={dir?.resolved}>
-            {dir?.resolved ?? '…'}
-          </p>
+          <PathLine path={dir?.resolved} />
           <Button
             variant="ghost"
             size="icon"
@@ -274,19 +325,40 @@ export function DatabaseTab(): React.JSX.Element {
   }
 
   return (
-    <div className="flex max-w-2xl flex-col gap-4">
+    <div className="flex max-w-3xl flex-col gap-4">
       <Card>
         <CardHeader>
-          <CardTitle>{t('settings.tabs.database')}</CardTitle>
+          <CardTitle>{t('settings.db.backupTitle')}</CardTitle>
+          <CardDescription>{t('settings.db.backupDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <DbLocationRow />
-          <ActionRow title={t('settings.db.exportJson')} desc={t('settings.db.exportJsonDesc')}>
-            <Button variant="outline" disabled={busy !== null} onClick={() => runExport('export-json')}>
-              {busy === 'export-json' ? t('settings.db.working') : t('settings.db.exportJson')}
+          <ActionRow
+            icon={<Download className="size-4" />}
+            title={t('settings.db.exportJson')}
+            desc={t('settings.db.exportJsonDesc')}
+          >
+            <Button
+              variant="outline"
+              disabled={busy !== null}
+              className="gap-2"
+              onClick={() => runExport('export-json')}
+            >
+              {busy === 'export-json' ? (
+                <Working />
+              ) : (
+                <>
+                  <Download className="size-4" />
+                  {t('settings.db.exportJson')}
+                </>
+              )}
             </Button>
           </ActionRow>
-          <ActionRow title={t('settings.db.importJson')} desc={t('settings.db.importJsonDesc')}>
+          <ActionRow
+            icon={<Upload className="size-4" />}
+            title={t('settings.db.importJson')}
+            desc={t('settings.db.importJsonDesc')}
+          >
             <ConfirmAction
               title={t('settings.db.importTitle')}
               desc={t('settings.db.importDesc')}
@@ -294,15 +366,42 @@ export function DatabaseTab(): React.JSX.Element {
               busy={busy !== null}
               onConfirm={() => runImport('import-json')}
             >
-              {busy === 'import-json' ? t('settings.db.working') : t('settings.db.importJson')}
+              {busy === 'import-json' ? (
+                <Working />
+              ) : (
+                <>
+                  <Upload className="size-4" />
+                  {t('settings.db.importJson')}
+                </>
+              )}
             </ConfirmAction>
           </ActionRow>
-          <ActionRow title={t('settings.db.exportExcel')} desc={t('settings.db.exportExcelDesc')}>
-            <Button variant="outline" disabled={busy !== null} onClick={() => runExport('export-excel')}>
-              {busy === 'export-excel' ? t('settings.db.working') : t('settings.db.exportExcel')}
+          <ActionRow
+            icon={<Download className="size-4" />}
+            title={t('settings.db.exportExcel')}
+            desc={t('settings.db.exportExcelDesc')}
+          >
+            <Button
+              variant="outline"
+              disabled={busy !== null}
+              className="gap-2"
+              onClick={() => runExport('export-excel')}
+            >
+              {busy === 'export-excel' ? (
+                <Working />
+              ) : (
+                <>
+                  <Download className="size-4" />
+                  {t('settings.db.exportExcel')}
+                </>
+              )}
             </Button>
           </ActionRow>
-          <ActionRow title={t('settings.db.importExcel')} desc={t('settings.db.importExcelDesc')}>
+          <ActionRow
+            icon={<Upload className="size-4" />}
+            title={t('settings.db.importExcel')}
+            desc={t('settings.db.importExcelDesc')}
+          >
             <ConfirmAction
               title={t('settings.db.importTitle')}
               desc={t('settings.db.importDesc')}
@@ -310,10 +409,29 @@ export function DatabaseTab(): React.JSX.Element {
               busy={busy !== null}
               onConfirm={() => runImport('import-excel')}
             >
-              {busy === 'import-excel' ? t('settings.db.working') : t('settings.db.importExcel')}
+              {busy === 'import-excel' ? (
+                <Working />
+              ) : (
+                <>
+                  <Upload className="size-4" />
+                  {t('settings.db.importExcel')}
+                </>
+              )}
             </ConfirmAction>
           </ActionRow>
-          <ActionRow title={t('settings.db.importLegacyExcel')} desc={t('settings.db.importLegacyExcelDesc')}>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('settings.db.migrationTitle')}</CardTitle>
+          <CardDescription>{t('settings.db.migrationDesc')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ActionRow
+            icon={<ArrowRightLeft className="size-4" />}
+            title={t('settings.db.importLegacyExcel')}
+            desc={t('settings.db.importLegacyExcelDesc')}
+          >
             <ConfirmAction
               title={t('settings.db.importLegacyTitle')}
               desc={t('settings.db.importLegacyDesc')}
@@ -321,10 +439,29 @@ export function DatabaseTab(): React.JSX.Element {
               busy={busy !== null}
               onConfirm={() => runImport('import-legacy-excel')}
             >
-              {busy === 'import-legacy-excel' ? t('settings.db.working') : t('settings.db.importLegacyExcel')}
+              {busy === 'import-legacy-excel' ? (
+                <Working />
+              ) : (
+                <>
+                  <ArrowRightLeft className="size-4" />
+                  {t('settings.db.importLegacyExcel')}
+                </>
+              )}
             </ConfirmAction>
           </ActionRow>
-          <ActionRow title={t('settings.db.resetDb')} desc={t('settings.db.resetDbDesc')}>
+        </CardContent>
+      </Card>
+      <Card className="border-destructive/50">
+        <CardHeader>
+          <CardTitle className="text-destructive">{t('settings.db.dangerTitle')}</CardTitle>
+          <CardDescription>{t('settings.db.dangerDesc')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ActionRow
+            icon={<Trash2 className="size-4" />}
+            title={t('settings.db.resetDb')}
+            desc={t('settings.db.resetDbDesc')}
+          >
             <ConfirmAction
               title={t('settings.db.resetTitle')}
               desc={t('settings.db.resetDesc')}
@@ -333,18 +470,26 @@ export function DatabaseTab(): React.JSX.Element {
               busy={busy !== null}
               onConfirm={runReset}
             >
-              {busy === 'reset' ? t('settings.db.working') : t('settings.db.resetDb')}
+              {busy === 'reset' ? (
+                <Working />
+              ) : (
+                <>
+                  <Trash2 className="size-4" />
+                  {t('settings.db.resetDb')}
+                </>
+              )}
             </ConfirmAction>
           </ActionRow>
         </CardContent>
       </Card>
       <Card>
-        <CardContent className="flex flex-col gap-4 pt-6">
+        <CardHeader>
+          <CardTitle>{t('settings.db.closeBackupTitle')}</CardTitle>
+          <CardDescription>{t('settings.db.backupOnCloseDesc')}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-4">
-            <div>
-              <Label htmlFor="backupOnClose">{t('settings.db.backupOnClose')}</Label>
-              <CardDescription>{t('settings.db.backupOnCloseDesc')}</CardDescription>
-            </div>
+            <Label htmlFor="backupOnClose">{t('settings.db.backupOnClose')}</Label>
             <Switch
               id="backupOnClose"
               checked={data?.general.backupOnClose ?? false}

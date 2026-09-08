@@ -5,8 +5,16 @@ import { useTheme } from 'next-themes'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -29,6 +37,10 @@ import {
   AlertDialogTrigger
 } from '@/components/ui/alert-dialog'
 import { defaultSettings, generalSettings, type SettingsValues } from '@shared/settings'
+import type { StoreCurrency } from '@shared/money'
+import { formatMoney } from '@shared/money'
+import type { StoreDateFormat } from '@shared/dates'
+import { formatISO } from '@shared/dates'
 import { settingsKey, useSettings, useUpdateSettings } from '@/hooks/useSettings'
 import { useAppVersion } from '@/hooks/useAppVersion'
 
@@ -55,6 +67,12 @@ export function GeneralTab(): React.JSX.Element {
     resolver: zodResolver(generalSettings),
     values: data?.general ?? defaultSettings.general
   })
+  const isDirty = form.formState.isDirty
+  const isSaving = update.isPending
+
+  const currency = form.watch('currency') as StoreCurrency
+  const dateFormat = form.watch('dateFormat') as StoreDateFormat
+  const preview = `${formatMoney(1234.5, currency)} • ${formatISO(new Date().toISOString(), dateFormat)}`
 
   const onSubmit = form.handleSubmit((values) => {
     update.mutate({ section: 'general', patch: values })
@@ -68,6 +86,7 @@ export function GeneralTab(): React.JSX.Element {
         await window.api.settings.update(section, defaultSettings[section] as Record<string, unknown>)
       }
       queryClient.setQueryData(settingsKey, defaultSettings)
+      form.reset(defaultSettings.general)
       await i18n.changeLanguage(defaultSettings.general.language)
       toast.success(t('settings.saved'))
     } catch (error) {
@@ -77,14 +96,33 @@ export function GeneralTab(): React.JSX.Element {
     }
   }
 
+  const saveButton = (
+    <>
+      <Button type="submit" disabled={isSaving || !isDirty}>
+        {isSaving ? (
+          <>
+            <Loader2 className="size-4 animate-spin" />
+            {t('settings.saving')}
+          </>
+        ) : (
+          t('settings.save')
+        )}
+      </Button>
+      {isDirty && !isSaving ? (
+        <span className="text-xs text-muted-foreground">● {t('settings.unsaved')}</span>
+      ) : null}
+    </>
+  )
+
   return (
-    <div className="flex max-w-2xl flex-col gap-4">
-      <form onSubmit={onSubmit}>
+    <div className="flex max-w-3xl flex-col gap-4">
+      <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <Card>
           <CardHeader>
-            <CardTitle>{t('settings.tabs.general')}</CardTitle>
+            <CardTitle>{t('settings.sections.appearance')}</CardTitle>
+            <CardDescription>{t('settings.appearanceDesc')}</CardDescription>
           </CardHeader>
-          <CardContent className="flex max-w-lg flex-col gap-4">
+          <CardContent className="flex max-w-xl flex-col gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="language">{t('settings.language')}</Label>
               <Controller
@@ -109,6 +147,7 @@ export function GeneralTab(): React.JSX.Element {
                   </Select>
                 )}
               />
+              <p className="text-xs text-muted-foreground">{t('settings.languageHint')}</p>
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="theme">{t('settings.theme')}</Label>
@@ -123,6 +162,28 @@ export function GeneralTab(): React.JSX.Element {
                 </SelectContent>
               </Select>
             </div>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <Label htmlFor="startMaximized">{t('settings.startMaximized')}</Label>
+                <p className="text-xs text-muted-foreground">{t('settings.startMaximizedDesc')}</p>
+              </div>
+              <Controller
+                name="startMaximized"
+                control={form.control}
+                render={({ field }) => (
+                  <Switch id="startMaximized" checked={field.value} onCheckedChange={field.onChange} />
+                )}
+              />
+            </div>
+          </CardContent>
+          <CardFooter className="gap-2">{saveButton}</CardFooter>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('settings.sections.regional')}</CardTitle>
+            <CardDescription>{t('settings.regionalDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex max-w-xl flex-col gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="currency">{t('settings.currency')}</Label>
               <Controller
@@ -165,18 +226,23 @@ export function GeneralTab(): React.JSX.Element {
                 )}
               />
             </div>
-            <div className="flex items-center justify-between gap-4">
-              <Label htmlFor="startMaximized">{t('settings.startMaximized')}</Label>
-              <Controller
-                name="startMaximized"
-                control={form.control}
-                render={({ field }) => (
-                  <Switch id="startMaximized" checked={field.value} onCheckedChange={field.onChange} />
-                )}
-              />
+            <div className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+              {t('settings.regionalPreview')}: {preview}
             </div>
+          </CardContent>
+          <CardFooter className="gap-2">{saveButton}</CardFooter>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('settings.sections.inventory')}</CardTitle>
+            <CardDescription>{t('settings.inventoryDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex max-w-xl flex-col gap-4">
             <div className="flex items-center justify-between gap-4">
-              <Label htmlFor="lowStock">{t('settings.lowStock')}</Label>
+              <div>
+                <Label htmlFor="lowStock">{t('settings.lowStock')}</Label>
+                <p className="text-xs text-muted-foreground">{t('settings.lowStockDesc')}</p>
+              </div>
               <Controller
                 name="lowStockNotifications"
                 control={form.control}
@@ -192,29 +258,51 @@ export function GeneralTab(): React.JSX.Element {
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <>
-                    <Input
-                      id="cardFee"
-                      type="number"
-                      min={0}
-                      max={100}
-                      step={0.01}
-                      value={field.value}
-                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                    />
-                    {fieldState.error && <p className="text-sm text-destructive">{fieldState.error.message}</p>}
+                    <div className="relative">
+                      <Input
+                        id="cardFee"
+                        type="number"
+                        min={0}
+                        max={100}
+                        step={0.01}
+                        value={field.value}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                        className="pr-8"
+                      />
+                      <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted-foreground">
+                        %
+                      </span>
+                    </div>
+                    {fieldState.error ? (
+                      <p className="text-sm text-destructive">{fieldState.error.message}</p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">{t('settings.cardFeeHint')}</p>
+                    )}
                   </>
                 )}
               />
             </div>
           </CardContent>
-          <CardFooter className="gap-2">
-            <Button type="submit" disabled={update.isPending}>
-              {t('settings.save')}
-            </Button>
+          <CardFooter className="gap-2">{saveButton}</CardFooter>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('settings.sections.danger')}</CardTitle>
+            <CardDescription>{t('settings.resetSettingsDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex items-center justify-between gap-4">
+            <p className="text-sm font-medium">{t('settings.reset')}</p>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button type="button" variant="destructive" disabled={resetting}>
-                  {t('settings.reset')}
+                <Button type="button" variant="outline" disabled={resetting}>
+                  {resetting ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      {t('settings.saving')}
+                    </>
+                  ) : (
+                    t('settings.reset')
+                  )}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -228,14 +316,14 @@ export function GeneralTab(): React.JSX.Element {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-            {appVersion ? (
-              <span className="ml-auto text-xs text-muted-foreground">
-                {t('settings.version', { version: appVersion })}
-              </span>
-            ) : null}
-          </CardFooter>
+          </CardContent>
         </Card>
       </form>
+      {appVersion ? (
+        <p className="text-right text-xs text-muted-foreground">
+          {t('settings.version', { version: appVersion })}
+        </p>
+      ) : null}
     </div>
   )
 }

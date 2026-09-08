@@ -27,7 +27,7 @@ test('settings language switch persists across reload (SQLite)', async () => {
 
   await page.locator('#language').click()
   await page.getByRole('option', { name: 'Türkçe' }).click()
-  await page.getByRole('button', { name: 'Save Changes' }).click()
+  await page.getByRole('button', { name: 'Save Changes' }).first().click()
   await expect(page.getByRole('link', { name: 'Ayarlar' })).toBeVisible()
 
   await page.reload()
@@ -38,6 +38,6 @@ test('settings language switch persists across reload (SQLite)', async () => {
   await page.getByRole('link', { name: 'Ayarlar' }).click()
   await page.locator('#language').click()
   await page.getByRole('option', { name: 'English' }).click()
-  await page.getByRole('button', { name: 'Değişiklikleri Kaydet' }).click()
+  await page.getByRole('button', { name: 'Değişiklikleri Kaydet' }).first().click()
   await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible()
 })

@@ -426,6 +426,7 @@ export const tr = {
         dateFormat: 'Tarih Biçimi',
         lowStock: 'Düşük Stok Bildirimlerini Aç',
         cardFee: 'Kredi Kartı Komisyonu (%)',
+        startMaximized: 'Tam Ekran Başlat (Maksimize)',
         save: 'Değişiklikleri Kaydet',
         saved: 'Ayarlar kaydedildi',
         saveFailed: 'Ayarlar kaydedilemedi',

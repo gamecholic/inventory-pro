@@ -426,6 +426,7 @@ export const en = {
         dateFormat: 'Date Format',
         lowStock: 'Enable Low Stock Notifications',
         cardFee: 'Credit Card Vendor Fee (%)',
+        startMaximized: 'Start Maximized (Full Screen)',
         save: 'Save Changes',
         saved: 'Settings saved',
         saveFailed: 'Failed to save settings',

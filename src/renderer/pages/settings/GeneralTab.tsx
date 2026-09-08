@@ -166,6 +166,16 @@ export function GeneralTab(): React.JSX.Element {
               />
             </div>
             <div className="flex items-center justify-between gap-4">
+              <Label htmlFor="startMaximized">{t('settings.startMaximized')}</Label>
+              <Controller
+                name="startMaximized"
+                control={form.control}
+                render={({ field }) => (
+                  <Switch id="startMaximized" checked={field.value} onCheckedChange={field.onChange} />
+                )}
+              />
+            </div>
+            <div className="flex items-center justify-between gap-4">
               <Label htmlFor="lowStock">{t('settings.lowStock')}</Label>
               <Controller
                 name="lowStockNotifications"

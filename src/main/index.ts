@@ -20,7 +20,16 @@ function createWindow(): void {
     }
   })
 
-  mainWindow.on('ready-to-show', () => mainWindow?.show())
+  mainWindow.on('ready-to-show', () => {
+    try {
+      if (getSettings().general.startMaximized) {
+        mainWindow?.maximize()
+      }
+    } catch {
+      // ignore missing settings on first run
+    }
+    mainWindow?.show()
+  })
 
   // Backup prompt on close (features §1.8). Reads the live setting every time.
   mainWindow.on('close', (event) => {

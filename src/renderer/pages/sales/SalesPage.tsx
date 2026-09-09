@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,14 +35,22 @@ export function SalesPage(): React.JSX.Element {
   const currency = settings?.general.currency ?? 'USD'
   const dateFormat = settings?.general.dateFormat ?? 'MM/DD/YYYY'
 
-  // Draft range (picker + presets) commits to the query only via Apply Filter (§6.2).
+  // Range commits instantly once both ends are picked; payment/search were already instant.
   // Default window is Last 1 Month on every page using the picker.
-  const [draft, setDraft] = useState<DateRange | undefined>(() => presetRange('lastMonth'))
+  const [range, setRange] = useState<DateRange | undefined>(() => presetRange('lastMonth'))
   const [applied, setApplied] = useState(dayBounds(presetRange('lastMonth')))
   const [payment, setPayment] = useState<'all' | 'cash' | 'card' | 'split'>('all')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [selectedId, setSelectedId] = useState<number | null>(null)
+
+  const commitRange = (r: DateRange | undefined): void => {
+    setRange(r)
+    if (r?.from && r?.to) {
+      setApplied(dayBounds({ from: r.from, to: r.to }))
+      setPage(1)
+    }
+  }
 
   const { data, isPending, isError, refetch } = useSales({
     from: applied.from,
@@ -56,17 +63,7 @@ export function SalesPage(): React.JSX.Element {
   return (
     <div className="px-4 lg:px-6">
       <div className="mb-4 flex flex-wrap items-end gap-2">
-        <DateRangePicker range={draft} onSelect={setDraft} />
-        <Button
-          disabled={!draft?.from || !draft?.to}
-          onClick={() => {
-            if (!draft?.from || !draft?.to) return
-            setApplied(dayBounds({ from: draft.from, to: draft.to }))
-            setPage(1)
-          }}
-        >
-          {t('sales.apply')}
-        </Button>
+        <DateRangePicker range={range} onSelect={commitRange} />
         <Select
           value={payment}
           onValueChange={(v) => {
@@ -94,9 +91,6 @@ export function SalesPage(): React.JSX.Element {
             setPage(1)
           }}
         />
-        <Button variant="outline" size="icon" title={t('sales.refresh')} onClick={() => void refetch()}>
-          <RefreshCw className="size-4" />
-        </Button>
       </div>
 
       {isPending ? (

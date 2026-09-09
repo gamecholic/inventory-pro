@@ -14,7 +14,6 @@ import {
   Wallet,
   type LucideIcon
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { DateRange } from 'react-day-picker'
 import { DateRangePicker } from '@/components/date-range-picker'
@@ -58,11 +57,11 @@ const INSIGHT_REPORTS: Array<{ key: ReportKey; icon: LucideIcon }> = [
   { key: 'cardFees', icon: Receipt }
 ]
 
-/** §8 — report sidebar, draft range committed only via Generate Report. */
+/** §8 — report sidebar, range applies instantly; Generate re-runs it. */
 export function ReportsPage(): React.JSX.Element {
   const { t } = useTranslation()
   const [report, setReport] = useState<ReportKey>('financial')
-  const [draft, setDraft] = useState<DateRange | undefined>(() => {
+  const [range, setRange] = useState<DateRange | undefined>(() => {
     const now = new Date()
     return { from: startOfDay(startOfMonth(now)), to: endOfDay(endOfMonth(now)) }
   })
@@ -70,6 +69,11 @@ export function ReportsPage(): React.JSX.Element {
     const now = new Date()
     return { from: toISO(startOfDay(startOfMonth(now))), to: toISO(endOfDay(endOfMonth(now))) }
   })
+
+  const commitRange = (r: DateRange | undefined): void => {
+    setRange(r)
+    if (r?.from && r?.to) setApplied(dayBounds({ from: r.from, to: r.to }))
+  }
 
   const reportTrigger = ({ key, icon: Icon }: { key: ReportKey; icon: LucideIcon }): React.JSX.Element => (
     <TabsTrigger key={key} value={key} className="justify-start gap-2 px-3">
@@ -95,16 +99,7 @@ export function ReportsPage(): React.JSX.Element {
         <div className="flex min-w-0 flex-1 flex-col gap-4">
           {report !== 'reorder' && report !== 'deadStock' && (
             <div className="flex flex-wrap items-end gap-2">
-              <DateRangePicker range={draft} onSelect={setDraft} />
-              <Button
-                disabled={!draft?.from || !draft?.to}
-                onClick={() => {
-                  if (!draft?.from || !draft?.to) return
-                  setApplied(dayBounds({ from: draft.from, to: draft.to }))
-                }}
-              >
-                {t('reportPage.generate')}
-              </Button>
+              <DateRangePicker range={range} onSelect={commitRange} />
             </div>
           )}
           <TabsContent value="financial" className="mt-0">

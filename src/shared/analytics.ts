@@ -158,3 +158,47 @@ export interface MonthPoint {
 
 export const yearInput = z.object({ year: z.number().int().min(2000).max(2100) })
 export type YearInput = z.infer<typeof yearInput>
+
+/** Peak-hours heatmap: one bucket per hour of day (local shop time, 0–23). */
+export interface HourlyPoint {
+  hour: number
+  sales: number
+  revenue: number
+}
+
+export const affinityInput = rangeInput.extend({
+  limit: z.number().int().min(1).max(50).default(10)
+})
+export type AffinityInput = z.infer<typeof affinityInput>
+
+/** Product pair bought in the same sale. Support = together ÷ sales analyzed. */
+export interface AffinityRow {
+  aProductId: number | null
+  aName: string
+  bProductId: number | null
+  bName: string
+  together: number
+  support: number
+}
+
+export const lowMarginInput = rangeInput.extend({
+  threshold: z.number().min(0).max(100).default(20),
+  limit: z.number().int().min(1).max(50).default(20)
+})
+export type LowMarginInput = z.infer<typeof lowMarginInput>
+
+/**
+ * Net-margin row with sale-level discounts prorated by line share
+ * (discount × lineTotal ÷ subtotal). Sorted ascending by margin.
+ */
+export interface LowMarginRow {
+  productId: number | null
+  name: string
+  quantity: number
+  grossRevenue: number
+  discount: number
+  netRevenue: number
+  cost: number
+  profit: number
+  margin: number
+}

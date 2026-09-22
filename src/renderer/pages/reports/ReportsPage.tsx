@@ -3,15 +3,19 @@ import { useTranslation } from 'react-i18next'
 import { endOfDay, endOfMonth, startOfDay, startOfMonth } from 'date-fns'
 import {
   Archive,
+  Boxes,
   CreditCard,
+  Link2,
   Package,
   Percent,
   Receipt,
   ShoppingBasket,
   Tag,
+  TrendingDown,
   TrendingUp,
   Truck,
   Wallet,
+  Warehouse,
   type LucideIcon
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -24,6 +28,10 @@ import { CardFeeReport } from './CardFeeReport'
 import { CategoryReport } from './CategoryReport'
 import { DeadStockReport } from './DeadStockReport'
 import { DiscountReport } from './DiscountReport'
+import { AffinityReport } from './AffinityReport'
+import { MarginReport } from './MarginReport'
+import { InventoryValueReport } from './InventoryValueReport'
+import { SupplierValueReport } from './SupplierValueReport'
 import { FinancialReport } from './FinancialReport'
 import { PaymentReport } from './PaymentReport'
 import { ReorderReport } from './ReorderReport'
@@ -41,6 +49,10 @@ type ReportKey =
   | 'basket'
   | 'discounts'
   | 'cardFees'
+  | 'affinity'
+  | 'lowMargin'
+  | 'invValue'
+  | 'supValue'
 
 const SPEC_REPORTS: Array<{ key: ReportKey; icon: LucideIcon }> = [
   { key: 'financial', icon: Wallet },
@@ -54,7 +66,11 @@ const INSIGHT_REPORTS: Array<{ key: ReportKey; icon: LucideIcon }> = [
   { key: 'deadStock', icon: Archive },
   { key: 'basket', icon: ShoppingBasket },
   { key: 'discounts', icon: Percent },
-  { key: 'cardFees', icon: Receipt }
+  { key: 'cardFees', icon: Receipt },
+  { key: 'affinity', icon: Link2 },
+  { key: 'lowMargin', icon: TrendingDown },
+  { key: 'invValue', icon: Boxes },
+  { key: 'supValue', icon: Warehouse }
 ]
 
 /** §8 — report sidebar, range applies instantly; Generate re-runs it. */
@@ -97,7 +113,7 @@ export function ReportsPage(): React.JSX.Element {
           {INSIGHT_REPORTS.map(reportTrigger)}
         </TabsList>
         <div className="flex min-w-0 flex-1 flex-col gap-4">
-          {report !== 'reorder' && report !== 'deadStock' && (
+          {report !== 'reorder' && report !== 'deadStock' && report !== 'invValue' && report !== 'supValue' && (
             <div className="flex flex-wrap items-end gap-2">
               <DateRangePicker range={range} onSelect={commitRange} />
             </div>
@@ -131,6 +147,18 @@ export function ReportsPage(): React.JSX.Element {
           </TabsContent>
           <TabsContent value="cardFees" className="mt-0">
             <CardFeeReport range={applied} />
+          </TabsContent>
+          <TabsContent value="affinity" className="mt-0">
+            <AffinityReport range={applied} />
+          </TabsContent>
+          <TabsContent value="lowMargin" className="mt-0">
+            <MarginReport range={applied} />
+          </TabsContent>
+          <TabsContent value="invValue" className="mt-0">
+            <InventoryValueReport />
+          </TabsContent>
+          <TabsContent value="supValue" className="mt-0">
+            <SupplierValueReport />
           </TabsContent>
         </div>
       </Tabs>

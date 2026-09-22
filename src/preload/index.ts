@@ -13,6 +13,8 @@ import type { PricePoint, StockAdjustInput } from '../shared/stock'
 import type { CheckoutInput, Receipt } from '../shared/sale'
 import type { SaleDetail, SaleList, SaleListFilter } from '../shared/sales'
 import type {
+  AffinityInput,
+  AffinityRow,
   BasketPoint,
   CardFeeReport,
   CategoryProfitRow,
@@ -20,8 +22,11 @@ import type {
   DiscountSummary,
   ExpenseSummary,
   FinancialMetrics,
+  HourlyPoint,
   InventoryOverview,
   InventoryValueRow,
+  LowMarginInput,
+  LowMarginRow,
   MonthPoint,
   PaymentRevenueRow,
   RangeInput,
@@ -153,7 +158,11 @@ const api = {
       ipcRenderer.invoke('analytics:inventory-value', { by }),
     revenueTrend: (months: number): Promise<TrendPoint[]> => ipcRenderer.invoke('analytics:revenue-trend', { months }),
     weekday: (range: RangeInput): Promise<WeekdayPoint[]> => ipcRenderer.invoke('analytics:weekday', range),
-    monthly: (year: number): Promise<MonthPoint[]> => ipcRenderer.invoke('analytics:monthly', { year })
+    monthly: (year: number): Promise<MonthPoint[]> => ipcRenderer.invoke('analytics:monthly', { year }),
+    hourly: (range: RangeInput): Promise<HourlyPoint[]> => ipcRenderer.invoke('analytics:hourly', range),
+    affinity: (input: AffinityInput): Promise<AffinityRow[]> => ipcRenderer.invoke('analytics:affinity', input),
+    lowMargin: (input: LowMarginInput): Promise<LowMarginRow[]> =>
+      ipcRenderer.invoke('analytics:low-margin', input)
   },
   suppliers: {
     list: (): Promise<SupplierRow[]> => ipcRenderer.invoke('suppliers:list'),

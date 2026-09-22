@@ -25,7 +25,7 @@ import {
   ChartTooltipContent,
   type ChartConfig
 } from '@/components/ui/chart'
-import { chartMoneyFormatter, formatMoney, round2 } from '@shared/money'
+import { chartMoneyFormatter, chartPieMoneyFormatter, formatMoney, round2 } from '@shared/money'
 import type { RangeInput } from '@shared/analytics'
 import { useCategoryReport } from '@/hooks/useReports'
 import { useSettings } from '@/hooks/useSettings'
@@ -88,7 +88,7 @@ export function CategoryReport({ range }: { range: RangeInput }): React.JSX.Elem
       ) : (
         <ChartContainer config={config} className="h-72 w-full">
           <PieChart>
-            <ChartTooltip content={<ChartTooltipContent formatter={chartMoneyFormatter(currency)} />} />
+            <ChartTooltip content={<ChartTooltipContent formatter={chartPieMoneyFormatter(currency)} />} />
             <Pie data={data} dataKey="profit" nameKey="name" innerRadius={48}>
               {data.map((r, i) => (
                 <Cell key={r.name} fill={PIE_COLORS[i % PIE_COLORS.length]} />

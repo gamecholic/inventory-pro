@@ -1,6 +1,8 @@
 import { and, eq, gte, isNull, lte, sql } from 'drizzle-orm'
 import { round2 } from '../../shared/money'
 import type {
+  AffinityInput,
+  AffinityRow,
   BasketPoint,
   CardFeeReport,
   CategoryProfitRow,
@@ -9,8 +11,11 @@ import type {
   DiscountSummary,
   ExpenseSummary,
   FinancialMetrics,
+  HourlyPoint,
   InventoryOverview,
   InventoryValueRow,
+  LowMarginInput,
+  LowMarginRow,
   MonthPoint,
   PaymentRevenueRow,
   RangeInput,
@@ -528,4 +533,155 @@ export function getMonthlyAverages(
     const revenue = round2(totals.reduce((s, v) => s + v, 0))
     return { month, sales: totals.length, revenue, avgSales: totals.length, avgRevenue: revenue }
   })
+}
+
+/**
+ * Peak-hours heatmap: totals per hour of day in the shop's local timezone.
+ * Same local-time convention as getWeekdayAverages (JS Date, not SQLite
+ * strftime) so opening-hour decisions match wall-clock time. Always 24 rows.
+ */
+export function getHourlySales(input: RangeInput, db: AppDb = getDb()): HourlyPoint[] {
+  const { from, to } = input
+  const rows = db
+    .select({ createdAt: sales.createdAt, total: sales.total })
+    .from(sales)
+    .where(and(gte(sales.createdAt, from), lte(sales.createdAt, to), COMPLETED))
+    .all()
+  const buckets = Array.from({ length: 24 }, (_, hour) => ({ hour, sales: 0, revenue: 0 }))
+  for (const r of rows) {
+    const hour = new Date(r.createdAt).getHours()
+    if (hour < 0 || hour > 23 || Number.isNaN(hour)) continue
+    const b = buckets[hour] as { hour: number; sales: number; revenue: number }
+    b.sales += 1
+    b.revenue = round2(b.revenue + r.total)
+  }
+  return buckets
+}
+
+/**
+ * Frequently bought together: unordered product pairs sharing a completed
+ * sale in the range. Support = together ÷ completed sales in range.
+ * Names come from the sale-time snapshot so archived products still read.
+ */
+export function getAffinityPairs(input: AffinityInput, db: AppDb = getDb()): AffinityRow[] {
+  const { from, to, limit } = input
+  const completed = db
+    .select({ id: sales.id })
+    .from(sales)
+    .where(and(gte(sales.createdAt, from), lte(sales.createdAt, to), COMPLETED))
+    .all()
+  if (completed.length === 0) return []
+  const ids = completed.map((s) => s.id)
+  const names = new Map<string, { productId: number | null; name: string }>()
+  const itemsBySale = new Map<number, string[]>()
+  // Chunked IN-query to stay under SQLite variable limits on large ranges.
+  for (let i = 0; i < ids.length; i += 400) {
+    const chunk = ids.slice(i, i + 400)
+    const items = db
+      .select({ saleId: saleItems.saleId, productId: saleItems.productId, productName: saleItems.productName })
+      .from(saleItems)
+      .where(sql`${saleItems.saleId} IN ${chunk}`)
+      .all()
+    for (const it of items) {
+      const key = `${it.productId ?? 'x'}::${it.productName}`
+      if (!names.has(key)) names.set(key, { productId: it.productId, name: it.productName })
+      const list = itemsBySale.get(it.saleId) ?? []
+      if (!list.includes(key)) list.push(key)
+      itemsBySale.set(it.saleId, list)
+    }
+  }
+  const pairCounts = new Map<string, number>()
+  for (const keys of itemsBySale.values()) {
+    if (keys.length < 2) continue
+    const capped = keys.slice(0, 50)
+    for (let a = 0; a < capped.length; a++) {
+      for (let b = a + 1; b < capped.length; b++) {
+        const pair = [(capped[a] as string), (capped[b] as string)].sort().join('\n')
+        pairCounts.set(pair, (pairCounts.get(pair) ?? 0) + 1)
+      }
+    }
+  }
+  const totalSales = completed.length
+  return [...pairCounts.entries()]
+    .map(([pair, together]) => {
+      const [ka, kb] = pair.split('\n') as [string, string]
+      const a = names.get(ka) as { productId: number | null; name: string }
+      const b = names.get(kb) as { productId: number | null; name: string }
+      return {
+        aProductId: a.productId,
+        aName: a.name,
+        bProductId: b.productId,
+        bName: b.name,
+        together,
+        support: totalSales > 0 ? (together / totalSales) * 100 : 0
+      }
+    })
+    .sort((x, y) => y.together - x.together || y.support - x.support)
+    .slice(0, limit)
+}
+
+/**
+ * Low-margin / loss-makers with sale-level discounts prorated by line share
+ * (discount × lineTotal ÷ subtotal). Filters margin < threshold, ascending.
+ */
+export function getLowMarginProducts(input: LowMarginInput, db: AppDb = getDb()): LowMarginRow[] {
+  const { from, to, threshold, limit } = input
+  const saleRows = db
+    .select({ id: sales.id, subtotal: sales.subtotal, discount: sales.discount })
+    .from(sales)
+    .where(and(gte(sales.createdAt, from), lte(sales.createdAt, to), COMPLETED))
+    .all()
+  if (saleRows.length === 0) return []
+  const discountBySale = new Map(saleRows.map((s) => [s.id, { subtotal: s.subtotal, discount: s.discount }]))
+  const ids = saleRows.map((s) => s.id)
+  const agg = new Map<string, { productId: number | null; name: string; quantity: number; gross: number; discount: number; cost: number }>()
+  for (let i = 0; i < ids.length; i += 400) {
+    const chunk = ids.slice(i, i + 400)
+    const items = db
+      .select({
+        saleId: saleItems.saleId,
+        productId: saleItems.productId,
+        productName: saleItems.productName,
+        qty: saleItems.qty,
+        lineTotal: saleItems.lineTotal,
+        unitCost: saleItems.unitCost
+      })
+      .from(saleItems)
+      .where(sql`${saleItems.saleId} IN ${chunk}`)
+      .all()
+    for (const it of items) {
+      const sale = discountBySale.get(it.saleId) ?? { subtotal: 0, discount: 0 }
+      const share = sale.subtotal > 0 ? it.lineTotal / sale.subtotal : 0
+      const lineDiscount = sale.discount * share
+      const key = `${it.productId ?? 'x'}::${it.productName}`
+      const entry = agg.get(key) ?? { productId: it.productId, name: it.productName, quantity: 0, gross: 0, discount: 0, cost: 0 }
+      entry.quantity += it.qty
+      entry.gross = round2(entry.gross + it.lineTotal)
+      entry.discount = round2(entry.discount + lineDiscount)
+      entry.cost = round2(entry.cost + it.qty * it.unitCost)
+      agg.set(key, entry)
+    }
+  }
+  return [...agg.values()]
+    .map((e) => {
+      const grossRevenue = round2(e.gross)
+      const discount = round2(e.discount)
+      const netRevenue = round2(grossRevenue - discount)
+      const cost = round2(e.cost)
+      const profit = round2(netRevenue - cost)
+      return {
+        productId: e.productId,
+        name: e.name,
+        quantity: e.quantity,
+        grossRevenue,
+        discount,
+        netRevenue,
+        cost,
+        profit,
+        margin: marginOf(profit, netRevenue)
+      }
+    })
+    .filter((r) => r.margin < threshold)
+    .sort((a, b) => a.margin - b.margin)
+    .slice(0, limit)
 }

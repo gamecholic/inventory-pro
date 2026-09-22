@@ -1,18 +1,11 @@
 import { useTranslation } from 'react-i18next'
 import { useSettings } from '@/hooks/useSettings'
 import { MetricCards } from './MetricCards'
-import { TopSellingPanel } from './TopSellingPanel'
-import { SupplierPanel } from './SupplierPanel'
-import { WeekdayPanel } from './WeekdayPanel'
-import { MonthlyPanel } from './MonthlyPanel'
-import { PaymentPanel } from './PaymentPanel'
-import { InvSupplierPanel } from './InvSupplierPanel'
+import { RhythmPanel } from './RhythmPanel'
 import { ExpensesTrendPanel } from './ExpensesTrendPanel'
 import { RevProfitTrendPanel } from './RevProfitTrendPanel'
-import { CategoryPanel } from './CategoryPanel'
-import { InvCategoryPanel } from './InvCategoryPanel'
 
-/** §2 — welcome line, 11 metric cards, 10 analysis panels. */
+/** §2 — welcome line, metric cards, 3 glanceable ops panels (breakdowns live in Reports). */
 export function DashboardPage(): React.JSX.Element {
   const { t } = useTranslation()
   const { data: settings } = useSettings()
@@ -26,16 +19,11 @@ export function DashboardPage(): React.JSX.Element {
       </h2>
       <MetricCards />
       <div className="grid items-start gap-4 md:grid-cols-2">
-        <TopSellingPanel />
-        <SupplierPanel />
-        <WeekdayPanel />
-        <MonthlyPanel />
-        <PaymentPanel />
-        <InvSupplierPanel />
-        <ExpensesTrendPanel />
         <RevProfitTrendPanel />
-        <CategoryPanel />
-        <InvCategoryPanel />
+        <ExpensesTrendPanel />
+        <div className="md:col-span-2">
+          <RhythmPanel />
+        </div>
       </div>
     </div>
   )

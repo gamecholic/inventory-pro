@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { chartMoneyFormatter, formatMoney, round2 } from './money'
+import { chartMoneyFormatter, chartPieMoneyFormatter, formatMoney, round2 } from './money'
 
 describe('round2', () => {
   it('rounds repeating decimals to cents', () => {
@@ -19,5 +19,12 @@ describe('formatMoney', () => {
 
   it('builds chart tooltip formatters', () => {
     expect(chartMoneyFormatter('USD')(42.5)).toBe('$42.50')
+  })
+
+  it('prefixes pie tooltips with the slice name', () => {
+    const fmt = chartPieMoneyFormatter('TRY')
+    expect(fmt(1200, 'value', { payload: { name: 'Drinks' } })).toBe('Drinks: ₺1,200.00')
+    expect(fmt(50, 'value', { payload: { name: '' } })).toBe('—: ₺50.00')
+    expect(fmt(50, 'value', {})).toBe('—: ₺50.00')
   })
 })

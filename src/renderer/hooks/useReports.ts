@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { endOfDay, endOfMonth, startOfDay, startOfMonth } from 'date-fns'
-import type { DeadStockInput, RangeInput, TopProductsInput } from '@shared/analytics'
+import type { AffinityInput, DeadStockInput, LowMarginInput, RangeInput, TopProductsInput } from '@shared/analytics'
 
 /** Current calendar month as an ISO range — the dashboard's default window. */
 export function currentMonthRange(): RangeInput {
@@ -129,4 +129,31 @@ export function useWeekdayAverages(range: RangeInput | null) {
 
 export function useMonthlyAverages(year: number) {
   return useQuery({ queryKey: ['dash-monthly', year], queryFn: () => window.api.analytics.monthly(year) })
+}
+
+export function useHourlySales(range: RangeInput | null) {
+  return useQuery({
+    queryKey: ['dash-hourly', range],
+    queryFn: () => window.api.analytics.hourly(range as RangeInput),
+    enabled: range !== null,
+    placeholderData: keepPreviousData
+  })
+}
+
+export function useAffinityReport(input: AffinityInput | null) {
+  return useQuery({
+    queryKey: ['report-affinity', input],
+    queryFn: () => window.api.analytics.affinity(input as AffinityInput),
+    enabled: input !== null,
+    placeholderData: keepPreviousData
+  })
+}
+
+export function useLowMarginReport(input: LowMarginInput | null) {
+  return useQuery({
+    queryKey: ['report-low-margin', input],
+    queryFn: () => window.api.analytics.lowMargin(input as LowMarginInput),
+    enabled: input !== null,
+    placeholderData: keepPreviousData
+  })
 }

@@ -30,3 +30,18 @@ export function round2(n: number): number {
 export function chartMoneyFormatter(currency: StoreCurrency): (value: unknown) => string {
   return (value: unknown) => formatMoney(Number(value), currency)
 }
+
+/**
+ * Pie-slice tooltip formatter: "Name: $1,200.00". Recharts drops the slice
+ * name for pies (payload name = dataKey), so the category is read back off
+ * the datum. Blank names render as an em dash, matching the report tables.
+ */
+export function chartPieMoneyFormatter(
+  currency: StoreCurrency
+): (value: unknown, _name: unknown, item?: { payload?: { name?: unknown } }) => string {
+  return (value: unknown, _name: unknown, item?: { payload?: { name?: unknown } }) => {
+    const raw = item?.payload?.name
+    const name = typeof raw === 'string' && raw !== '' ? raw : '—'
+    return `${name}: ${formatMoney(Number(value), currency)}`
+  }
+}

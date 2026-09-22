@@ -6,6 +6,7 @@ import { drizzle } from 'drizzle-orm/better-sqlite3'
 import * as schema from './schema'
 import type { AppDb } from './client'
 import {
+  getAffinityPairs,
   getBasketTrend,
   getCardFeeReport,
   getCategoryProfit,
@@ -13,8 +14,10 @@ import {
   getDiscountSummary,
   getExpenseSummary,
   getFinancialMetrics,
+  getHourlySales,
   getInventoryOverview,
   getInventoryValue,
+  getLowMarginProducts,
   getMonthlyAverages,
   getPaymentRevenue,
   getReorderSuggestions,
@@ -233,6 +236,129 @@ describe('analytics', () => {
     const months = getMonthlyAverages({ year: new Date().getFullYear() }, db)
     expect(months).toHaveLength(12)
     expect(months.reduce((s, m) => s + m.sales, 0)).toBe(1)
+  })
+})
+
+/** Isolated fixture for the three new aggregations (keeps the suite above intact). */
+describe('hourly, affinity and low-margin', () => {
+  let db2: AppDb
+  let sqlite2: Database.Database
+  const H_RANGE = { from: '2026-06-01T00:00:00.000Z', to: '2026-06-30T23:59:59.999Z' }
+
+  beforeAll(() => {
+    sqlite2 = new Database(':memory:')
+    db2 = drizzle(sqlite2, { schema })
+    migrate(db2, { migrationsFolder: join(process.cwd(), 'drizzle') })
+    const now = '2026-06-15T12:00:00.000Z'
+
+    const mkProduct = (name: string): number =>
+      db2
+        .insert(schema.products)
+        .values({
+          name,
+          barcode: null,
+          categoryId: null,
+          unit: 'pcs',
+          sellingPrice: 100,
+          costPrice: 10,
+          stockQty: 50,
+          minStock: 5,
+          supplierId: null,
+          description: null,
+          archivedAt: null,
+          createdAt: now,
+          updatedAt: now
+        })
+        .run().lastInsertRowid as number
+
+    const mkSale = (createdAt: string, subtotal: number, discount: number, total: number): number =>
+      db2
+        .insert(schema.sales)
+        .values({
+          receiptNo: `HX-${createdAt}`,
+          createdAt,
+          subtotal,
+          discount,
+          total,
+          paymentMethod: 'cash',
+          cashAmount: total,
+          cardAmount: null,
+          changeAmount: 0,
+          status: 'completed',
+          canceledAt: null
+        })
+        .run().lastInsertRowid as number
+
+    const mkItem = (saleId: number, productId: number, name: string, qty: number, price: number, cost: number): void => {
+      db2
+        .insert(schema.saleItems)
+        .values({ saleId, productId, productName: name, unit: 'pcs', qty, unitPrice: price, unitCost: cost, lineTotal: qty * price })
+        .run()
+    }
+
+    // Hourly: two morning sales, one evening sale.
+    const h1 = mkSale('2026-06-10T08:15:00.000Z', 100, 0, 100)
+    const h2 = mkSale('2026-06-11T08:45:00.000Z', 50, 0, 50)
+    const h3 = mkSale('2026-06-12T20:05:00.000Z', 200, 0, 200)
+    // Affinity + margin items on the same sales.
+    const bread = mkProduct('Bread')
+    const butter = mkProduct('Butter')
+    const milk = mkProduct('Milk')
+    mkItem(h1, bread, 'Bread', 1, 100, 90) // thin margin, worsened by discount below
+    mkItem(h1, butter, 'Butter', 1, 100, 10)
+    mkItem(h2, bread, 'Bread', 1, 50, 45)
+    mkItem(h2, butter, 'Butter', 1, 50, 5)
+    mkItem(h3, milk, 'Milk', 2, 100, 10) // rich margin, never flagged
+    // Discounted sale: Bread goes negative after proration.
+    const h4 = mkSale('2026-06-13T09:00:00.000Z', 100, 40, 60)
+    mkItem(h4, bread, 'Bread', 1, 100, 90)
+    void milk
+  })
+
+  afterAll(() => {
+    sqlite2.close()
+  })
+
+  it('buckets sales into 24 local-hour rows', () => {
+    const rows = getHourlySales(H_RANGE, db2)
+    expect(rows).toHaveLength(24)
+    const totalSales = rows.reduce((s, r) => s + r.sales, 0)
+    const totalRevenue = rows.reduce((s, r) => s + r.revenue, 0)
+    expect(totalSales).toBe(4)
+    expect(totalRevenue).toBe(410)
+    const morningHour = new Date('2026-06-10T08:15:00.000Z').getHours()
+    expect(rows[morningHour]?.sales).toBe(2)
+  })
+
+  it('finds the Bread+Butter pair with support over all sales', () => {
+    const pairs = getAffinityPairs({ ...H_RANGE, limit: 10 }, db2)
+    const bb = pairs.find(
+      (p) => (p.aName === 'Bread' && p.bName === 'Butter') || (p.aName === 'Butter' && p.bName === 'Bread')
+    )
+    expect(bb?.together).toBe(2)
+    expect(bb?.support).toBeCloseTo(50, 5)
+    expect(pairs[0]).toEqual(bb)
+  })
+
+  it('flags negative-margin Bread but not rich-margin Milk', () => {    const rows = getLowMarginProducts({ ...H_RANGE, threshold: 20, limit: 20 }, db2)
+    const names = rows.map((r) => r.name)
+    expect(names).toContain('Bread')
+    expect(names).not.toContain('Milk')
+    const bread = rows.find((r) => r.name === 'Bread')
+    // Gross 250, discount 40 prorated fully onto Bread's 100-line, cost 225.
+    expect(bread).toMatchObject({ grossRevenue: 250, discount: 40, netRevenue: 210, cost: 225 })
+    expect(bread?.profit).toBeLessThan(0)
+    // Threshold is exclusive: threshold 0 keeps only loss-makers (Bread).
+    expect(getLowMarginProducts({ ...H_RANGE, threshold: 0, limit: 20 }, db2).map((r) => r.name)).toEqual(['Bread'])
+  })
+
+  it('returns empty-shaped results outside any sales', () => {
+    const empty = { from: '2020-01-01T00:00:00.000Z', to: '2020-01-31T23:59:59.999Z' }
+    const hours = getHourlySales(empty, db2)
+    expect(hours).toHaveLength(24)
+    expect(hours.every((h) => h.sales === 0 && h.revenue === 0)).toBe(true)
+    expect(getAffinityPairs({ ...empty, limit: 10 }, db2)).toEqual([])
+    expect(getLowMarginProducts({ ...empty, threshold: 20, limit: 20 }, db2)).toEqual([])
   })
 })
 

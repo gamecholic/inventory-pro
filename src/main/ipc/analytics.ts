@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron'
 import {
+  getAffinityPairs,
   getBasketTrend,
   getCardFeeReport,
   getCategoryProfit,
@@ -7,8 +8,10 @@ import {
   getDiscountSummary,
   getExpenseSummary,
   getFinancialMetrics,
+  getHourlySales,
   getInventoryOverview,
   getInventoryValue,
+  getLowMarginProducts,
   getMonthlyAverages,
   getMonthlyExpenses,
   getPaymentRevenue,
@@ -18,7 +21,7 @@ import {
   getTopProducts,
   getWeekdayAverages
 } from '../db/analytics'
-import { deadStockInput, rangeInput, topProductsInput, yearInput } from '../../shared/analytics'
+import { affinityInput, deadStockInput, lowMarginInput, rangeInput, topProductsInput, yearInput } from '../../shared/analytics'
 
 export function registerAnalyticsIpc(): void {
   ipcMain.handle('analytics:financial', (_event, input: unknown) => getFinancialMetrics(rangeInput.parse(input)))
@@ -50,4 +53,7 @@ export function registerAnalyticsIpc(): void {
   })
   ipcMain.handle('analytics:weekday', (_event, input: unknown) => getWeekdayAverages(rangeInput.parse(input)))
   ipcMain.handle('analytics:monthly', (_event, input: unknown) => getMonthlyAverages(yearInput.parse(input)))
+  ipcMain.handle('analytics:hourly', (_event, input: unknown) => getHourlySales(rangeInput.parse(input)))
+  ipcMain.handle('analytics:affinity', (_event, input: unknown) => getAffinityPairs(affinityInput.parse(input)))
+  ipcMain.handle('analytics:low-margin', (_event, input: unknown) => getLowMarginProducts(lowMarginInput.parse(input)))
 }

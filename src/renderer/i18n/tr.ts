@@ -130,6 +130,7 @@ export const tr = {
         method: 'Yöntem',
         share: 'Pay',
         netCard: 'Komisyon Sonrası Net Kart Tutarı',
+        feeCallout: 'Kart komisyonu bu dönemde size {{fee}} mal oldu (%{{feePercent}} komisyon). Net kart: {{net}}.',
         supplierCol: 'Tedarikçi',
         categoryCol: 'Kategori',
         cost: 'Maliyet',

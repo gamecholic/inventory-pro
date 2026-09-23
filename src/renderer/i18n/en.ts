@@ -130,6 +130,7 @@ export const en = {
         method: 'Method',
         share: 'Share',
         netCard: 'Net Card Amount After Fee',
+        feeCallout: 'Card fees cost you {{fee}} this period ({{feePercent}}% fee). Net card: {{net}}.',
         supplierCol: 'Supplier',
         categoryCol: 'Category',
         cost: 'Cost',

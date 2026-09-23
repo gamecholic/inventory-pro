@@ -39,7 +39,8 @@ export const en = {
           margin: 'Profit Margin',
           marginHelp: 'Monthly profit divided by monthly revenue.',
           turnover: 'Inventory Turnover',
-          turnoverHelp: 'Monthly cost of goods sold divided by current inventory value. Higher means faster-moving stock.',
+          turnoverHelp: 'Cost of goods sold in the current calendar month divided by current inventory value. Higher means faster-moving stock. Shows — when there is no cost data yet.',
+          noCostData: 'No cost data this month',
           inventoryValue: 'Inventory Value',
           inventoryValueHelp: 'Current stock valued at cost price.',
           monthlyExpenses: 'Monthly Expenses',
@@ -50,6 +51,11 @@ export const en = {
           revenueDiffHelp: 'Monthly revenue (all methods) minus monthly expenses.',
           positive: 'Positive',
           negative: 'Negative'
+        },
+        sections: {
+          sales: 'Sales',
+          inventory: 'Inventory',
+          cash: 'Cash & Expenses'
         },
         rhythm: 'Sales Rhythm',
         hours: 'Hours',

@@ -124,6 +124,8 @@ export interface InventoryOverview {
   todaySales: number
   inventoryValue: number
   turnover: number
+  /** Current-month COGS behind turnover — lets the UI tell "no cost data" apart from a true 0. */
+  monthCogs: number
 }
 
 export interface InventoryValueRow {

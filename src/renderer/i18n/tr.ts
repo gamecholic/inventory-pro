@@ -39,7 +39,8 @@ export const tr = {
           margin: 'Kâr Marjı',
           marginHelp: 'Aylık kârın aylık ciroya bölümü.',
           turnover: 'Stok Devir Hızı',
-          turnoverHelp: 'Aylık satılan maliyeti bölü güncel stok değeri. Yüksek değer hızlı stok demektir.',
+          turnoverHelp: 'İçinde bulunulan aydaki satılan malın maliyeti bölü güncel stok değeri. Yüksek değer hızlı stok demektir. Henüz maliyet verisi yoksa — gösterir.',
+          noCostData: 'Bu ay maliyet verisi yok',
           inventoryValue: 'Stok Değeri',
           inventoryValueHelp: 'Mevcut stok maliyet fiyatıyla değerlenir.',
           monthlyExpenses: 'Aylık Giderler',
@@ -50,6 +51,11 @@ export const tr = {
           revenueDiffHelp: 'Aylık ciro (tüm yöntemler) eksi aylık giderler.',
           positive: 'Pozitif',
           negative: 'Negatif'
+        },
+        sections: {
+          sales: 'Satışlar',
+          inventory: 'Stok',
+          cash: 'Nakit & Giderler'
         },
         rhythm: 'Satış Ritmi',
         hours: 'Saatler',

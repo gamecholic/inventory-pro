@@ -210,6 +210,7 @@ describe('analytics', () => {
     expect(o.todaySales).toBe(45)
     expect(o.inventoryValue).toBe(160)
     expect(o.turnover).toBeCloseTo(20 / 160, 10)
+    expect(o.monthCogs).toBe(20)
   })
 
   it('groups inventory value by supplier and category', () => {

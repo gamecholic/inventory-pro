@@ -413,6 +413,7 @@ export function getInventoryOverview(db: AppDb = getDb()): InventoryOverview {
       .innerJoin(sales, eq(saleItems.saleId, sales.id))
       .where(and(gte(sales.createdAt, monthStart), COMPLETED))
       .get()?.c ?? 0
+  const roundedCogs = round2(monthCogs)
   return {
     totalProducts: active.length,
     lowStockItems: active.filter((p) => p.stockQty <= p.minStock).length,
@@ -420,7 +421,8 @@ export function getInventoryOverview(db: AppDb = getDb()): InventoryOverview {
     inventoryValue,
     // True turnover needs average inventory over time; current value is the
     // documented small-shop approximation (no historical snapshots exist).
-    turnover: inventoryValue > 0 ? monthCogs / inventoryValue : 0
+    turnover: inventoryValue > 0 ? monthCogs / inventoryValue : 0,
+    monthCogs: roundedCogs
   }
 }
 

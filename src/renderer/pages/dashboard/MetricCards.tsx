@@ -108,7 +108,7 @@ export function MetricCards(): React.JSX.Element {
   return (
     <div className="grid gap-3 lg:grid-cols-3">
       <section aria-label={t('dashboard.sections.sales')} className="flex flex-col gap-2 rounded-lg border border-border bg-muted/30 p-3">
-        <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h3 className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
           <TrendingUp className="size-4" aria-hidden />
           {t('dashboard.sections.sales')}
         </h3>
@@ -131,7 +131,7 @@ export function MetricCards(): React.JSX.Element {
         </div>
       </section>
       <section aria-label={t('dashboard.sections.inventory')} className="flex flex-col gap-2 rounded-lg border border-border bg-muted/30 p-3">
-        <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h3 className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
           <Package className="size-4" aria-hidden />
           {t('dashboard.sections.inventory')}
         </h3>
@@ -165,7 +165,7 @@ export function MetricCards(): React.JSX.Element {
         </div>
       </section>
       <section aria-label={t('dashboard.sections.cash')} className="flex flex-col gap-2 rounded-lg border border-border bg-muted/30 p-3">
-        <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <h3 className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
           <Wallet className="size-4" aria-hidden />
           {t('dashboard.sections.cash')}
         </h3>

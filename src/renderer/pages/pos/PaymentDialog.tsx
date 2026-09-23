@@ -118,6 +118,12 @@ export function PaymentDialog({
     if (c !== null) setCardStr(Math.max(0, round2(total - c)).toFixed(2))
   }
 
+  const onCardType = (v: string): void => {
+    setCardStr(v)
+    const k = num(v)
+    if (k !== null) setCashStr(Math.max(0, round2(total - k)).toFixed(2))
+  }
+
   const completeLabel = complete.isPending ? t('pos.processing') : t('pos.completeSale')
 
   return (
@@ -181,7 +187,7 @@ export function PaymentDialog({
                       step={0.01}
                       disabled={splitChange > 0}
                       value={splitCash !== null && splitCash > total ? '0.00' : cardStr}
-                      onChange={(e) => setCardStr(e.target.value)}
+                      onChange={(e) => onCardType(e.target.value)}
                     />
                   </div>
                   {splitChange > 0 && (

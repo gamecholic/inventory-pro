@@ -25,7 +25,7 @@ import {
   ChartTooltipContent,
   type ChartConfig
 } from '@/components/ui/chart'
-import { chartMoneyFormatter, chartPieMoneyFormatter, formatMoney, round2 } from '@shared/money'
+import { chartPieMoneyFormatter, formatMoney, round2 } from '@shared/money'
 import type { RangeInput } from '@shared/analytics'
 import { useCategoryReport } from '@/hooks/useReports'
 import { useSettings } from '@/hooks/useSettings'
@@ -66,6 +66,10 @@ export function CategoryReport({ range }: { range: RangeInput }): React.JSX.Elem
   const totalProfit = round2(data.reduce((s, r) => s + r.profit, 0))
   const overallMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0
   const truncateAxis = (s: string): string => (s.length > 12 ? `${s.slice(0, 11)}…` : s)
+  const tooltipFormatter = (value: unknown, name: unknown): string => {
+    const label = name === 'cost' ? config.cost.label : config.profit.label
+    return `${String(label ?? name)}: ${formatMoney(Number(value), currency)}`
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -101,7 +105,7 @@ export function CategoryReport({ range }: { range: RangeInput }): React.JSX.Elem
               height={56}
             />
             <YAxis tickLine={false} axisLine={false} width={64} tick={{ fontSize: 12 }} />
-            <ChartTooltip content={<ChartTooltipContent formatter={chartMoneyFormatter(currency)} />} />
+            <ChartTooltip content={<ChartTooltipContent formatter={tooltipFormatter} />} />
             <ChartLegend content={<ChartLegendContent />} />
             <Bar dataKey="profit" fill="var(--color-profit)" radius={4} />
             <Bar dataKey="cost" fill="var(--color-cost)" radius={4} />

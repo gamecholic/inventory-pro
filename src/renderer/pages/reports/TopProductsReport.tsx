@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { Label } from '@/components/ui/label'
@@ -34,7 +34,9 @@ export function TopProductsReport({ range }: { range: RangeInput }): React.JSX.E
   const { data: settings } = useSettings()
   const [sort, setSort] = useState<Sort>('revenue')
   const [limit, setLimit] = useState<number>(10)
-  const { data, isPending, isError, refetch } = useTopProductsReport({ ...range, sort, limit })
+  // Stable input: a fresh object every render would change the query key.
+  const input = useMemo(() => ({ ...range, sort, limit }), [range, sort, limit])
+  const { data, isPending, isError, refetch } = useTopProductsReport(input)
   const currency = settings?.general.currency ?? 'USD'
 
   const config = { value: { label: t('reportPage.value'), color: 'var(--chart-2)' } } satisfies ChartConfig
@@ -52,6 +54,7 @@ export function TopProductsReport({ range }: { range: RangeInput }): React.JSX.E
   const totalRevenue = round2(data.reduce((s, r) => s + r.revenue, 0))
   const totalProfit = round2(data.reduce((s, r) => s + r.profit, 0))
   const overallMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0
+  const truncateAxis = (s: string): string => (s.length > 18 ? `${s.slice(0, 17)}…` : s)
 
   return (
     <div className="flex flex-col gap-4">
@@ -93,12 +96,21 @@ export function TopProductsReport({ range }: { range: RangeInput }): React.JSX.E
       <ChartContainer config={config} className="h-72 w-full">
         <BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 16 }}>
           <CartesianGrid horizontal={false} />
-          <XAxis type="number" tickLine={false} axisLine={false} />
-          <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} width={140} />
+          <XAxis type="number" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
+          <YAxis
+            type="category"
+            dataKey="name"
+            tickLine={false}
+            axisLine={false}
+            width={140}
+            tick={{ fontSize: 12 }}
+            tickFormatter={(v: unknown): string => truncateAxis(String(v))}
+          />
           <ChartTooltip content={<ChartTooltipContent formatter={(v) => fmtValue(Number(v))} />} />
           <Bar dataKey="value" fill="var(--color-value)" radius={4} />
         </BarChart>
       </ChartContainer>
+      <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -130,6 +142,7 @@ export function TopProductsReport({ range }: { range: RangeInput }): React.JSX.E
           </TableRow>
         </TableFooter>
       </Table>
+      </div>
       <p className="text-xs text-muted-foreground">{t('reports.grossRevenueNote')}</p>
     </div>
   )

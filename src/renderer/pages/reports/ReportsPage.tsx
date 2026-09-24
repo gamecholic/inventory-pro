@@ -1,13 +1,13 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { endOfDay, endOfMonth, startOfDay, startOfMonth } from 'date-fns'
 import {
   Archive,
   Boxes,
   CreditCard,
+  LayoutGrid,
   Link2,
   Package,
-  Percent,
   Receipt,
   ShoppingBasket,
   Tag,
@@ -54,26 +54,46 @@ type ReportKey =
   | 'invValue'
   | 'supValue'
 
-const SPEC_REPORTS: Array<{ key: ReportKey; icon: LucideIcon }> = [
-  { key: 'financial', icon: Wallet },
-  { key: 'topProducts', icon: TrendingUp },
-  { key: 'payment', icon: CreditCard },
-  { key: 'supplier', icon: Truck },
-  { key: 'category', icon: Tag }
-]
-const INSIGHT_REPORTS: Array<{ key: ReportKey; icon: LucideIcon }> = [
-  { key: 'reorder', icon: Package },
-  { key: 'deadStock', icon: Archive },
-  { key: 'basket', icon: ShoppingBasket },
-  { key: 'discounts', icon: Percent },
-  { key: 'cardFees', icon: Receipt },
-  { key: 'affinity', icon: Link2 },
-  { key: 'lowMargin', icon: TrendingDown },
-  { key: 'invValue', icon: Boxes },
-  { key: 'supValue', icon: Warehouse }
+const NO_RANGE_REPORTS: ReadonlySet<ReportKey> = new Set(['reorder', 'deadStock', 'invValue', 'supValue'])
+
+const REPORT_GROUPS: Array<{ labelKey: string; items: Array<{ key: ReportKey; icon: LucideIcon }> }> = [
+  {
+    labelKey: 'reportPage.performance',
+    items: [
+      { key: 'financial', icon: Wallet },
+      { key: 'topProducts', icon: TrendingUp },
+      { key: 'basket', icon: ShoppingBasket },
+      { key: 'discounts', icon: Tag }
+    ]
+  },
+  {
+    labelKey: 'reportPage.payments',
+    items: [
+      { key: 'payment', icon: CreditCard },
+      { key: 'cardFees', icon: Receipt }
+    ]
+  },
+  {
+    labelKey: 'reportPage.breakdowns',
+    items: [
+      { key: 'supplier', icon: Truck },
+      { key: 'category', icon: LayoutGrid },
+      { key: 'invValue', icon: Boxes },
+      { key: 'supValue', icon: Warehouse }
+    ]
+  },
+  {
+    labelKey: 'reportPage.stockActions',
+    items: [
+      { key: 'reorder', icon: Package },
+      { key: 'deadStock', icon: Archive },
+      { key: 'lowMargin', icon: TrendingDown },
+      { key: 'affinity', icon: Link2 }
+    ]
+  }
 ]
 
-/** §8 — report sidebar, range applies instantly; Generate re-runs it. */
+/** §8 — report sidebar, range applies instantly on commit. */
 export function ReportsPage(): React.JSX.Element {
   const { t } = useTranslation()
   const [report, setReport] = useState<ReportKey>('financial')
@@ -93,7 +113,7 @@ export function ReportsPage(): React.JSX.Element {
 
   const reportTrigger = ({ key, icon: Icon }: { key: ReportKey; icon: LucideIcon }): React.JSX.Element => (
     <TabsTrigger key={key} value={key} className="justify-start gap-2 px-3">
-      <Icon />
+      <Icon className="size-4 shrink-0" aria-hidden />
       {t(`reportPage.${key}`)}
     </TabsTrigger>
   )
@@ -107,13 +127,23 @@ export function ReportsPage(): React.JSX.Element {
         className="flex-col gap-6 md:flex-row"
       >
         <TabsList className="h-fit w-full shrink-0 flex-col items-stretch gap-1 p-1.5 md:w-60">
-          <p className="px-3 pt-1 text-xs font-medium text-muted-foreground">{t('reportPage.types')}</p>
-          {SPEC_REPORTS.map(reportTrigger)}
-          <p className="px-3 pt-2 text-xs font-medium text-muted-foreground">{t('reportPage.insights')}</p>
-          {INSIGHT_REPORTS.map(reportTrigger)}
+          {REPORT_GROUPS.map((group, i) => (
+            <Fragment key={group.labelKey}>
+              <p
+                className={
+                  i === 0
+                    ? 'px-3 pt-1 text-xs font-medium text-muted-foreground'
+                    : 'px-3 pt-2 text-xs font-medium text-muted-foreground'
+                }
+              >
+                {t(group.labelKey)}
+              </p>
+              {group.items.map(reportTrigger)}
+            </Fragment>
+          ))}
         </TabsList>
         <div className="flex min-w-0 flex-1 flex-col gap-4">
-          {report !== 'reorder' && report !== 'deadStock' && report !== 'invValue' && report !== 'supValue' && (
+          {!NO_RANGE_REPORTS.has(report) && (
             <div className="flex flex-wrap items-end gap-2">
               <DateRangePicker range={range} onSelect={commitRange} />
             </div>

@@ -1,13 +1,5 @@
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis } from 'recharts'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import {
   Table,
   TableBody,
@@ -19,30 +11,26 @@ import {
 } from '@/components/ui/table'
 import {
   ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig
 } from '@/components/ui/chart'
-import { chartMoneyFormatter, chartPieMoneyFormatter, formatMoney, round2 } from '@shared/money'
+import { chartMoneyFormatter, formatMoney, round2 } from '@shared/money'
 import { useInventoryValue } from '@/hooks/useReports'
 import { useSettings } from '@/hooks/useSettings'
 import { ReportEmpty, ReportError, ReportLoading } from './ReportState'
-
-const PIE_COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)'] as const
 
 /** Current stock value distribution by category — a snapshot, no date range. */
 export function InventoryValueReport(): React.JSX.Element {
   const { t } = useTranslation()
   const { data: settings } = useSettings()
-  const [mode, setMode] = useState<'pie' | 'bar'>('pie')
   const { data, isPending, isError, refetch } = useInventoryValue('category')
   const currency = settings?.general.currency ?? 'USD'
 
   const config = { value: { label: t('reportPage.value'), color: 'var(--chart-2)' } } satisfies ChartConfig
   const total = round2((data ?? []).reduce((s, r) => s + r.value, 0))
   const totalItems = (data ?? []).reduce((s, r) => s + r.items, 0)
+  const truncateAxis = (s: string): string => (s.length > 18 ? `${s.slice(0, 17)}…` : s)
 
   if (isPending) return <ReportLoading />
   if (isError) return <ReportError onRetry={() => void refetch()} />
@@ -54,40 +42,24 @@ export function InventoryValueReport(): React.JSX.Element {
         <h3 className="text-lg font-semibold">{t('reportPage.invValue')}</h3>
         <p className="text-sm text-muted-foreground">{t('reportPage.invValueDesc')}</p>
       </div>
-      <div className="flex items-center gap-2">
-        <Select value={mode} onValueChange={(v) => setMode(v as 'pie' | 'bar')}>
-          <SelectTrigger className="w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pie">{t('reportPage.pieChart')}</SelectItem>
-            <SelectItem value="bar">{t('reportPage.barChart')}</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      {mode === 'pie' ? (
-        <ChartContainer config={config} className="h-64 w-full">
-          <PieChart>
-            <ChartTooltip content={<ChartTooltipContent formatter={chartPieMoneyFormatter(currency)} />} />
-            <Pie data={data} dataKey="value" nameKey="name" innerRadius={48}>
-              {data.map((r, i) => (
-                <Cell key={r.key} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-              ))}
-            </Pie>
-            <ChartLegend content={<ChartLegendContent nameKey="name" />} />
-          </PieChart>
-        </ChartContainer>
-      ) : (
-        <ChartContainer config={config} className="h-64 w-full">
-          <BarChart data={data} layout="vertical" margin={{ left: 8, right: 16 }}>
-            <CartesianGrid horizontal={false} />
-            <XAxis type="number" tickLine={false} axisLine={false} />
-            <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} width={140} />
-            <ChartTooltip content={<ChartTooltipContent formatter={chartMoneyFormatter(currency)} />} />
-            <Bar dataKey="value" fill="var(--color-value)" radius={4} />
-          </BarChart>
-        </ChartContainer>
-      )}
+      <ChartContainer config={config} className="h-64 w-full">
+        <BarChart data={data} layout="vertical" margin={{ left: 8, right: 16 }}>
+          <CartesianGrid horizontal={false} />
+          <XAxis type="number" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
+          <YAxis
+            type="category"
+            dataKey="name"
+            tickLine={false}
+            axisLine={false}
+            width={140}
+            tick={{ fontSize: 12 }}
+            tickFormatter={(v: unknown): string => truncateAxis(String(v))}
+          />
+          <ChartTooltip content={<ChartTooltipContent formatter={chartMoneyFormatter(currency)} />} />
+          <Bar dataKey="value" fill="var(--color-value)" radius={4} />
+        </BarChart>
+      </ChartContainer>
+      <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -116,6 +88,7 @@ export function InventoryValueReport(): React.JSX.Element {
           </TableRow>
         </TableFooter>
       </Table>
+      </div>
     </div>
   )
 }

@@ -1,20 +1,12 @@
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table'
 import { formatMoney } from '@shared/money'
 import type { RangeInput } from '@shared/analytics'
 import { useFinancialMetrics } from '@/hooks/useReports'
 import { useSettings } from '@/hooks/useSettings'
 import { PeriodLabel, ReportEmpty, ReportError, ReportLoading } from './ReportState'
 
-/** §8.1 — default report. Six metric cards plus a Metric/Value table. */
+/** §8.1 — default report. Six metric cards. */
 export function FinancialReport({ range }: { range: RangeInput }): React.JSX.Element {
   const { t } = useTranslation()
   const { data: settings } = useSettings()
@@ -51,22 +43,6 @@ export function FinancialReport({ range }: { range: RangeInput }): React.JSX.Ele
           </Card>
         ))}
       </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t('reportPage.metric')}</TableHead>
-            <TableHead className="text-right">{t('reportPage.value')}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {cards.map(([label, value]) => (
-            <TableRow key={label}>
-              <TableCell>{label}</TableCell>
-              <TableCell className="text-right">{value}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
     </div>
   )
 }

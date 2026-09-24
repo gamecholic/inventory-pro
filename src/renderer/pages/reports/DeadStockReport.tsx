@@ -66,6 +66,7 @@ export function DeadStockReport(): React.JSX.Element {
           <p className="text-2xl font-bold">{formatMoney(data.totalValue, currency)}</p>
         </CardContent>
       </Card>
+      <div className="max-h-[60vh] overflow-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -90,6 +91,7 @@ export function DeadStockReport(): React.JSX.Element {
           ))}
         </TableBody>
       </Table>
+      </div>
     </div>
   )
 }

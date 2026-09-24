@@ -692,18 +692,18 @@ badge) | Payment Method | Amount | Actions.
 
 ## 8. Reports
 
-Left sidebar `Report Types` with 5 buttons; main panel with `From` + `To`
-date pickers + `Generate Report` button. Changing the pickers does nothing
-until `Generate Report` is clicked. Default range: start to end of the
-current month. Every report has loading, error-with-retry, and
-`no data for the selected period` states.
+Left sidebar with grouped report navigation (Performance, Payments,
+Breakdowns, Stock Actions); main panel with a date-range picker. Changing
+the range applies instantly.
+Default range: start to end of the current month. Every report has loading,
+error-with-retry, and `no data for the selected period` states.
 
-### 8.1 Financial Metrics Report
+### 8.1 Financial Summary Report
 
 Default selected report. Title + description + period label
 (e.g. `For period: 1 September 2026 to 30 September 2026`).
 
-6 metrics, shown as cards and as a Metric / Value summary table:
+6 metrics, shown as cards:
 
 - Revenue: total sales revenue for the period.
 - Profit: gross profit for the period.
@@ -714,7 +714,7 @@ Default selected report. Title + description + period label
 
 All money values in shop currency.
 
-### 8.2 Top Selling Products Report
+### 8.2 Top Products Report
 
 Controls: `Sort By` Revenue / Profit / Quantity; `Show` 5 / 10 / 15 / 20
 products.
@@ -738,23 +738,22 @@ products.
 - Horizontal bar chart with 2 series per supplier: Revenue and Profit.
 - Table: Supplier | Revenue | Profit | Margin %, plus a Total footer with
   overall margin %.
-- Yellow warning note: margin here may differ from the dashboard card because
+- Muted warning note: margin here may differ from the dashboard card because
   discounts are not accounted for in this breakdown.
 
-### 8.5 Category Profit Analysis Report
+### 8.5 Category Profitability Report
 
 - Toggle `Bar Chart` (grouped Profit vs. Cost per category) / `Pie Chart`
   (profit share per category, one color per category).
 - Table: Category | Revenue | Cost | Profit | Margin %, plus a Total footer
   with overall margin %.
-- Same yellow discount warning as the supplier report.
+- Same muted discount warning as the supplier report.
 
 ### 8.6 Export / Print in Reports
 
-- The current Reports page only offers `Generate Report`. There are no
-  export-to-CSV or print buttons in any of the 5 report views. Printing of
-  sales documents is done from Sales History (`Print Receipt`) and POS
-  (`Print Receipt`).
+- The current Reports page has no export-to-CSV or print buttons in any of
+  the report views. Printing of sales documents is done from Sales History
+  (`Print Receipt`) and POS (`Print Receipt`).
 
 ---
 

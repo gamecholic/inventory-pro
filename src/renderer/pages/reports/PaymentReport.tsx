@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next'
 import { Cell, Pie, PieChart } from 'recharts'
-import { Card, CardContent } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -30,7 +29,18 @@ const METHOD_KEY: Record<string, string> = {
   split: 'pos.receipt.split'
 }
 
-const PIE_COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)'] as const
+const PIE_COLORS = [
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
+  'color-mix(in srgb, var(--chart-1) 65%, transparent)',
+  'color-mix(in srgb, var(--chart-2) 65%, transparent)',
+  'color-mix(in srgb, var(--chart-3) 65%, transparent)',
+  'color-mix(in srgb, var(--chart-4) 65%, transparent)',
+  'color-mix(in srgb, var(--chart-5) 65%, transparent)'
+] as const
 
 /** §8.3 — donut chart + table with net-card row and Total footer. */
 export function PaymentReport({ range }: { range: RangeInput }): React.JSX.Element {
@@ -50,7 +60,6 @@ export function PaymentReport({ range }: { range: RangeInput }): React.JSX.Eleme
   const total = round2(data.reduce((s, r) => s + r.revenue, 0))
   const cardRevenue = feeData ? feeData.cardRevenue : 0
   const feePercent = feeData ? feeData.feePercent : (settings?.general.cardFeePercent ?? 0)
-  const feeAmount = feeData ? feeData.feeAmount : null
   const netCard = feeData ? feeData.netCard : null
 
   const config = { revenue: { label: t('reportPage.revenue'), color: 'var(--chart-2)' } } satisfies ChartConfig
@@ -87,20 +96,7 @@ export function PaymentReport({ range }: { range: RangeInput }): React.JSX.Eleme
           <ChartLegend content={<ChartLegendContent nameKey="name" />} />
         </PieChart>
       </ChartContainer>
-      {feeAmount !== null && netCard !== null && feeAmount > 0 && cardRevenue > 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">
-              {t('reportPage.feeCallout', {
-                fee: formatMoney(feeAmount, currency),
-                feePercent,
-                net: formatMoney(netCard, currency)
-              })}
-            </p>
-            <p className="text-2xl font-bold text-destructive">{formatMoney(feeAmount, currency)}</p>
-          </CardContent>
-        </Card>
-      )}
+      <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -135,6 +131,7 @@ export function PaymentReport({ range }: { range: RangeInput }): React.JSX.Eleme
           </TableRow>
         </TableFooter>
       </Table>
+      </div>
     </div>
   )
 }

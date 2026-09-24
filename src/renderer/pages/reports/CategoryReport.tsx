@@ -31,7 +31,18 @@ import { useCategoryReport } from '@/hooks/useReports'
 import { useSettings } from '@/hooks/useSettings'
 import { PeriodLabel, ReportEmpty, ReportError, ReportLoading } from './ReportState'
 
-const PIE_COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)'] as const
+const PIE_COLORS = [
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
+  'color-mix(in srgb, var(--chart-1) 65%, transparent)',
+  'color-mix(in srgb, var(--chart-2) 65%, transparent)',
+  'color-mix(in srgb, var(--chart-3) 65%, transparent)',
+  'color-mix(in srgb, var(--chart-4) 65%, transparent)',
+  'color-mix(in srgb, var(--chart-5) 65%, transparent)'
+] as const
 
 /** §8.5 — Profit-vs-Cost bars or profit-share pie, plus table with overall margin. */
 export function CategoryReport({ range }: { range: RangeInput }): React.JSX.Element {
@@ -54,6 +65,7 @@ export function CategoryReport({ range }: { range: RangeInput }): React.JSX.Elem
   const totalCost = round2(data.reduce((s, r) => s + r.cost, 0))
   const totalProfit = round2(data.reduce((s, r) => s + r.profit, 0))
   const overallMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0
+  const truncateAxis = (s: string): string => (s.length > 12 ? `${s.slice(0, 11)}…` : s)
 
   return (
     <div className="flex flex-col gap-4">
@@ -64,7 +76,7 @@ export function CategoryReport({ range }: { range: RangeInput }): React.JSX.Elem
       </div>
       <div className="flex items-center gap-2">
         <Select value={mode} onValueChange={(v) => setMode(v as 'bar' | 'pie')}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-40" aria-label={t('reportPage.category')}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -77,8 +89,18 @@ export function CategoryReport({ range }: { range: RangeInput }): React.JSX.Elem
         <ChartContainer config={config} className="h-72 w-full">
           <BarChart data={data.map((r) => ({ name: r.name === '' ? '—' : r.name, profit: r.profit, cost: r.cost }))}>
             <CartesianGrid vertical={false} />
-            <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} />
-            <YAxis tickLine={false} axisLine={false} width={64} />
+            <XAxis
+              dataKey="name"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              tick={{ fontSize: 12 }}
+              tickFormatter={(v: unknown): string => truncateAxis(String(v))}
+              interval="preserveStartEnd"
+              minTickGap={16}
+              height={56}
+            />
+            <YAxis tickLine={false} axisLine={false} width={64} tick={{ fontSize: 12 }} />
             <ChartTooltip content={<ChartTooltipContent formatter={chartMoneyFormatter(currency)} />} />
             <ChartLegend content={<ChartLegendContent />} />
             <Bar dataKey="profit" fill="var(--color-profit)" radius={4} />
@@ -98,6 +120,7 @@ export function CategoryReport({ range }: { range: RangeInput }): React.JSX.Elem
           </PieChart>
         </ChartContainer>
       )}
+      <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -129,7 +152,8 @@ export function CategoryReport({ range }: { range: RangeInput }): React.JSX.Elem
           </TableRow>
         </TableFooter>
       </Table>
-      <p className="rounded-md bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-400">
+      </div>
+      <p className="rounded-md border border-border bg-muted p-3 text-sm text-muted-foreground">
         {t('reportPage.discountWarning')}
       </p>
     </div>

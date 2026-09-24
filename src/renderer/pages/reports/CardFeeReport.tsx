@@ -28,7 +28,7 @@ export function CardFeeReport({ range }: { range: RangeInput }): React.JSX.Eleme
         <p className="text-sm text-muted-foreground">{t('reportPage.cardFeesDesc')}</p>
         <PeriodLabel range={range} />
       </div>
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">{t('reportPage.cardRevenue')}</p>
@@ -51,8 +51,8 @@ export function CardFeeReport({ range }: { range: RangeInput }): React.JSX.Eleme
       <ChartContainer config={config} className="h-64 w-full">
         <BarChart data={data.perDay}>
           <CartesianGrid vertical={false} />
-          <XAxis dataKey="day" tickLine={false} axisLine={false} tickMargin={8} minTickGap={48} />
-          <YAxis tickLine={false} axisLine={false} width={64} />
+          <XAxis dataKey="day" tickLine={false} axisLine={false} tickMargin={8} minTickGap={48} tick={{ fontSize: 12 }} />
+          <YAxis tickLine={false} axisLine={false} width={64} tick={{ fontSize: 12 }} />
           <ChartTooltip content={<ChartTooltipContent formatter={chartMoneyFormatter(currency)} />} />
           <Bar dataKey="feeAmount" fill="var(--color-feeAmount)" radius={4} />
         </BarChart>

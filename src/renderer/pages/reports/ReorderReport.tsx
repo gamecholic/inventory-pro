@@ -27,6 +27,7 @@ export function ReorderReport(): React.JSX.Element {
         <h3 className="text-lg font-semibold">{t('reportPage.reorder')}</h3>
         <p className="text-sm text-muted-foreground">{t('reportPage.reorderDesc')}</p>
       </div>
+      <div className="max-h-[60vh] overflow-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -57,6 +58,7 @@ export function ReorderReport(): React.JSX.Element {
           ))}
         </TableBody>
       </Table>
+      </div>
     </div>
   )
 }

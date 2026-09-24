@@ -42,9 +42,9 @@ export function AffinityReport({ range }: { range: RangeInput }): React.JSX.Elem
         <PeriodLabel range={range} />
       </div>
       <div className="flex items-center gap-2">
-        <Label>{t('reportPage.show')}</Label>
+        <Label htmlFor="affinityShow">{t('reportPage.show')}</Label>
         <Select value={String(limit)} onValueChange={(v) => setLimit(Number(v))}>
-          <SelectTrigger className="w-20">
+          <SelectTrigger id="affinityShow" className="w-20">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -56,6 +56,7 @@ export function AffinityReport({ range }: { range: RangeInput }): React.JSX.Elem
           </SelectContent>
         </Select>
       </div>
+      <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -76,6 +77,7 @@ export function AffinityReport({ range }: { range: RangeInput }): React.JSX.Elem
           ))}
         </TableBody>
       </Table>
+      </div>
     </div>
   )
 }

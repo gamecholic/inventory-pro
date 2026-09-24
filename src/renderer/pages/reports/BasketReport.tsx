@@ -27,6 +27,8 @@ export function BasketReport({ range }: { range: RangeInput }): React.JSX.Elemen
   const totalSales = data.reduce((s, d) => s + d.sales, 0)
   const totalItems = data.reduce((s, d) => s + d.items, 0)
   const totalRevenue = round2(data.reduce((s, d) => s + d.revenue, 0))
+  const compactTick = (v: number): string =>
+    new Intl.NumberFormat('en-US', { notation: 'compact' }).format(Number(v))
 
   return (
     <div className="flex flex-col gap-4">
@@ -60,9 +62,24 @@ export function BasketReport({ range }: { range: RangeInput }): React.JSX.Elemen
       <ChartContainer config={config} className="h-72 w-full">
         <ComposedChart data={data}>
           <CartesianGrid vertical={false} />
-          <XAxis dataKey="day" tickLine={false} axisLine={false} tickMargin={8} minTickGap={48} />
-          <YAxis yAxisId="left" tickLine={false} axisLine={false} width={64} />
-          <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} width={64} />
+          <XAxis dataKey="day" tickLine={false} axisLine={false} tickMargin={8} minTickGap={48} tick={{ fontSize: 12 }} />
+          <YAxis
+            yAxisId="left"
+            tickLine={false}
+            axisLine={false}
+            width={64}
+            tick={{ fontSize: 12 }}
+            tickFormatter={(v: number): string => compactTick(v)}
+          />
+          <YAxis
+            yAxisId="right"
+            orientation="right"
+            tickLine={false}
+            axisLine={false}
+            width={64}
+            tick={{ fontSize: 12 }}
+            tickFormatter={(v: number): string => compactTick(v)}
+          />
           <ChartTooltip content={<ChartTooltipContent formatter={chartMoneyFormatter(currency)} />} />
           <ChartLegend content={<ChartLegendContent />} />
           <Bar yAxisId="left" dataKey="revenue" fill="var(--color-revenue)" radius={4} />

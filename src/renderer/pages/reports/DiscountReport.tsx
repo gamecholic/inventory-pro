@@ -57,8 +57,8 @@ export function DiscountReport({ range }: { range: RangeInput }): React.JSX.Elem
       <ChartContainer config={config} className="h-64 w-full">
         <BarChart data={data.perDay}>
           <CartesianGrid vertical={false} />
-          <XAxis dataKey="day" tickLine={false} axisLine={false} tickMargin={8} minTickGap={48} />
-          <YAxis tickLine={false} axisLine={false} width={64} />
+          <XAxis dataKey="day" tickLine={false} axisLine={false} tickMargin={8} minTickGap={48} tick={{ fontSize: 12 }} />
+          <YAxis tickLine={false} axisLine={false} width={64} tick={{ fontSize: 12 }} />
           <ChartTooltip content={<ChartTooltipContent formatter={chartMoneyFormatter(currency)} />} />
           <Bar dataKey="discount" fill="var(--color-discount)" radius={4} />
         </BarChart>

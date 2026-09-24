@@ -52,9 +52,9 @@ export function MarginReport({ range }: { range: RangeInput }): React.JSX.Elemen
       </div>
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
-          <Label>{t('reportPage.threshold')}</Label>
+          <Label htmlFor="marginThreshold">{t('reportPage.threshold')}</Label>
           <Select value={String(threshold)} onValueChange={(v) => setThreshold(Number(v))}>
-            <SelectTrigger className="w-24">
+            <SelectTrigger id="marginThreshold" className="w-24">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -81,6 +81,7 @@ export function MarginReport({ range }: { range: RangeInput }): React.JSX.Elemen
           </Card>
         </div>
       </div>
+      <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -124,6 +125,7 @@ export function MarginReport({ range }: { range: RangeInput }): React.JSX.Elemen
           </TableRow>
         </TableFooter>
       </Table>
+      </div>
     </div>
   )
 }

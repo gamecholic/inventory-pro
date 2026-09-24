@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { enUS, tr } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -9,7 +9,7 @@ import type { RangeInput } from '@shared/analytics'
 export function PeriodLabel({ range }: { range: RangeInput }): React.JSX.Element {
   const { t, i18n } = useTranslation()
   const locale = i18n.language === 'tr' ? tr : enUS
-  const fmt = (iso: string): string => format(new Date(iso), 'PPP', { locale })
+  const fmt = (iso: string): string => format(parseISO(iso), 'PPP', { locale })
   return (
     <p className="text-sm text-muted-foreground">
       {t('reportPage.period', { from: fmt(range.from), to: fmt(range.to) })}
@@ -20,8 +20,12 @@ export function PeriodLabel({ range }: { range: RangeInput }): React.JSX.Element
 export function ReportLoading(): React.JSX.Element {
   const { t } = useTranslation()
   return (
-    <div className="flex flex-col gap-2" aria-label={t('reportPage.loading')}>
-      <Skeleton className="h-24 w-full" />
+    <div className="flex flex-col gap-4" aria-label={t('reportPage.loading')} role="status">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
+      </div>
       <Skeleton className="h-64 w-full" />
     </div>
   )
@@ -30,8 +34,11 @@ export function ReportLoading(): React.JSX.Element {
 export function ReportError({ onRetry }: { onRetry: () => void }): React.JSX.Element {
   const { t } = useTranslation()
   return (
-    <div className="flex items-center gap-4 rounded-lg border border-border p-6">
-      <p>{t('reportPage.loadFailed')}</p>
+    <div
+      role="alert"
+      className="flex flex-wrap items-center gap-4 rounded-lg border border-destructive/50 bg-muted p-6"
+    >
+      <p className="text-sm text-destructive">{t('reportPage.loadFailed')}</p>
       <Button variant="outline" onClick={onRetry}>
         {t('reportPage.retry')}
       </Button>
@@ -41,5 +48,12 @@ export function ReportError({ onRetry }: { onRetry: () => void }): React.JSX.Ele
 
 export function ReportEmpty(): React.JSX.Element {
   const { t } = useTranslation()
-  return <p className="rounded-lg border border-border p-8 text-center text-muted-foreground">{t('reportPage.noData')}</p>
+  return (
+    <p
+      role="status"
+      className="rounded-lg border border-border bg-muted/40 p-8 text-center text-muted-foreground"
+    >
+      {t('reportPage.noData')}
+    </p>
+  )
 }

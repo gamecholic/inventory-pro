@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Bar, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from 'recharts'
 import { Card, CardContent } from '@/components/ui/card'
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
-import { chartMoneyFormatter, formatMoney, round2 } from '@shared/money'
+import { formatMoney, round2 } from '@shared/money'
 import type { RangeInput } from '@shared/analytics'
 import { useBasketReport } from '@/hooks/useReports'
 import { useSettings } from '@/hooks/useSettings'
@@ -29,6 +29,10 @@ export function BasketReport({ range }: { range: RangeInput }): React.JSX.Elemen
   const totalRevenue = round2(data.reduce((s, d) => s + d.revenue, 0))
   const compactTick = (v: number): string =>
     new Intl.NumberFormat('en-US', { notation: 'compact' }).format(Number(v))
+  const tooltipFormatter = (value: unknown, name: unknown): string => {
+    const label = name === 'avgValue' ? config.avgValue.label : config.revenue.label
+    return `${String(label ?? name)}: ${formatMoney(Number(value), currency)}`
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -80,7 +84,7 @@ export function BasketReport({ range }: { range: RangeInput }): React.JSX.Elemen
             tick={{ fontSize: 12 }}
             tickFormatter={(v: number): string => compactTick(v)}
           />
-          <ChartTooltip content={<ChartTooltipContent formatter={chartMoneyFormatter(currency)} />} />
+          <ChartTooltip content={<ChartTooltipContent formatter={tooltipFormatter} />} />
           <ChartLegend content={<ChartLegendContent />} />
           <Bar yAxisId="left" dataKey="revenue" fill="var(--color-revenue)" radius={4} />
           <Line yAxisId="right" type="monotone" dataKey="avgValue" stroke="var(--color-avgValue)" strokeWidth={2} dot={false} />

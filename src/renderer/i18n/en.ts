@@ -29,7 +29,7 @@ export const en = {
           totalProducts: 'Total Products',
           totalProductsHelp: 'Count of all active products in the catalog, in stock and out of stock.',
           lowStock: 'Low Stock Items',
-          lowStockHelp: 'Products at or below their minimum-stock threshold. Reorder soon.',
+          lowStockHelp: 'Products at or below their minimum-stock threshold, including out-of-stock items. Reorder soon.',
           todaySales: "Today's Sales",
           todaySalesHelp: 'Revenue from completed sales since midnight today, all payment methods.',
           monthlyRevenue: 'Monthly Revenue',
@@ -166,12 +166,12 @@ export const en = {
         fee: 'Fee',
         net: 'Net',
         pair: 'Pair',
-        together: 'Together',
-        support: 'Support',
-        threshold: 'Margin below',
+        together: 'Sold Together',
+        support: 'Frequency',
+        threshold: 'Margin Threshold',
         netRevenue: 'Net Revenue',
-        loss: 'Loss',
-        flagged: 'Flagged'
+        loss: 'Loss-Making Product',
+        flagged: 'At-Risk Product'
       },
       expenses: {
         title: 'Expenses',

@@ -1,7 +1,7 @@
 export const tr = {
     translation: {
       nav: {
-        dashboard: 'Panel',
+        dashboard: 'Genel Bakış',
         pos: 'Satış Noktası',
         products: 'Ürünler',
         stock: 'Stok Güncelleme',
@@ -29,7 +29,7 @@ export const tr = {
           totalProducts: 'Toplam Ürün',
           totalProductsHelp: 'Stokta olan ve tükenen tüm aktif ürünlerin sayısı.',
           lowStock: 'Düşük Stoklu Ürünler',
-          lowStockHelp: 'Minimum eşiğinde veya altında ürünler. Yakında sipariş verin.',
+          lowStockHelp: 'Minimum eşiğinde veya altında kalan ürünler, tükenenler dahil. Yakında sipariş verin.',
           todaySales: 'Bugünkü Satışlar',
           todaySalesHelp: 'Gece yarısından bu yana tüm ödeme yöntemleriyle tamamlanan satışların cirosu.',
           monthlyRevenue: 'Aylık Ciro',
@@ -166,12 +166,12 @@ export const tr = {
         fee: 'Komisyon',
         net: 'Net',
         pair: 'Ürün Çifti',
-        together: 'Birlikte',
-        support: 'Destek',
-        threshold: 'Marj altı',
+        together: 'Birlikte Satış',
+        support: 'Görülme Sıklığı',
+        threshold: 'Marj Eşiği',
         netRevenue: 'Net Ciro',
-        loss: 'Zarar',
-        flagged: 'İşaretli'
+        loss: 'Zarar Eden Ürün',
+        flagged: 'Riskli Ürün'
       },
       expenses: {
         title: 'Giderler',

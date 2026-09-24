@@ -50,7 +50,7 @@ export function MarginReport({ range }: { range: RangeInput }): React.JSX.Elemen
         <p className="text-sm text-muted-foreground">{t('reportPage.lowMarginDesc')}</p>
         <PeriodLabel range={range} />
       </div>
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <Label htmlFor="marginThreshold">{t('reportPage.threshold')}</Label>
           <Select value={String(threshold)} onValueChange={(v) => setThreshold(Number(v))}>
@@ -67,13 +67,13 @@ export function MarginReport({ range }: { range: RangeInput }): React.JSX.Elemen
           </Select>
         </div>
         <div className="flex gap-2">
-          <Card>
+          <Card className="min-w-48 flex-1">
             <CardContent className="pt-4">
               <p className="text-sm text-muted-foreground">{t('reportPage.flagged')}</p>
               <p className="text-2xl font-bold">{data.length}</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="min-w-48 flex-1">
             <CardContent className="pt-4">
               <p className="text-sm text-muted-foreground">{t('reportPage.loss')}</p>
               <p className="text-2xl font-bold text-destructive">{lossCount}</p>

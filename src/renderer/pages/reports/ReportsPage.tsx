@@ -9,7 +9,7 @@ import {
   Link2,
   Package,
   Receipt,
-  ShoppingBasket,
+  ShoppingCart,
   Tag,
   TrendingDown,
   TrendingUp,
@@ -62,7 +62,7 @@ const REPORT_GROUPS: Array<{ labelKey: string; items: Array<{ key: ReportKey; ic
     items: [
       { key: 'financial', icon: Wallet },
       { key: 'topProducts', icon: TrendingUp },
-      { key: 'basket', icon: ShoppingBasket },
+      { key: 'basket', icon: ShoppingCart },
       { key: 'discounts', icon: Tag }
     ]
   },

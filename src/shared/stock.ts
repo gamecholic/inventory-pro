@@ -66,4 +66,5 @@ export interface PricePoint {
   type: string
   costPrice: number | null
   sellingPrice: number | null
+  reason: string
 }

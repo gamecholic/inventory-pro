@@ -20,7 +20,8 @@ export function getPriceHistory(productId: number, db = defaultHandles().db): Pr
       createdAt: stockAdjustments.createdAt,
       type: stockAdjustments.type,
       costPrice: stockAdjustments.costPrice,
-      sellingPrice: stockAdjustments.sellingPrice
+      sellingPrice: stockAdjustments.sellingPrice,
+      reason: stockAdjustments.reason
     })
     .from(stockAdjustments)
     .where(eq(stockAdjustments.productId, productId))

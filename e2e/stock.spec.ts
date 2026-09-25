@@ -42,18 +42,18 @@ test('stock search → select → add with cost averaging', async () => {
   await page.getByRole('link', { name: 'Stock Update' }).click()
   await page.getByPlaceholder('Search name, barcode or SKU...').fill('flour')
   await page.getByRole('button', { name: /E2E Flour/ }).click()
-  await expect(page.getByText('Stock Update: E2E Flour')).toBeVisible()
+  await page.getByRole('button', { name: 'Receive stock', exact: true }).click()
+  await expect(page.getByText('Receive Stock: E2E Flour')).toBeVisible()
 
   // 3 @ 10.00 + 10 @ 15.00 → 13 @ 13.85
-  await page.locator('#adjQty').fill('10')
-  await page.locator('#adjCost').fill('15')
-  await page.getByRole('button', { name: 'Update', exact: true }).click()
-  await expect(page.getByText('Select a product from the list')).toBeVisible()
+  const dialog = page.getByRole('dialog')
+  await dialog.locator('#adjQty').fill('10')
+  await dialog.locator('#adjCost').fill('15')
+  await dialog.getByRole('button', { name: 'Receive stock', exact: true }).click()
+  await expect(dialog).toBeHidden()
 
-  // List refreshed with the new quantity; averaging applied to cost.
-  await page.getByRole('button', { name: /E2E Flour/ }).click()
-  await expect(page.getByText('Stock Update: E2E Flour')).toBeVisible()
-  await expect(page.getByText('Current stock: 13 kg')).toBeVisible()
+  // Selection stays: summary + chart show the updated stock and averaged cost.
+  await expect(page.getByText('13 kg').first()).toBeVisible()
 
   // Movement log feeds the price history chart (create + adjustment points).
   await expect(page.getByText('Price History')).toBeVisible()

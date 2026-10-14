@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useDeferredValue, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -56,7 +56,7 @@ export function SalesPage(): React.JSX.Element {
     from: applied.from,
     to: applied.to,
     payment,
-    search,
+    search: useDeferredValue(search),
     page
   })
 

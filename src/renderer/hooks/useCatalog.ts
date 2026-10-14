@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import type {
@@ -38,7 +38,11 @@ function useCatalogMutation<TArgs, TResult>(fn: (args: TArgs) => Promise<TResult
 
 /** Paginated, filtered product list (features §4.3). Filter is part of the query key. */
 export function useProducts(filter: ProductListFilter) {
-  return useQuery({ queryKey: productsKey(filter), queryFn: () => window.api.products.list(filter) })
+  return useQuery({
+    queryKey: productsKey(filter),
+    queryFn: () => window.api.products.list(filter),
+    placeholderData: keepPreviousData
+  })
 }
 
 export function useCreateProduct() {

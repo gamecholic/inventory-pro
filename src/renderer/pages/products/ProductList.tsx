@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useDeferredValue, useEffect, useState } from 'react'
 import { Pencil, RotateCcw, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
@@ -63,7 +63,7 @@ export function ProductList({
     page: 1
   })
 
-  const { data, isPending, isError, refetch } = useProducts(filter)
+  const { data, isPending, isError, refetch } = useProducts({ ...filter, search: useDeferredValue(filter.search) })
   const patch = (p: Partial<ProductListFilter>): void =>
     setFilter((f) => ({ ...f, ...p, page: p.page ?? 1 }))
 

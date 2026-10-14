@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import type { StockAdjustInput } from '@shared/stock'
@@ -7,7 +7,8 @@ import type { StockAdjustInput } from '@shared/stock'
 export function useProductSearch(query: string) {
   return useQuery({
     queryKey: ['product-search', query],
-    queryFn: () => window.api.products.search(query)
+    queryFn: () => window.api.products.search(query),
+    placeholderData: keepPreviousData
   })
 }
 

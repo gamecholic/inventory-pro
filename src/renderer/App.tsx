@@ -96,7 +96,12 @@ function Shell(): React.JSX.Element {
 }
 
 export default function App(): React.JSX.Element {
-  const [queryClient] = useState(() => new QueryClient())
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: { queries: { staleTime: 30_000, retry: 1, refetchOnWindowFocus: false } }
+      })
+  )
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>

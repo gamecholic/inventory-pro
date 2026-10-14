@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import type { SaleListFilter } from '@shared/sales'
@@ -8,7 +8,11 @@ export const saleKey = (id: number | null) => ['sale', id] as const
 
 /** Paginated sales list (features §6.1–§6.2). */
 export function useSales(filter: SaleListFilter) {
-  return useQuery({ queryKey: salesKey(filter), queryFn: () => window.api.sales.list(filter) })
+  return useQuery({
+    queryKey: salesKey(filter),
+    queryFn: () => window.api.sales.list(filter),
+    placeholderData: keepPreviousData
+  })
 }
 
 export function useSale(id: number | null) {

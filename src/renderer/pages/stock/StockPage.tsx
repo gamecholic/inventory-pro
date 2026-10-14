@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Plus, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -27,7 +27,8 @@ export function StockPage(): React.JSX.Element {
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [filter, setFilter] = useState<LevelFilter>('all')
   const [dialogOpen, setDialogOpen] = useState(false)
-  const { data, isPending, isError, refetch } = useProductSearch(search)
+  const deferredSearch = useDeferredValue(search)
+  const { data, isPending, isError, refetch } = useProductSearch(deferredSearch)
   const currency = settings?.general.currency ?? 'USD'
 
   const filtered = useMemo(() => {
@@ -40,11 +41,11 @@ export function StockPage(): React.JSX.Element {
 
   // Scanner fast-path: exact barcode match auto-selects.
   useEffect(() => {
-    const q = normalizeTR(search.trim())
+    const q = normalizeTR(deferredSearch.trim())
     if (q.length === 0 || (data ?? []).length === 0) return
     const exact = (data ?? []).find((p) => normalizeTR(p.barcode ?? '') === q)
     if (exact && exact.id !== selectedId) setSelectedId(exact.id)
-  }, [data, search, selectedId])
+  }, [data, deferredSearch, selectedId])
 
   const select = (p: ProductRow): void => setSelectedId(p.id)
 

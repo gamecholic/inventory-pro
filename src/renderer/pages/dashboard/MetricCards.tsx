@@ -58,7 +58,7 @@ function MetricCard({
             <span className="flex items-baseline gap-2">
               <span className="text-2xl font-bold">{value}</span>
               {trend && (
-                <span className={trend === 'up' ? 'text-sm text-green-600' : 'text-sm text-red-500'}>
+                <span className={trend === 'up' ? 'text-sm text-green-600 dark:text-green-500' : 'text-sm text-destructive'}>
                   {trend === 'up' ? '↑' : '↓'} {t(`dashboard.metrics.${trend === 'up' ? 'positive' : 'negative'}`)}
                 </span>
               )}

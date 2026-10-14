@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import {
   ChevronDown,
   ChevronLeft,
@@ -96,7 +96,7 @@ export function ExpensesPage(): React.JSX.Element {
     to: applied.to,
     categoryId,
     payment,
-    search
+    search: useDeferredValue(search)
   })
 
   const items = data ?? []

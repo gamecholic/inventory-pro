@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import type { ExpenseCategoryInput, ExpenseFilter, ExpenseInput } from '@shared/expenses'
@@ -31,7 +31,11 @@ function useExpenseMutation<TArgs, TResult>(fn: (args: TArgs) => Promise<TResult
 
 /** Filtered expense list (features §7.4–§7.6). No pagination — full filtered set for summaries. */
 export function useExpenses(filter: ExpenseFilter) {
-  return useQuery({ queryKey: expensesKey(filter), queryFn: () => window.api.expenses.list(filter) })
+  return useQuery({
+    queryKey: expensesKey(filter),
+    queryFn: () => window.api.expenses.list(filter),
+    placeholderData: keepPreviousData
+  })
 }
 
 export function useCreateExpense() {

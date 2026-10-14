@@ -115,6 +115,50 @@ describe('stock movement log', () => {
   })
 })
 
+describe('cost averaging through adjustStock', () => {
+  const makeProduct = (stockQty: number, costPrice: number): number =>
+    db
+      .insert(schema.products)
+      .values({
+        name: `Avg Widget ${stockQty}@${costPrice}`,
+        barcode: null,
+        categoryId: null,
+        unit: 'pcs',
+        sellingPrice: 20,
+        costPrice,
+        stockQty,
+        minStock: 5,
+        supplierId: null,
+        description: null,
+        archivedAt: null,
+        createdAt: now(),
+        updatedAt: now()
+      })
+      .run().lastInsertRowid as number
+
+  it('averages divergent costs on add', () => {
+    // 10 @ 5.00 + 10 @ 15.00 → 20 @ 10.00
+    const id = makeProduct(10, 5)
+    const result = adjustStock(
+      { productId: id, type: 'add', quantity: 10, newCostPrice: 15, newSellingPrice: null, reason: 'Restock' },
+      handles
+    )
+    expect(result.product.stockQty).toBe(20)
+    expect(result.product.costPrice).toBe(10)
+  })
+
+  it('rounds repeating-decimal averages to cents on save', () => {
+    // 2 @ 10.00 + 1 @ 11.00 → 31/3 = 10.333… → 10.33
+    const id = makeProduct(2, 10)
+    const result = adjustStock(
+      { productId: id, type: 'add', quantity: 1, newCostPrice: 11, newSellingPrice: null, reason: 'Restock' },
+      handles
+    )
+    expect(result.product.stockQty).toBe(3)
+    expect(result.product.costPrice).toBeCloseTo(10.33, 2)
+  })
+})
+
 afterAll(() => {
   sqlite.close()
 })

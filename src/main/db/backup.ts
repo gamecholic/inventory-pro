@@ -48,16 +48,18 @@ export interface TableDump {
 /** Read every user table. Dates/amounts stay as stored; exportedAt is ISO8601 UTC. */
 export function collectAll(): TableDump {
   const db = getDb()
+  // One corrupt settings row must not sink the whole export: skip values that
+  // fail to parse and let withDefaults() fill them back in (settingsStore pattern).
+  const stored: Record<string, unknown> = {}
+  for (const r of db.select().from(settings).all()) {
+    try {
+      stored[r.key] = JSON.parse(r.value) as unknown
+    } catch {
+      continue
+    }
+  }
   return {
-    settings: withDefaults(
-      Object.fromEntries(
-        db
-          .select()
-          .from(settings)
-          .all()
-          .map((r) => [r.key, JSON.parse(r.value) as unknown])
-      )
-    ),
+    settings: withDefaults(stored),
     categories: db
       .select()
       .from(categories)

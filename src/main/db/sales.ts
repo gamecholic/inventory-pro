@@ -18,44 +18,50 @@ export function completeSale(input: CheckoutInput, handles: DbHandles = defaultH
   const parsed = checkoutInput.parse(input)
   const { db, sqlite } = handles
 
-  const items = parsed.lines.map((line) => {
-    const product = db.select().from(products).where(eq(products.id, line.productId)).get()
-    if (!product || product.archivedAt) throw new Error('Product not found')
-    if (product.stockQty <= 0) throw new Error(`${product.name}: out of stock`)
-    if (line.qty > product.stockQty) throw new Error(`${product.name}: insufficient stock`)
-    return { product, qty: line.qty }
-  })
-
-  const subtotal = round2(cartSubtotal(items.map((i) => ({ qty: i.qty, unitPrice: i.product.sellingPrice }))))
-  const discount = round2(computeDiscount(subtotal, parsed.discount))
-  const total = round2(subtotal - discount)
-
+  const now = new Date()
+  const createdAt = toISO(now)
+  let items: Array<{ product: typeof products.$inferSelect; qty: number }> = []
+  let subtotal = 0
+  let discount = 0
+  let total = 0
   let cashAmount: number | null = null
   let cardAmount: number | null = null
   let changeAmount = 0
-  if (parsed.paymentMethod === 'cash') {
-    const cash = parsed.cashAmount ?? total
-    if (round2(cash) < total) throw new Error('Cash amount is less than total')
-    cashAmount = round2(cash)
-    changeAmount = round2(computeChange(cashAmount, total))
-  } else if (parsed.paymentMethod === 'card') {
-    cardAmount = total
-  } else {
-    const cash = parsed.cashAmount ?? 0
-    const card = parsed.cardAmount ?? 0
-    if (round2(cash + card) < total) throw new Error('Combined payment is less than total')
-    cashAmount = round2(cash)
-    cardAmount = round2(card)
-    changeAmount = round2(computeChange(cashAmount, total))
-  }
-
-  const now = new Date()
-  const createdAt = toISO(now)
-  const notifyLow = readSettings(db).general.lowStockNotifications
-  const lowStock: LowStockAlert[] = []
   let savedReceiptNo = ''
+  const lowStock: LowStockAlert[] = []
 
+  // Stock reads, payment math, and all writes happen in one transaction so the
+  // validated quantities are the quantities decremented.
   sqlite.transaction(() => {
+    items = parsed.lines.map((line) => {
+      const product = db.select().from(products).where(eq(products.id, line.productId)).get()
+      if (!product || product.archivedAt) throw new Error('Product not found')
+      if (product.stockQty <= 0) throw new Error(`${product.name}: out of stock`)
+      if (line.qty > product.stockQty) throw new Error(`${product.name}: insufficient stock`)
+      return { product, qty: line.qty }
+    })
+
+    subtotal = round2(cartSubtotal(items.map((i) => ({ qty: i.qty, unitPrice: i.product.sellingPrice }))))
+    discount = round2(computeDiscount(subtotal, parsed.discount))
+    total = round2(subtotal - discount)
+
+    if (parsed.paymentMethod === 'cash') {
+      const cash = parsed.cashAmount ?? total
+      if (round2(cash) < total) throw new Error('Cash amount is less than total')
+      cashAmount = round2(cash)
+      changeAmount = round2(computeChange(cashAmount, total))
+    } else if (parsed.paymentMethod === 'card') {
+      cardAmount = total
+    } else {
+      const cash = parsed.cashAmount ?? 0
+      const card = parsed.cardAmount ?? 0
+      if (round2(cash + card) < total) throw new Error('Combined payment is less than total')
+      cashAmount = round2(cash)
+      cardAmount = round2(card)
+      changeAmount = round2(computeChange(cashAmount, total))
+    }
+
+    const notifyLow = readSettings(db).general.lowStockNotifications
     let seq = 0
     for (;;) {
       const candidate = receiptNo(now, seq)
@@ -165,12 +171,18 @@ export function listSales(filter: unknown): SaleList {
     .where(and(...conditions))
     .groupBy(sales.id)
     .orderBy(desc(sales.createdAt))
-    .all()
 
-  const total = rows.length
+  // Page in SQL: the conditions touch sales columns only, so the total comes
+  // from a plain count over the same filter.
+  const total =
+    db
+      .select({ n: count(sales.id) })
+      .from(sales)
+      .where(and(...conditions))
+      .get()?.n ?? 0
   const totalPages = Math.max(1, Math.ceil(total / SALE_PAGE_SIZE))
   const page = Math.min(f.page, totalPages)
-  const items = rows.slice((page - 1) * SALE_PAGE_SIZE, page * SALE_PAGE_SIZE)
+  const items = rows.limit(SALE_PAGE_SIZE).offset((page - 1) * SALE_PAGE_SIZE).all()
   return { items, total, page, totalPages }
 }
 

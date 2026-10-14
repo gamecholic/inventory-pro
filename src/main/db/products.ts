@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, isNull, sql } from 'drizzle-orm'
+import { and, count, eq, isNotNull, isNull, sql } from 'drizzle-orm'
 import { normalizeTR } from '../../shared/normalizeTR'
 import {
   PRODUCT_PAGE_SIZE,
@@ -78,20 +78,36 @@ export function listProducts(filter: ProductListFilter): ProductList {
     conditions.push(sql`${products.stockQty} > 0 AND ${products.stockQty} <= ${products.minStock}`)
   if (f.stockLevel === 'in') conditions.push(sql`${products.stockQty} > ${products.minStock}`)
 
+  const where = conditions.length > 0 ? and(...conditions) : undefined
+  const q = normalizeTR(f.search.trim())
+  if (q.length === 0) {
+    // No text search: page fully in SQL.
+    const total = db.select({ n: count(products.id) }).from(products).where(where).get()?.n ?? 0
+    const totalPages = Math.max(1, Math.ceil(total / PRODUCT_PAGE_SIZE))
+    const page = Math.min(f.page, totalPages)
+    const items = db
+      .select(productColumns())
+      .from(products)
+      .leftJoin(categories, eq(products.categoryId, categories.id))
+      .where(where)
+      .orderBy(products.name)
+      .limit(PRODUCT_PAGE_SIZE)
+      .offset((page - 1) * PRODUCT_PAGE_SIZE)
+      .all() as ProductRow[]
+    return { items, total, page, totalPages }
+  }
+
+  // Text search stays in memory: SQLite has no Turkish collation, so matching
+  // runs through normalizeTR row by row.
   const rows = db
     .select(productColumns())
     .from(products)
     .leftJoin(categories, eq(products.categoryId, categories.id))
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .where(where)
     .orderBy(products.name)
     .all() as ProductRow[]
 
-  // Shop-scale catalogs fit in memory easily.
-  const q = normalizeTR(f.search.trim())
-  const matched =
-    q.length === 0
-      ? rows
-      : rows.filter((r) => [r.name, r.barcode ?? '', r.description ?? ''].some((v) => normalizeTR(v).includes(q)))
+  const matched = rows.filter((r) => [r.name, r.barcode ?? '', r.description ?? ''].some((v) => normalizeTR(v).includes(q)))
 
   const total = matched.length
   const totalPages = Math.max(1, Math.ceil(total / PRODUCT_PAGE_SIZE))

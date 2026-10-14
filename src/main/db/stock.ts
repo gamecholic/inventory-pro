@@ -37,7 +37,7 @@ export function getPriceHistory(productId: number, db = defaultHandles().db): Pr
  */
 export function adjustStock(input: StockAdjustInput, handles: DbHandles = defaultHandles()): AdjustResult {
   const parsed = stockAdjustInput.parse(input)
-  const { db } = handles
+  const { db, sqlite } = handles
   const current = db.select().from(products).where(eq(products.id, parsed.productId)).get()
   if (!current) throw new Error('Product not found')
   if (current.archivedAt) throw new Error('Product is archived')
@@ -53,18 +53,20 @@ export function adjustStock(input: StockAdjustInput, handles: DbHandles = defaul
   const sellingPrice = round2(parsed.newSellingPrice ?? current.sellingPrice)
   const reason = normalizeReason(parsed.reason)
   const now = toISO(new Date())
-  db.update(products)
-    .set({ stockQty: preview.newQty, costPrice: round2(preview.newCost), sellingPrice, updatedAt: now })
-    .where(eq(products.id, parsed.productId))
-    .run()
-  logAdjustment(handles, {
-    productId: parsed.productId,
-    qtyChange: parsed.type === 'add' ? parsed.quantity : -parsed.quantity,
-    type: parsed.type,
-    reason,
-    costPrice: round2(preview.newCost),
-    sellingPrice
-  })
+  sqlite.transaction(() => {
+    db.update(products)
+      .set({ stockQty: preview.newQty, costPrice: round2(preview.newCost), sellingPrice, updatedAt: now })
+      .where(eq(products.id, parsed.productId))
+      .run()
+    logAdjustment(handles, {
+      productId: parsed.productId,
+      qtyChange: parsed.type === 'add' ? parsed.quantity : -parsed.quantity,
+      type: parsed.type,
+      reason,
+      costPrice: round2(preview.newCost),
+      sellingPrice
+    })
+  })()
   const product = getProductRow(parsed.productId, db)
   if (!product) throw new Error('Product not found after adjustment')
   return { product, reason }

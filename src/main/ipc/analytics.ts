@@ -21,7 +21,7 @@ import {
   getTopProducts,
   getWeekdayAverages
 } from '../db/analytics'
-import { affinityInput, deadStockInput, lowMarginInput, rangeInput, topProductsInput, yearInput } from '../../shared/analytics'
+import { affinityInput, deadStockInput, inventoryGroupInput, lowMarginInput, monthsInput, rangeInput, topProductsInput, yearInput } from '../../shared/analytics'
 
 export function registerAnalyticsIpc(): void {
   ipcMain.handle('analytics:financial', (_event, input: unknown) => getFinancialMetrics(rangeInput.parse(input)))
@@ -36,20 +36,14 @@ export function registerAnalyticsIpc(): void {
   ipcMain.handle('analytics:basket', (_event, input: unknown) => getBasketTrend(rangeInput.parse(input)))
   ipcMain.handle('analytics:discounts', (_event, input: unknown) => getDiscountSummary(rangeInput.parse(input)))
   ipcMain.handle('analytics:monthly-expenses', (_event, input: unknown) => {
-    const months = (input as { months?: unknown })?.months
-    const n = typeof months === 'number' && Number.isInteger(months) && months >= 1 && months <= 24 ? months : 6
-    return getMonthlyExpenses(n)
+    return getMonthlyExpenses(monthsInput.parse(input).months)
   })
   ipcMain.handle('analytics:inventory-overview', () => getInventoryOverview())
   ipcMain.handle('analytics:inventory-value', (_event, input: unknown) => {
-    const by = (input as { by?: unknown })?.by
-    if (by !== 'supplier' && by !== 'category') throw new Error('Invalid group')
-    return getInventoryValue(by)
+    return getInventoryValue(inventoryGroupInput.parse(input).by)
   })
   ipcMain.handle('analytics:revenue-trend', (_event, input: unknown) => {
-    const months = (input as { months?: unknown })?.months
-    const n = typeof months === 'number' && Number.isInteger(months) && months >= 1 && months <= 24 ? months : 6
-    return getRevenueProfitTrend(n)
+    return getRevenueProfitTrend(monthsInput.parse(input).months)
   })
   ipcMain.handle('analytics:weekday', (_event, input: unknown) => getWeekdayAverages(rangeInput.parse(input)))
   ipcMain.handle('analytics:monthly', (_event, input: unknown) => getMonthlyAverages(yearInput.parse(input)))

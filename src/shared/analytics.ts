@@ -14,6 +14,14 @@ export type TopProductsInput = z.infer<typeof topProductsInput>
 export const deadStockInput = z.object({ days: z.number().int().min(1).max(365).default(60) })
 export type DeadStockInput = z.infer<typeof deadStockInput>
 
+/** Trailing-month window for trend reports. Missing input means 6; anything else rejects. */
+export const monthsInput = z.object({ months: z.number().int().min(1).max(24).default(6) })
+export type MonthsInput = z.infer<typeof monthsInput>
+
+/** Inventory value breakdown dimension. Unknown values reject instead of throwing ad-hoc. */
+export const inventoryGroupInput = z.object({ by: z.enum(['supplier', 'category']) })
+export type InventoryGroupInput = z.infer<typeof inventoryGroupInput>
+
 /** §8.1 — period financials. Cash = cash revenue minus expenses. */
 export interface FinancialMetrics {
   revenue: number

@@ -43,12 +43,13 @@ export function computeAdjustment(
   const cost = input.newCostPrice ?? current.costPrice
   const newQty = current.stockQty + input.quantity
   const newValue = currentValue + input.quantity * cost
+  // Add quantity is at least 1 (stockAdjustInput), so newQty is never 0 here.
   return {
     currentQty: current.stockQty,
     currentCost: current.costPrice,
     currentValue,
     newQty,
-    newCost: newQty === 0 ? cost : newValue / newQty,
+    newCost: newValue / newQty,
     newValue
   }
 }

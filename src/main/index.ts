@@ -8,6 +8,13 @@ import { defaultBackupPath, registerIpc, writeExcelBackup } from './ipc'
 let mainWindow: BrowserWindow | null = null
 let closingAfterBackupChoice = false
 
+// Dev-only shared session: expose renderer over CDP so a local agent can
+// attach to the same `npm run dev` window (console / network / DOM).
+if (is.dev) {
+  app.commandLine.appendSwitch('remote-debugging-port', '9222')
+  app.commandLine.appendSwitch('remote-allow-origins', '*')
+}
+
 function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1280,

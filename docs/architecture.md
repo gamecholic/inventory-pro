@@ -3,7 +3,7 @@
 Status: [DECIDED] = agreed, not locked. [OPEN] = needs decision.
 
 ## 1. Stack
-- [DECIDED] Shell: Electron + electron-builder (NSIS) + electron-updater, GitHub Releases provider (`publish: {provider: github, owner, repo}` explicit). Update card (features §1.6) polls on launch. Releases are cut by manually running `.github/workflows/release.yml` (patch/minor/major input bumps the version, builds Windows NSIS + `latest.yml`, pushes the version commit/tag, attaches assets to the Release).
+- [DECIDED] Shell: Electron + electron-builder (NSIS on Windows, AppImage + deb on Linux) + electron-updater, GitHub Releases provider (`publish: {provider: github, owner, repo}` explicit). Update card (features §1.6) polls on launch. Releases are cut by manually running `.github/workflows/release.yml` (patch/minor/major input bumps the version, builds Windows NSIS + `latest.yml`, pushes the version commit/tag, attaches assets to the Release). `.github/workflows/release-linux.yml` then manually attaches the Linux AppImage/.deb + `latest-linux.yml` for the version currently in `package.json` to the existing Release (no bump, no tag push).
 - [DECIDED] Frontend: Vite + React + TypeScript + React Router (8 routes) + Zustand (ephemeral: cart, selection, filters) + TanStack Query over IPC (query keys per page/filter, invalidate on mutations).
 - [DECIDED] DB: SQLite file per shop, better-sqlite3 in main only, Drizzle ORM + migrations. Sale completion = one transaction (insert sale + lines, decrement stock). Cost-averaging (§5.3) computed in main.
 - [DECIDED] Validation: Zod schemas in `shared/` for forms + IPC payloads, both sides.

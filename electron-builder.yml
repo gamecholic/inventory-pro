@@ -1,5 +1,6 @@
 # electron-builder config (picked up automatically, keeps version numbers out of this file).
-# Publishes Windows NSIS installers to GitHub Releases, which electron-updater polls.
+# Publishes Windows NSIS installers and Linux AppImage/.deb packages to GitHub
+# Releases, which electron-updater polls.
 appId: com.inventorypro.app
 productName: Inventory Pro
 # Explicit space-free name: with spaces in productName the builder writes one
@@ -21,6 +22,23 @@ nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
   perMachine: false
+linux:
+  # AppImage self-updates through electron-updater (latest-linux.yml); the .deb
+  # is a plain install, so both are attached to the same GitHub Release.
+  target:
+    - target: AppImage
+      arch:
+        - x64
+    - target: deb
+      arch:
+        - x64
+  executableName: inventory-pro
+  category: Office
+  synopsis: Offline inventory, POS, expenses and reports for a single shop
+  description: Offline single-shop inventory, point of sale, expenses and reports.
+  # dpkg requires a maintainer; package.json has no author email.
+  maintainer: gamecholic <gamecholic@users.noreply.github.com>
+  artifactName: Inventory-Pro-${version}-linux-${arch}.${ext}
 publish:
   provider: github
   owner: gamecholic

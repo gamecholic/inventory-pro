@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
@@ -43,11 +43,15 @@ export function PosPage(): React.JSX.Element {
     searchRef.current?.focus()
   }, [])
 
-  const pick = (product: ProductRow): void => {
-    const result = add(product)
-    if (result === 'out') toast.error(t('pos.outOfStockMsg', { name: product.name }))
-    else if (result === 'insufficient') toast.error(t('pos.insufficientMsg', { name: product.name }))
-  }
+  // Stable identity keeps memoized ProductCards from re-rendering on every keystroke.
+  const pick = useCallback(
+    (product: ProductRow): void => {
+      const result = add(product)
+      if (result === 'out') toast.error(t('pos.outOfStockMsg', { name: product.name }))
+      else if (result === 'insufficient') toast.error(t('pos.insufficientMsg', { name: product.name }))
+    },
+    [add, t]
+  )
 
   /** Features §3.3 — exact numeric barcode first, then single-result auto-add. */
   const submitSearch = (e: React.FormEvent): void => {

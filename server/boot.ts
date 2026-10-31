@@ -13,6 +13,7 @@
  */
 import { spawn } from 'node:child_process'
 import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { createServer } from 'node:net'
 import { basename, dirname, join } from 'node:path'
 import { startServer } from './index'
@@ -163,6 +164,18 @@ process.env.INVENTORY_VERSION ??=
 // --- Main -------------------------------------------------------------------
 
 async function main(): Promise<void> {
+  // Best-effort: remove installers left in the temp folder by previous updates.
+  try {
+    const dir = join(tmpdir(), 'inventory-pro-update')
+    if (existsSync(dir)) {
+      for (const f of readdirSync(dir)) {
+        if (f.toLowerCase().endsWith('.exe')) {
+          try { unlinkSync(join(dir, f)) } catch { /* file may be in use */ }
+        }
+      }
+    }
+  } catch { /* ignore */ }
+
   resolveMigrations()
 
   if (!process.env.HOST) {

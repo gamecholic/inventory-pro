@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["node", "vitest/globals", "bun"]
   },
-  "include": ["electron.vite.config.ts", "src/main/**/*", "src/preload/**/*", "src/shared/**/*", "vitest.config.ts", "drizzle.config.ts"]
+  "include": ["src/main/**/*", "src/shared/**/*", "vitest.config.ts", "drizzle.config.ts"]
 }

@@ -3,7 +3,7 @@
 Status: [DECIDED] = agreed, not locked. [OPEN] = needs decision.
 
 ## 1. Stack
-- [DECIDED] Shell: Bun single-process server (Windows). `server/boot.ts` compiles to `Inventory Pro.exe` (Bun runtime) which serves the Vite renderer + API on 127.0.0.1 and opens a Chrome/Edge `--app` window. Packaging via `scripts/build-app.ts` + Inno Setup (`scripts/build-installer.ts`, `packaging/inventory-pro.iss`). Auto-update is installer-based (see `server/updater.ts`, `docs/migrate-to-bun.md` §6.3/§9). Electron + electron-builder are retired from the ship path; the Electron entry (`src/main/index.ts`) is kept for typecheck only. Linux is not currently shipped.
+- [DECIDED] Shell: Bun single-process server (Windows). `server/boot.ts` compiles to `Inventory Pro.exe` (Bun runtime) which serves the Vite renderer + API on 127.0.0.1 and opens a Chrome/Edge `--app` window. Packaging via `scripts/build-app.ts` + Inno Setup (`scripts/build-installer.ts`, `packaging/inventory-pro.iss`). Auto-update is installer-based (see `server/updater.ts`, `docs/migrate-to-bun.md` §6.3/§9). Electron is fully removed from the tree; Linux is not currently shipped.
 - [DECIDED] Frontend: Vite + React + TypeScript + React Router (8 routes) + Zustand (ephemeral: cart, selection, filters) + TanStack Query over IPC (query keys per page/filter, invalidate on mutations).
 - [DECIDED] DB: SQLite file per shop, better-sqlite3 (Electron, retired) / bun:sqlite (Bun port, ship path), Drizzle ORM + migrations. Sale completion = one transaction (insert sale + lines, decrement stock). Cost-averaging (§5.3) computed in main.
 - [DECIDED] Validation: Zod schemas in `shared/` for forms + IPC payloads, both sides.

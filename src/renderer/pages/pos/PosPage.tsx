@@ -85,9 +85,12 @@ export function PosPage(): React.JSX.Element {
 
   const currentLow = lowQueue[0] ?? null
 
+  // Below lg the panels stack in one scrollable column: the grid keeps its own
+  // bounded scroller (the virtualizer needs it) and the cart sits below it.
+  // At lg+ the row is height-constrained again and each panel scrolls internally.
   return (
-    <div className="absolute inset-0 top-16 flex flex-col gap-4 px-4 lg:px-6">
-      <div className="grid min-h-0 flex-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_24rem] xl:grid-cols-[minmax(0,1fr)_27rem]">
+    <div className="absolute inset-0 top-16 flex flex-col gap-4 overflow-y-auto px-4 pb-4 lg:overflow-hidden lg:px-6 lg:pb-0">
+      <div className="flex min-h-0 shrink-0 flex-col gap-4 lg:grid lg:flex-1 lg:items-start lg:grid-cols-[minmax(0,1fr)_24rem] xl:grid-cols-[minmax(0,1fr)_27rem]">
         <form onSubmit={submitSearch} className="min-h-0 lg:h-full">
           <ProductGrid
             catalog={catalog ?? []}

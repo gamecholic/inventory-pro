@@ -63,7 +63,7 @@ export function CartPanel({ onPay }: { onPay: (method: PaymentMethod) => void })
         : t('pos.discountHelpFixed')
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-xs">
+    <div className="flex min-h-0 flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-xs lg:h-full">
       {/* Header: title + item count + clear */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">

@@ -62,3 +62,20 @@ test('cash sale: search → add → pay exact → receipt → stock decremented'
   await expect(page.getByText('No items in cart.')).toBeVisible()
   await expect(page.getByText('8 pcs')).toBeVisible()
 })
+
+test('narrow window: cart stacks below the product grid instead of overlapping it', async () => {
+  await page.setViewportSize({ width: 800, height: 800 })
+  await page.getByRole('link', { name: 'Point of Sale' }).click()
+
+  const grid = await page.getByTestId('product-grid').boundingBox()
+  const cartTitle = await page.getByRole('heading', { name: 'Current Sale' }).boundingBox()
+  expect(grid).not.toBeNull()
+  expect(cartTitle).not.toBeNull()
+  // The cart header must start below the grid, never underneath it.
+  expect(cartTitle!.y).toBeGreaterThanOrEqual(grid!.y + grid!.height!)
+
+  // The page scrolls as one column, so the pay buttons stay reachable.
+  const pay = page.getByRole('button', { name: 'Cash Payment' })
+  await pay.scrollIntoViewIfNeeded()
+  await expect(pay).toBeInViewport()
+})

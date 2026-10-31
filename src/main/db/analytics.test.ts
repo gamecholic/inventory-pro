@@ -1,8 +1,8 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
+import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
+import { migrate } from 'drizzle-orm/bun-sqlite/migrator'
 import { join } from 'node:path'
-import Database from 'better-sqlite3'
-import { drizzle } from 'drizzle-orm/better-sqlite3'
+import { Database } from 'bun:sqlite'
+import { drizzle } from 'drizzle-orm/bun-sqlite'
 import * as schema from './schema'
 import type { AppDb } from './client'
 import {
@@ -28,7 +28,7 @@ import {
 } from './analytics'
 
 let db: AppDb
-let sqlite: Database.Database
+let sqlite: Database
 
 const RANGE = { from: '2026-01-01T00:00:00.000Z', to: '2026-12-31T23:59:59.999Z' }
 
@@ -40,12 +40,11 @@ beforeAll(() => {
   // Sale/expense timestamps use real now so trailing-30d windows hit them.
   const now = new Date().toISOString()
   db.insert(schema.settings).values({ key: 'general', value: JSON.stringify({ cardFeePercent: 1 }), updatedAt: now }).run()
-  const catId = db.insert(schema.categories).values({ name: 'Drinks', description: null, createdAt: now }).run()
-    .lastInsertRowid as number
+  const catId = db.insert(schema.categories).values({ name: 'Drinks', description: null, createdAt: now }).returning({ id: schema.categories.id }).get()!.id
   const supId = db
     .insert(schema.suppliers)
     .values({ companyName: 'Acme', contactPerson: null, phone: null, email: null, address: null, createdAt: now, updatedAt: now })
-    .run().lastInsertRowid as number
+    .returning({ id: schema.suppliers.id }).get()!.id
   const prodId = db
     .insert(schema.products)
     .values({
@@ -63,7 +62,7 @@ beforeAll(() => {
       createdAt: now,
       updatedAt: now
     })
-    .run().lastInsertRowid as number
+    .returning({ id: schema.products.id }).get()!.id
   const staleId = db
     .insert(schema.products)
     .values({
@@ -81,7 +80,7 @@ beforeAll(() => {
       createdAt: now,
       updatedAt: now
     })
-    .run().lastInsertRowid as number
+    .returning({ id: schema.products.id }).get()!.id
   void staleId
   const saleId = db
     .insert(schema.sales)
@@ -98,7 +97,7 @@ beforeAll(() => {
       status: 'completed',
       canceledAt: null
     })
-    .run().lastInsertRowid as number
+    .returning({ id: schema.sales.id }).get()!.id
   db.insert(schema.saleItems)
     .values({ saleId, productId: prodId, productName: 'Cola', unit: 'pcs', qty: 2, unitPrice: 25, unitCost: 10, lineTotal: 50 })
     .run()
@@ -118,7 +117,7 @@ beforeAll(() => {
       status: 'canceled',
       canceledAt: now
     })
-    .run().lastInsertRowid as number
+    .returning({ id: schema.sales.id }).get()!.id
   db.insert(schema.saleItems)
     .values({ saleId: canceledId, productId: prodId, productName: 'Cola', unit: 'pcs', qty: 40, unitPrice: 25, unitCost: 10, lineTotal: 1000 })
     .run()
@@ -243,7 +242,7 @@ describe('analytics', () => {
 /** Isolated fixture for the three new aggregations (keeps the suite above intact). */
 describe('hourly, affinity and low-margin', () => {
   let db2: AppDb
-  let sqlite2: Database.Database
+  let sqlite2: Database
   const H_RANGE = { from: '2026-06-01T00:00:00.000Z', to: '2026-06-30T23:59:59.999Z' }
 
   beforeAll(() => {
@@ -270,7 +269,7 @@ describe('hourly, affinity and low-margin', () => {
           createdAt: now,
           updatedAt: now
         })
-        .run().lastInsertRowid as number
+        .returning({ id: schema.products.id }).get()!.id
 
     const mkSale = (createdAt: string, subtotal: number, discount: number, total: number): number =>
       db2
@@ -288,7 +287,7 @@ describe('hourly, affinity and low-margin', () => {
           status: 'completed',
           canceledAt: null
         })
-        .run().lastInsertRowid as number
+        .returning({ id: schema.sales.id }).get()!.id
 
     const mkItem = (saleId: number, productId: number, name: string, qty: number, price: number, cost: number): void => {
       db2
@@ -338,7 +337,7 @@ describe('hourly, affinity and low-margin', () => {
     )
     expect(bb?.together).toBe(2)
     expect(bb?.support).toBeCloseTo(50, 5)
-    expect(pairs[0]).toEqual(bb)
+    expect(pairs[0]).toEqual(bb!)
   })
 
   it('flags negative-margin Bread but not rich-margin Milk', () => {    const rows = getLowMarginProducts({ ...H_RANGE, threshold: 20, limit: 20 }, db2)

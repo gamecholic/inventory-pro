@@ -187,18 +187,13 @@ Works on both drivers, and the type is real instead of a cast.
 
 ## 6. Not done yet (in the order I'd do it)
 
-1. **Tests.** `analytics.test.ts`, `sales.test.ts`, `stockMovements.test.ts`
-   still import `better-sqlite3`; `npm run typecheck` fails on those three and
-   nothing else. They must move to `bun test` because Vitest runs on Node and
-   cannot load `bun:sqlite`. Acceptance: `bun test` green, same assertions.
+1. **Tests.** ~~Done~~ â€” migrated to `bun:sqlite` + `bun:test`; `npm run test:bun` green (81 tests). `npm run typecheck` is now clean.
 2. ~~**Folder pickers.**~~ Done â€” see Â§10.
 3. **Updater.** `updater:*` are stubs. Implement check â†’ stage â†’ apply-at-boot
    from `docs/updater.md`. Acceptance: a newer `latest.json` produces the card
    and the swap happens on the next start.
 4. **Packaging.** ~~Done~~ â€” see Â§9.
-5. **Backup on close.** `pagehide` + `sendBeacon('/api/backup/auto')`, plus the
-   next-launch reminder. See the close-event discussion; this is a
-   `features.md` Â§1.8 deviation that needs recording.
+5. **Backup on close.** Dropped â€” auto-backup (hourly) is the chosen mechanism.
 6. **Printing.** Not implemented in the Electron app either (only i18n strings
    exist), so nothing to port. When it lands, `window.print()` in the tab plus
    Chrome's `--kiosk-printing`.
@@ -298,7 +293,7 @@ Windows file-version metadata gets the same value with a fourth `.0` part.
 
 **Icon.** Drop a 256ï¿½256 `packaging/icon.ico` in and the build picks it up
 automatically; without it the exe keeps the default Bun icon. The repository has
-no branded icon, so none was invented.
+multi-resolution icon (16/24/32/48/64/128/256) generated from the user-supplied Adsiz.ico.
 
 **Measured** (this machine, installed copy, dashboard open):
 
@@ -325,7 +320,7 @@ without an Authenticode certificate SmartScreen warns on the first install.
 
 A browser cannot hand a server an absolute path: `<input type=file>` uploads the
 bytes, and `showDirectoryPicker()` returns an opaque handle. That made three
-things impossible in the first port — Save As on export, Open on import, and the
+things impossible in the first port ï¿½ Save As on export, Open on import, and the
 Browse buttons in Settings.
 
 The answer is that this server runs on the user's machine, so it can raise the
@@ -346,7 +341,7 @@ gone.
 **Details that matter**
 
 - The script is passed with `-EncodedCommand` (base64 UTF-16LE), so no quoting
-  layer can mangle a Turkish path. Output is read as UTF-8; `þðü`/`ýÝöç`
+  layer can mangle a Turkish path. Output is read as UTF-8; `ï¿½ï¿½ï¿½`/`ï¿½ï¿½ï¿½ï¿½`
   round-trip byte for byte.
 - `FolderBrowserDialog` and the modern shell dialogs are separate windows owned
   by the PowerShell process. They open *behind* the Chrome app window by
@@ -358,7 +353,7 @@ gone.
 - Folder selection uses `FolderBrowserDialog`, which is the classic tree dialog
   on .NET Framework 4.8 (Windows 10 has no modern folder picker there). File
   selection uses the modern shell dialog.
-- Cancelling exits 0 with empty stdout › `null`. A non-zero exit throws, so the
+- Cancelling exits 0 with empty stdout ï¿½ `null`. A non-zero exit throws, so the
   UI shows a toast instead of silently doing nothing.
 - Windows only; `showNativeDialog` throws elsewhere. This app is Windows only.
 

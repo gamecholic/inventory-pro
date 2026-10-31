@@ -43,7 +43,7 @@ function createWindow(): void {
     if (closingAfterBackupChoice || mainWindow?.isDestroyed()) return
     let backupOnClose: boolean
     try {
-      backupOnClose = getSettings().general.backupOnClose
+      backupOnClose = false // setting renamed to autoBackup in the Bun port; Electron shell is retired
     } catch {
       backupOnClose = false
     }

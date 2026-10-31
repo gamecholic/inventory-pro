@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'bun:test'
 import { legacyWorkbookToBackup } from './legacyExcel'
 
 function sheet(workbook: ExcelJS.Workbook, name: string, headers: string[], rows: unknown[][]): void {

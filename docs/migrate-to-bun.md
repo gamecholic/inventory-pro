@@ -82,7 +82,7 @@ so no page, hook, form or chart changed.
 | File | Status | What |
 |---|---|---|
 | `src/shared/api-surface.ts` | **new** | `createApi(invoke)` — the API object, transport-agnostic |
-| `src/preload/index.ts` | rewritten | 3 lines: bind `createApi` to `ipcRenderer.invoke` |
+| `src/preload/index.ts` | removed (Electron retired) | renderer now uses `src/renderer/lib/http-api.ts` only |
 | `src/renderer/lib/http-api.ts` | **new** | binds `createApi` to `fetch`, installs `window.api` |
 | `src/renderer/main.tsx` | +1 import | installs the transport before React mounts |
 | `server/electron.ts` | **new** | `app` / `ipcMain` / `dialog` / `shell` shim |

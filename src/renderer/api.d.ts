@@ -1,4 +1,4 @@
-import type { AppApi } from '../preload/index'
+import type { AppApi } from '@shared/api-surface'
 
 declare global {
   interface Window {

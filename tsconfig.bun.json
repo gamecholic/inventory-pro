@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@shared/*": ["./src/shared/*"],
+      "electron": ["./server/electron.ts"]
+    }
+  },
+  "include": ["server/**/*", "src/shared/**/*"],
+  "exclude": ["src/main/index.ts", "src/main/ipc/updater.ts"]
+}

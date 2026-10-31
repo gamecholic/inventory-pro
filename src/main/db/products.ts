@@ -137,7 +137,8 @@ export function createProduct(input: ProductInput): ProductRow {
       createdAt: now,
       updatedAt: now
     })
-    .run().lastInsertRowid as number
+    .returning({ id: products.id })
+    .get()!.id
   logAdjustment(
     { db: getDb(), sqlite: getSqlite() },
     {

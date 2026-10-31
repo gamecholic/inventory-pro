@@ -485,19 +485,19 @@ export function DatabaseTab(): React.JSX.Element {
       <Card>
         <CardHeader>
           <CardTitle>{t('settings.db.closeBackupTitle')}</CardTitle>
-          <CardDescription>{t('settings.db.backupOnCloseDesc')}</CardDescription>
+          <CardDescription>{t('settings.db.autoBackupDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-4">
-            <Label htmlFor="backupOnClose">{t('settings.db.backupOnClose')}</Label>
+            <Label htmlFor="autoBackup">{t('settings.db.autoBackup')}</Label>
             <Switch
-              id="backupOnClose"
-              checked={data?.general.backupOnClose ?? false}
+              id="autoBackup"
+              checked={data?.general.autoBackup ?? false}
               disabled={update.isPending}
-              onCheckedChange={(checked) => update.mutate({ section: 'general', patch: { backupOnClose: checked } })}
+              onCheckedChange={(checked) => update.mutate({ section: 'general', patch: { autoBackup: checked } })}
             />
           </div>
-          {data?.general.backupOnClose === true && <BackupFolderRow />}
+          {data?.general.autoBackup === true && <BackupFolderRow />}
         </CardContent>
       </Card>
     </div>

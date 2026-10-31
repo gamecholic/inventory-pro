@@ -7,11 +7,13 @@ export const generalSettings = z.object({
   dateFormat: z.enum(['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD']),
   lowStockNotifications: z.boolean(),
   cardFeePercent: z.number().min(0).max(100),
-  backupOnClose: z.boolean(),
+  autoBackup: z.boolean(),
   /** Custom close-backup folder. Empty = app-managed default. Chosen via folder picker (§9.4). */
   backupDir: z.string().max(500),
   /** Start the app window maximized (full screen) on launch. */
-  startMaximized: z.boolean()
+  startMaximized: z.boolean(),
+  /** Allow other devices on the LAN to reach the app (binds to 0.0.0.0). Requires restart. */
+  networkAccess: z.boolean()
 })
 
 /** Features §9.2 — Business Information. All optional, shown on receipts when set (§1.4). */
@@ -46,7 +48,7 @@ const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'obj
 export function withDefaults(stored: unknown): SettingsValues {
   const rec = isRecord(stored) ? stored : {}
   return {
-    general: { ...defaultSettings.general, ...(isRecord(rec.general) ? rec.general : {}) },
+    general: { ...defaultSettings.general, ...(isRecord(rec.general) ? rec.general : {}), ...(isRecord(rec.general) && typeof rec.general.backupOnClose === 'boolean' && typeof rec.general.autoBackup !== 'boolean' ? { autoBackup: rec.general.backupOnClose } : {}) },
     business: { ...defaultSettings.business, ...(isRecord(rec.business) ? rec.business : {}) },
     receipt: { ...defaultSettings.receipt, ...(isRecord(rec.receipt) ? rec.receipt : {}) }
   }
@@ -59,9 +61,10 @@ export const defaultSettings: SettingsValues = {
     dateFormat: 'MM/DD/YYYY',
     lowStockNotifications: true,
     cardFeePercent: 0.68,
-    backupOnClose: false,
+    autoBackup: false,
     backupDir: '',
-    startMaximized: false
+    startMaximized: false,
+    networkAccess: false
   },
   business: { name: '', address: '', phone: '', email: '', taxId: '' },
   receipt: { header: '', footer: 'Thank you for your purchase!', showLogo: false }

@@ -28,7 +28,8 @@ export function createSupplier(input: SupplierInput): SupplierRow {
       createdAt: now,
       updatedAt: now
     })
-    .run().lastInsertRowid as number
+    .returning({ id: suppliers.id })
+    .get()!.id
   return requireSupplier(id)
 }
 

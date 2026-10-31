@@ -87,7 +87,8 @@ export function completeSale(input: CheckoutInput, handles: DbHandles = defaultH
         status: 'completed',
         canceledAt: null
       })
-      .run().lastInsertRowid as number
+      .returning({ id: sales.id })
+      .get()!.id
     for (const { product, qty } of items) {
       const lineTotal = round2(qty * product.sellingPrice)
       db.insert(saleItems)

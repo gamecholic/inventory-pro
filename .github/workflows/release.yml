@@ -62,7 +62,3 @@ jobs:
           tag_name: v${{ steps.bump.outputs.version }}
           files: dist/installer/Inventory-Pro-Setup-*.exe
           generate_release_notes: true
-          files: |
-            dist/*.exe
-            dist/*.exe.blockmap
-            dist/latest.yml

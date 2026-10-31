@@ -22,6 +22,7 @@ import { registerCatalogIpc } from '../src/main/ipc/catalog'
 import { registerExpensesIpc } from '../src/main/ipc/expenses'
 import { registerSalesIpc } from '../src/main/ipc/sales'
 import { registerSettingsIpc } from '../src/main/ipc/settings'
+import { registerUpdaterHandlers } from './updater'
 
 // --- Ported IPC handlers -----------------------------------------------------
 
@@ -31,17 +32,13 @@ registerCatalogIpc()
 registerExpensesIpc()
 registerAnalyticsIpc()
 registerSalesIpc()
-
 // Trivial channels that lived in main/index.ts.
 handlers.set('app:ping', () => 'pong')
 handlers.set('app:version', () => app.getVersion())
 
 // electron-updater is gone. Stubs keep the update card quiet until the
 // installer-based updater (docs/migrate-to-bun.md §6) exists.
-handlers.set('updater:check', () => ({ status: 'up-to-date' }))
-handlers.set('updater:download', () => ({ status: 'up-to-date' }))
-handlers.set('updater:progress', () => ({ percent: 0 }))
-handlers.set('updater:install', () => false)
+registerUpdaterHandlers()
 
 // --- File handling ----------------------------------------------------------
 // The server is local, so it raises real Windows dialogs and returns absolute
@@ -108,6 +105,8 @@ handlers.set('backup:import-legacy-excel', async () => {
 handlers.set('backup:select-dir', () =>
   showNativeDialog({ kind: 'folder', title: 'Choose backup folder', path: backupDir() })
 )
+
+
 
 handlers.set('db:select-dir', () =>
   showNativeDialog({ kind: 'folder', title: 'Choose database folder', path: app.getPath('userData') })

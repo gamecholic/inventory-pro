@@ -1,14 +1,14 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
+import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
+import { migrate } from 'drizzle-orm/bun-sqlite/migrator'
 import { join } from 'node:path'
-import Database from 'better-sqlite3'
-import { drizzle } from 'drizzle-orm/better-sqlite3'
+import { Database } from 'bun:sqlite'
+import { drizzle } from 'drizzle-orm/bun-sqlite'
 import * as schema from './schema'
 import type { AppDb, DbHandles } from './client'
 import { completeSale } from './sales'
 
 let db: AppDb
-let sqlite: Database.Database
+let sqlite: Database
 let handles: DbHandles
 
 const now = () => new Date().toISOString()
@@ -41,7 +41,7 @@ const makeProduct = (stockQty: number, sellingPrice: number): number =>
       createdAt: now(),
       updatedAt: now()
     })
-    .run().lastInsertRowid as number
+    .returning({ id: schema.products.id }).get()!.id
 
 describe('checkout payment math', () => {
   it('splits exact payment across cash and card with no change', () => {

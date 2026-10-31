@@ -9,3 +9,4 @@ Thumbs.db
 playwright-report/
 test-results/
 databasetest/
+.openchamber/

@@ -24,7 +24,8 @@ export function createExpenseCategory(input: ExpenseCategoryInput): ExpenseCateg
   const id = getDb()
     .insert(expenseCategories)
     .values({ name: parsed.name, description: parsed.description || null, createdAt: now })
-    .run().lastInsertRowid as number
+    .returning({ id: expenseCategories.id })
+    .get()!.id
   const row = getDb().select().from(expenseCategories).where(eq(expenseCategories.id, id)).get()
   if (!row) throw new Error('Category not found after save')
   return row
@@ -101,7 +102,8 @@ export function createExpense(input: ExpenseInput): ExpenseRow {
       createdAt: now,
       updatedAt: now
     })
-    .run().lastInsertRowid as number
+    .returning({ id: expenses.id })
+    .get()!.id
   return requireExpense(id)
 }
 

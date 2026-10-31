@@ -294,6 +294,28 @@ export function GeneralTab(): React.JSX.Element {
         </Card>
         <Card>
           <CardHeader>
+            <CardTitle>{t('settings.sections.network')}</CardTitle>
+            <CardDescription>{t('settings.networkDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex max-w-xl flex-col gap-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <Label htmlFor="networkAccess">{t('settings.networkAccess')}</Label>
+                <p className="text-xs text-muted-foreground">{t('settings.networkAccessDesc')}</p>
+              </div>
+              <Controller
+                name="networkAccess"
+                control={form.control}
+                render={({ field }) => (
+                  <Switch id="networkAccess" checked={field.value} onCheckedChange={field.onChange} />
+                )}
+              />
+            </div>
+          </CardContent>
+          <CardFooter className="gap-2">{saveButton}</CardFooter>
+        </Card>
+        <Card>
+          <CardHeader>
             <CardTitle>{t('settings.sections.danger')}</CardTitle>
             <CardDescription>{t('settings.resetSettingsDesc')}</CardDescription>
           </CardHeader>

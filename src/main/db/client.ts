@@ -1,14 +1,14 @@
 import { join, isAbsolute } from 'node:path'
 import { existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import { app } from 'electron'
-import Database from 'better-sqlite3'
-import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
+import { Database } from 'bun:sqlite'
+import { drizzle, type BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite'
+import { migrate } from 'drizzle-orm/bun-sqlite/migrator'
 import * as schema from './schema'
 
-export type AppDb = BetterSQLite3Database<typeof schema>
+export type AppDb = BunSQLiteDatabase<typeof schema>
 
-let sqlite: Database.Database | null = null
+let sqlite: Database | null = null
 let db: AppDb | null = null
 
 const DB_FILE_NAME = 'inventory.db'
@@ -66,14 +66,19 @@ export function setDbDir(dir: string): DbInfo {
 }
 
 export function migrationsPath(): string {
-  return join(__dirname, '../../drizzle')
+  // Electron bundles to out/main, so '../../drizzle' is the packaged folder.
+  // The Bun build runs from source, where the folder is <cwd>/drizzle.
+  const override = process.env.INVENTORY_DRIZZLE_DIR
+  if (override) return override
+  const bundled = join(__dirname, '../../drizzle')
+  return existsSync(bundled) ? bundled : join(process.cwd(), 'drizzle')
 }
 
 /** Open any SQLite file (or :memory:) and migrate it. Electron-free for tests. */
-export function openDatabase(filePath: string): { db: AppDb; sqlite: Database.Database } {
+export function openDatabase(filePath: string): { db: AppDb; sqlite: Database } {
   const handle = new Database(filePath)
-  handle.pragma('journal_mode = WAL')
-  handle.pragma('foreign_keys = ON')
+  handle.exec('PRAGMA journal_mode = WAL')
+  handle.exec('PRAGMA foreign_keys = ON')
   const database = drizzle(handle, { schema })
   migrate(database, { migrationsFolder: migrationsPath() })
   return { db: database, sqlite: handle }
@@ -82,7 +87,7 @@ export function openDatabase(filePath: string): { db: AppDb; sqlite: Database.Da
 /** Injectable handles so stores are testable against :memory: (defaults hit the shop DB). */
 export interface DbHandles {
   db: AppDb
-  sqlite: Database.Database
+  sqlite: Database
 }
 
 export function defaultHandles(): DbHandles {
@@ -99,7 +104,7 @@ export function getDb(): AppDb {
 }
 
 /** Raw handle for transactional backup/restore work. */
-export function getSqlite(): Database.Database {
+export function getSqlite(): Database {
   getDb()
   if (!sqlite) throw new Error('Database not open')
   return sqlite

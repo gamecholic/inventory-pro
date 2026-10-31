@@ -28,7 +28,8 @@ export function createCategory(input: CategoryInput): CategoryRow {
   const id = db
     .insert(categories)
     .values({ name: parsed.name, description: parsed.description || null, createdAt: now })
-    .run().lastInsertRowid as number
+    .returning({ id: categories.id })
+    .get()!.id
   return listCategories().find((c) => c.id === id) as CategoryRow
 }
 

@@ -1,4 +1,5 @@
 import { Banknote, CreditCard, Minus, Plus, ShoppingCart, Tag, Trash2, X } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -19,6 +20,21 @@ import { unitShort } from '@shared/units'
 import { useCartStore } from '@/stores/cart'
 import { useSettings } from '@/hooks/useSettings'
 
+type QtyIssue = 'min' | 'max' | 'whole' | null
+
+/** Features §3.6 — an edited quantity must stay within 1…available stock.
+ *  Returns why the typed value is not acceptable so the line can explain it
+ *  instead of silently rewriting the user's number. Empty input is not an
+ *  error while typing; blur handles it. */
+function qtyIssue(raw: string, max: number): QtyIssue {
+  if (raw.trim() === '') return null
+  const n = Number(raw)
+  if (!Number.isFinite(n) || !Number.isInteger(n)) return 'whole'
+  if (n < 1) return 'min'
+  if (n > max) return 'max'
+  return null
+}
+
 /** Features §3.5 + §3.7 — cart lines, discount controls, totals, pay buttons. */
 export function CartPanel({ onPay }: { onPay: (method: PaymentMethod) => void }): React.JSX.Element {
   const { t } = useTranslation()
@@ -32,6 +48,9 @@ export function CartPanel({ onPay }: { onPay: (method: PaymentMethod) => void })
   const setDiscount = useCartStore((s) => s.setDiscount)
   const clearDiscount = useCartStore((s) => s.clearDiscount)
   const currency = settings?.general.currency ?? 'USD'
+  // Only one quantity field can be focused at a time, so a single draft covers
+  // the line being edited without the store rewriting digits mid-typing.
+  const [qtyDraft, setQtyDraft] = useState<{ id: number; raw: string } | null>(null)
 
   const subtotal = round2(cartSubtotal(items.map((i) => ({ qty: i.qty, unitPrice: i.product.sellingPrice }))))
   const discountAmount = round2(computeDiscount(subtotal, { type: discountType, value: discountValue }))
@@ -101,10 +120,14 @@ export function CartPanel({ onPay }: { onPay: (method: PaymentMethod) => void })
         <ScrollArea className="min-h-0 flex-1">
           <div className="flex flex-col gap-2 pr-3">
             {items.map((i) => {
+              const maxQty = Math.max(1, i.product.stockQty)
               const lineTotal = i.qty * i.product.sellingPrice
               const atMin = i.qty <= 1
-              const atMax = i.qty >= Math.max(1, i.product.stockQty)
+              const atMax = i.qty >= maxQty
               const removeLabel = t('pos.removeItem', { name: i.product.name })
+              const editing = qtyDraft?.id === i.product.id
+              const issue = editing ? qtyIssue(qtyDraft.raw, maxQty) : null
+              const qtyErrorId = `pos-qty-error-${i.product.id}`
               return (
                 <div key={i.product.id} className="rounded-lg border border-border p-2.5 text-sm">
                   <div className="flex items-start gap-2">
@@ -141,10 +164,36 @@ export function CartPanel({ onPay }: { onPay: (method: PaymentMethod) => void })
                         className="h-6 w-14 px-1 text-center text-xs tabular-nums"
                         type="number"
                         min={1}
-                        max={Math.max(1, i.product.stockQty)}
-                        value={i.qty}
+                        max={maxQty}
+                        step={1}
+                        value={editing ? qtyDraft.raw : String(i.qty)}
                         aria-label={i.product.name}
-                        onChange={(e) => setQty(i.product.id, Math.floor(Number(e.target.value)))}
+                        title={t('pos.qtyAvailable', { max: maxQty, unit: unitShort(i.product.unit, t) })}
+                        aria-invalid={issue !== null}
+                        aria-describedby={issue ? qtyErrorId : undefined}
+                        onFocus={(e) => {
+                          // Replace the old amount on typing instead of appending to it.
+                          setQtyDraft({ id: i.product.id, raw: String(i.qty) })
+                          e.currentTarget.select()
+                        }}
+                        onChange={(e) => {
+                          const raw = e.target.value
+                          setQtyDraft({ id: i.product.id, raw })
+                          // Keep the cart on the last valid amount; the line explains bad input.
+                          if (qtyIssue(raw, maxQty) === null && raw.trim() !== '') {
+                            setQty(i.product.id, Number(raw))
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const raw = e.currentTarget.value
+                          const parsed = Math.floor(Number(raw))
+                          const next =
+                            raw.trim() === '' || !Number.isFinite(parsed)
+                              ? i.qty
+                              : Math.min(Math.max(1, parsed), maxQty)
+                          setQty(i.product.id, next)
+                          setQtyDraft(null)
+                        }}
                       />
                       <Button
                         variant="outline"
@@ -157,6 +206,15 @@ export function CartPanel({ onPay }: { onPay: (method: PaymentMethod) => void })
                       </Button>
                     </div>
                   </div>
+                  {issue && (
+                    <p id={qtyErrorId} className="mt-1 text-[11px] leading-snug text-destructive" role="alert">
+                      {issue === 'max'
+                        ? t('pos.qtyMaxStock', { max: maxQty, unit: unitShort(i.product.unit, t) })
+                        : issue === 'whole'
+                          ? t('pos.qtyWhole')
+                          : t('pos.qtyMin')}
+                    </p>
+                  )}
                 </div>
               )
             })}

@@ -16,10 +16,9 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, unlin
 import { tmpdir } from 'node:os'
 import { createServer } from 'node:net'
 import { basename, dirname, join } from 'node:path'
-import { startServer } from './index'
+import { startServer, notifyScheduledBackupFailed } from './index'
 import { getSettings } from '../src/main/db/settingsStore'
-import { backupDir } from '../src/main/db/backup'
-import { writeExcelBackup } from '../src/main/db/excel'
+import { setScheduledBackupFailureNotifier, startScheduledBackups, stopScheduledBackups } from '../src/main/scheduledBackup'
 
 const APP_NAME = 'Inventory Pro'
 // PORT is a development knob; the installed app just tries the default range.
@@ -202,38 +201,19 @@ async function main(): Promise<void> {
   log(`serving on http://${HOST === '0.0.0.0' ? '0.0.0.0 (LAN)' : HOST}:${server.port}`)
   log(`data: ${dataDir()}`)
 
-  // Hourly auto-backup (one file per day) when the toggle is on.
-  const runAutoBackup = async (): Promise<void> => {
-    try {
-      if (!getSettings().general.autoBackup) return
-      const dir = backupDir()
-      const now = new Date()
-      const pad = (n: number): string => String(n).padStart(2, '0')
-      const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-      const hour = `${pad(now.getHours())}${pad(now.getMinutes())}`
-      const filePath = join(dir, `inventory-auto-${date}-${hour}.xlsx`)
-      // Keep only one file per day: remove older backups from today first.
-      try {
-        const prefix = `inventory-auto-${date}-`
-        for (const f of readdirSync(dir)) {
-          if (f.startsWith(prefix) && f.endsWith('.xlsx') && f !== basename(filePath)) {
-            try { unlinkSync(join(dir, f)) } catch { /* ignore */ }
-          }
-        }
-      } catch { /* best effort */ }
-      await writeExcelBackup(filePath)
-      log(`auto-backup: ${filePath}`)
-    } catch (error) {
-      log(`auto-backup failed: ${error instanceof Error ? error.message : String(error)}`)
-    }
-  }
-  // First run shortly after boot, then every hour.
-  void runAutoBackup()
-  setInterval(() => { void runAutoBackup() }, 60 * 60 * 1000)
+  // Hourly scheduled backup (§1.8): on the hour, one file per day (latest
+  // hour). Success silent (time recorded for Settings); failure pushes a
+  // toast over SSE. No backup at launch — first run is the next hour.
+  setScheduledBackupFailureNotifier((message) => {
+    log(`scheduled-backup failed: ${message}`)
+    notifyScheduledBackupFailed(message)
+  })
+  startScheduledBackups()
 
   openWindow(server.port)
 
   const shutdown = (): void => {
+    stopScheduledBackups()
     try {
       server.stop()
     } catch {

@@ -193,7 +193,7 @@ Works on both drivers, and the type is real instead of a cast.
    from `docs/updater.md`. Acceptance: a newer `latest.json` produces the card
    and the swap happens on the next start.
 4. **Packaging.** ~~Done~~ — see §9.
-5. **Backup on close.** Dropped — auto-backup (hourly) is the chosen mechanism.
+5. **Backup on close.** Dropped — scheduled backup (hourly, on the hour, one file per day `inventory-YYYY-MM-DD-HHMM.xlsx`, see features §1.8) is the chosen mechanism.
 6. **Printing.** Not implemented in the Electron app either (only i18n strings
    exist), so nothing to port. When it lands, `window.print()` in the tab plus
    Chrome's `--kiosk-printing`.

@@ -1,5 +1,5 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs'
+import { basename, join } from 'node:path'
 import { app } from 'electron'
 import { z } from 'zod'
 import { settingsValues, withDefaults, type SettingsValues } from '../../shared/settings'
@@ -384,7 +384,61 @@ export function defaultBackupPath(): string {
   return join(backupDir(), `inventory-${stamp}.xlsx`)
 }
 
-/** Close-backup target: custom folder setting, else app-managed default. Created on demand. */
+/** Scheduled-backup filename: date + HHMM local (e.g. inventory-2026-11-07-1400.xlsx, §1.8). Pure — unit-tested. */
+export function scheduledBackupFileName(now: Date = new Date()): string {
+  const yyyy = now.getFullYear()
+  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const dd = String(now.getDate()).padStart(2, '0')
+  const hh = String(now.getHours()).padStart(2, '0')
+  const mi = String(now.getMinutes()).padStart(2, '0')
+  return `inventory-${yyyy}-${mm}-${dd}-${hh}${mi}.xlsx`
+}
+
+/** Local-day prefix shared by scheduled daily files, e.g. `inventory-2026-11-07`. */
+export function scheduledDayPrefix(now: Date = new Date()): string {
+  const yyyy = now.getFullYear()
+  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const dd = String(now.getDate()).padStart(2, '0')
+  return `inventory-${yyyy}-${mm}-${dd}`
+}
+
+/** Scheduled-backup target: latest-hour file for the (local) day (§1.8, retention: one per day). */
+export function scheduledBackupPath(now: Date = new Date()): string {
+  return join(backupDir(), scheduledBackupFileName(now))
+}
+
+/**
+ * Keep only the latest file per day: delete same-day scheduled files from
+ * earlier hours plus legacy files (Electron date-only `inventory-YYYY-MM-DD.xlsx`
+ * and the Bun `inventory-auto-YYYY-MM-DD-HHMM.xlsx` prefix), keeping `keepPath`.
+ * Other days and manual exports are untouched. Best effort — failures ignored.
+ * `dirOverride` is for tests; production always prunes the backup folder.
+ */
+export function pruneSameDayScheduledFiles(now: Date, keepPath: string, dirOverride?: string): void {
+  const dir = dirOverride ?? backupDir()
+  const prefix = scheduledDayPrefix(now)
+  const keep = basename(keepPath)
+  let files: string[]
+  try {
+    files = readdirSync(dir)
+  } catch {
+    return
+  }
+  for (const file of files) {
+    if (file === keep) continue
+    const isHourly = file.startsWith(`${prefix}-`) && file.endsWith('.xlsx')
+    const isLegacyDaily = file === `${prefix}.xlsx`
+    const isBunAuto = file.startsWith(`inventory-auto-${prefix.slice('inventory-'.length)}-`) && file.endsWith('.xlsx')
+    if (!isHourly && !isLegacyDaily && !isBunAuto) continue
+    try {
+      unlinkSync(join(dir, file))
+    } catch {
+      // best effort
+    }
+  }
+}
+
+/** Scheduled-backup target: custom folder setting, else app-managed default. Created on demand. */
 export function backupDir(): string {
   const custom = getSettings().general.backupDir.trim()
   const dir = custom !== '' ? custom : join(app.getPath('userData'), 'backups')

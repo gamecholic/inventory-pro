@@ -30,6 +30,7 @@ import {
 import { useSettings, useUpdateSettings } from '@/hooks/useSettings'
 import { backupDirKey, useBackupDir } from '@/hooks/useBackupDir'
 import { dbDirKey, useDbDir } from '@/hooks/useDbDir'
+import { formatDateTime } from '@shared/dates'
 
 type BackupAction = 'export-json' | 'import-json' | 'export-excel' | 'import-excel' | 'import-legacy-excel' | 'reset'
 
@@ -135,7 +136,7 @@ function PathLine({ path }: { path: string | undefined }): React.JSX.Element {
   )
 }
 
-/** Close-backup target folder: shown only while backup-on-close is on. */
+/** Scheduled-backup target folder: shown only while the schedule is on. */
 function BackupFolderRow(): React.JSX.Element {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -264,7 +265,7 @@ function DbLocationRow(): React.JSX.Element {
   )
 }
 
-/** Features §9.4 — JSON/Excel backup/restore, reset, backup-on-close. */
+/** Features §9.4 — JSON/Excel backup/restore, reset, scheduled backup. */
 export function DatabaseTab(): React.JSX.Element {
   const { t } = useTranslation()
   const { data } = useSettings()
@@ -484,20 +485,31 @@ export function DatabaseTab(): React.JSX.Element {
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>{t('settings.db.closeBackupTitle')}</CardTitle>
-          <CardDescription>{t('settings.db.autoBackupDesc')}</CardDescription>
+          <CardTitle>{t('settings.db.scheduledBackupTitle')}</CardTitle>
+          <CardDescription>{t('settings.db.scheduledBackupDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-4">
-            <Label htmlFor="autoBackup">{t('settings.db.autoBackup')}</Label>
+            <Label htmlFor="scheduledBackup">{t('settings.db.scheduledBackup')}</Label>
             <Switch
-              id="autoBackup"
-              checked={data?.general.autoBackup ?? false}
+              id="scheduledBackup"
+              checked={data?.general.scheduledBackup ?? false}
               disabled={update.isPending}
-              onCheckedChange={(checked) => update.mutate({ section: 'general', patch: { autoBackup: checked } })}
+              onCheckedChange={(checked) => update.mutate({ section: 'general', patch: { scheduledBackup: checked } })}
             />
           </div>
-          {data?.general.autoBackup === true && <BackupFolderRow />}
+          {data?.general.scheduledBackup === true && (
+            <>
+              <p className="text-sm text-muted-foreground">
+                {data?.general.scheduledBackupLastAt
+                  ? t('settings.db.scheduledBackupLast', {
+                      value: formatDateTime(data.general.scheduledBackupLastAt, data.general.dateFormat)
+                    })
+                  : t('settings.db.scheduledBackupLastNever')}
+              </p>
+              <BackupFolderRow />
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

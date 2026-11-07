@@ -112,6 +112,54 @@ handlers.set('db:select-dir', () =>
   showNativeDialog({ kind: 'folder', title: 'Choose database folder', path: app.getPath('userData') })
 )
 
+// --- Server -> renderer push (scheduled-backup failures) -----------------------
+// Electron used a BrowserWindow push; here it's one SSE stream. The renderer
+// subscribes with EventSource and shows a toast (see App.tsx). Success stays
+// silent — only failures are sent.
+
+const backupEventClients = new Set<ReadableStreamDefaultController<Uint8Array>>()
+const encoder = new TextEncoder()
+
+/** Broadcast a scheduled-backup failure to every connected tab. */
+export function notifyScheduledBackupFailed(message: string): void {
+  const payload = `data: ${JSON.stringify({ message })}\n\n`
+  for (const controller of backupEventClients) {
+    try {
+      controller.enqueue(encoder.encode(payload))
+    } catch {
+      // client went away mid-send; its cancel handler cleans up
+      backupEventClients.delete(controller)
+    }
+  }
+}
+
+function backupEventsResponse(): Response {
+  let heartbeat: ReturnType<typeof setInterval> | null = null
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      backupEventClients.add(controller)
+      heartbeat = setInterval(() => {
+        try {
+          controller.enqueue(encoder.encode(': heartbeat\n\n'))
+        } catch {
+          // ignore — client is gone
+        }
+      }, 15_000)
+    },
+    cancel(controller) {
+      backupEventClients.delete(controller)
+      if (heartbeat !== null) clearInterval(heartbeat)
+    }
+  })
+  return new Response(stream, {
+    headers: {
+      'content-type': 'text/event-stream',
+      'cache-control': 'no-store',
+      connection: 'keep-alive'
+    }
+  })
+}
+
 // --- HTTP -------------------------------------------------------------------
 
 function fail(status: number, message: string): Response {
@@ -121,6 +169,10 @@ function fail(status: number, message: string): Response {
 async function handleApi(request: Request, pathname: string): Promise<Response> {
   if (pathname === '/api/health') {
     return Response.json({ ok: true, version: app.getVersion(), pid: process.pid })
+  }
+
+  if (pathname === '/api/backup-events' && request.method === 'GET') {
+    return backupEventsResponse()
   }
 
   if (request.method !== 'POST') return fail(405, 'Use POST')

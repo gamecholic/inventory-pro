@@ -33,4 +33,26 @@ describe('settings schemas', () => {
     expect(withDefaults({ general: { language: 'tr' } }).general.currency).toBe('USD')
     expect(withDefaults(null)).toEqual(defaultSettings)
   })
+
+  it('migrates legacy backup flags to scheduledBackup', () => {
+    expect(withDefaults({ general: { backupOnClose: true } }).general.scheduledBackup).toBe(true)
+    expect(withDefaults({ general: { autoBackup: true } }).general.scheduledBackup).toBe(true)
+    expect(withDefaults({ general: { autoBackup: false } }).general.scheduledBackup).toBe(false)
+    // An explicit new value wins over legacy ones.
+    expect(withDefaults({ general: { autoBackup: true, scheduledBackup: false } }).general.scheduledBackup).toBe(false)
+    const migrated = withDefaults({ general: { backupOnClose: true } }).general
+    expect('backupOnClose' in migrated).toBe(false)
+    expect('autoBackup' in migrated).toBe(false)
+  })
+
+  it('defaults scheduledBackupLastAt to null and validates ISO or null', () => {
+    expect(defaultSettings.general.scheduledBackupLastAt).toBeNull()
+    expect(withDefaults({}).general.scheduledBackupLastAt).toBeNull()
+    expect(
+      generalSettings.safeParse({ ...defaultSettings.general, scheduledBackupLastAt: 'not-a-date' }).success
+    ).toBe(false)
+    expect(
+      generalSettings.safeParse({ ...defaultSettings.general, scheduledBackupLastAt: '2026-11-07T14:00:00.000Z' }).success
+    ).toBe(true)
+  })
 })

@@ -3,6 +3,7 @@ import { HashRouter, Route, Routes, useLocation } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from 'next-themes'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { Toaster } from '@/components/ui/sonner'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -45,6 +46,26 @@ function ApplySettings(): React.JSX.Element | null {
       void i18n.changeLanguage(data.general.language)
     }
   }, [data, i18n])
+  return null
+}
+
+/** Scheduled backups are silent on success; only failures surface as a toast (§1.8, SSE). */
+function ScheduledBackupToasts(): React.JSX.Element | null {
+  const { t } = useTranslation()
+  useEffect(() => {
+    const source = new EventSource('/api/backup-events')
+    source.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data) as { message?: string }
+        toast.error(t('settings.db.scheduledBackupFailed', { message: data.message ?? '' }))
+      } catch {
+        // ignore keepalive comments / malformed payloads
+      }
+    }
+    // A dropped stream must never break the app; EventSource retries on its own.
+    source.onerror = () => undefined
+    return () => source.close()
+  }, [t])
   return null
 }
 
@@ -109,6 +130,7 @@ export default function App(): React.JSX.Element {
         <TooltipProvider>
           <HashRouter>
             <ApplySettings />
+            <ScheduledBackupToasts />
             <Shell />
           </HashRouter>
           <Toaster richColors />

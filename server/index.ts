@@ -8,14 +8,12 @@
  * `startServer` has no side effects on import; server/boot.ts owns the process
  * lifecycle (single instance, port choice, opening the window).
  */
-import { join, normalize } from 'node:path'
+import { extname, join, normalize } from 'node:path'
 import { ZodError } from 'zod'
 import { app, handlers } from './electron'
 import { showNativeDialog } from './dialogs'
 import { getDb } from '../src/main/db/client'
 import { backupDir, fromBackupJson, readTextFile, toBackupJson, writeTextFile } from '../src/main/db/backup'
-import { readExcelBackup, writeExcelBackup } from '../src/main/db/excel'
-import { readLegacyExcelBackup } from '../src/main/db/legacyExcel'
 import { registerAnalyticsIpc } from '../src/main/ipc/analytics'
 import { registerBackupIpc } from '../src/main/ipc/backup'
 import { registerCatalogIpc } from '../src/main/ipc/catalog'
@@ -65,6 +63,7 @@ handlers.set('backup:export-excel', async () => {
     filters: [{ name: 'Excel', extensions: ['xlsx'] }]
   })
   if (!filePath) return null
+  const { writeExcelBackup } = await import('../src/main/db/excel')
   await writeExcelBackup(filePath)
   return filePath
 })
@@ -88,6 +87,7 @@ handlers.set('backup:import-excel', async () => {
     filters: [{ name: 'Excel', extensions: ['xlsx'] }]
   })
   if (!filePath) return null
+  const { readExcelBackup } = await import('../src/main/db/excel')
   return { filePath, ...(await readExcelBackup(filePath)) }
 })
 
@@ -99,6 +99,7 @@ handlers.set('backup:import-legacy-excel', async () => {
     filters: [{ name: 'Excel', extensions: ['xlsx'] }]
   })
   if (!filePath) return null
+  const { readLegacyExcelBackup } = await import('../src/main/db/legacyExcel')
   return { filePath, ...(await readLegacyExcelBackup(filePath)) }
 })
 
@@ -198,7 +199,64 @@ async function handleApi(request: Request, pathname: string): Promise<Response> 
   }
 }
 
-async function serveStatic(webRoot: string, pathname: string): Promise<Response> {
+const STATIC_CONTENT_TYPES: Record<string, string> = {
+  '.js': 'text/javascript',
+  '.mjs': 'text/javascript',
+  '.css': 'text/css',
+  '.html': 'text/html',
+  '.json': 'application/json',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.ico': 'image/x-icon',
+  '.woff2': 'font/woff2'
+}
+
+async function serveFile(
+  webRoot: string,
+  relative: string,
+  acceptEncoding: string | null
+): Promise<Response | null> {
+  const candidates: Array<{ suffix: string; encoding: string }> = []
+  if (acceptEncoding?.includes('br')) candidates.push({ suffix: '.br', encoding: 'br' })
+  if (acceptEncoding?.includes('gzip')) candidates.push({ suffix: '.gz', encoding: 'gzip' })
+
+  for (const { suffix, encoding } of candidates) {
+    const compressed = Bun.file(join(webRoot, `${relative}${suffix}`))
+    if (await compressed.exists()) {
+      const headers: Record<string, string> = {
+        'content-encoding': encoding,
+        vary: 'Accept-Encoding'
+      }
+      const type = STATIC_CONTENT_TYPES[extname(relative)]
+      if (type) headers['content-type'] = type
+      const slashRelative = relative.replace(/\\/g, '/')
+      if (relative.endsWith('.html')) {
+        // HashRouter means every route is "/", so only the shell must stay fresh.
+        headers['cache-control'] = 'no-store'
+      } else if (slashRelative.startsWith('assets/')) {
+        headers['cache-control'] = 'public, max-age=31536000, immutable'
+      } else {
+        headers['cache-control'] = 'public, max-age=86400'
+      }
+      return new Response(compressed, { headers })
+    }
+  }
+
+  const file = Bun.file(join(webRoot, relative))
+  if (!(await file.exists())) return null
+  const headers: Record<string, string> = {}
+  const slashRelative = relative.replace(/\\/g, '/')
+  if (relative.endsWith('.html')) {
+    headers['cache-control'] = 'no-store'
+  } else if (slashRelative.startsWith('assets/')) {
+    headers['cache-control'] = 'public, max-age=31536000, immutable'
+  } else if (relative.includes('.')) {
+    headers['cache-control'] = 'public, max-age=86400'
+  }
+  return new Response(file, { headers })
+}
+
+async function serveStatic(webRoot: string, pathname: string, acceptEncoding: string | null): Promise<Response> {
   const index = Bun.file(join(webRoot, 'index.html'))
   if (!(await index.exists())) {
     return fail(503, `Renderer build not found at ${webRoot}.\nRun: npm run build:web`)
@@ -207,16 +265,16 @@ async function serveStatic(webRoot: string, pathname: string): Promise<Response>
   const relative = normalize(pathname === '/' ? 'index.html' : pathname.slice(1))
   if (relative.startsWith('..')) return fail(403, 'Forbidden')
 
-  const file = Bun.file(join(webRoot, relative))
-  if (await file.exists()) {
-    const headers: Record<string, string> = {}
-    // HashRouter means every route is "/", so only the shell must stay fresh.
-    if (relative.endsWith('.html')) headers['cache-control'] = 'no-store'
-    return new Response(file, { headers })
-  }
+  const served = await serveFile(webRoot, relative, acceptEncoding)
+  if (served) return served
 
   // Unknown path without an extension: hand back the SPA shell.
-  if (!relative.includes('.')) return new Response(index, { headers: { 'cache-control': 'no-store' } })
+  if (!relative.includes('.')) {
+    const shell =
+      (await serveFile(webRoot, 'index.html', acceptEncoding)) ??
+      new Response(index, { headers: { 'cache-control': 'no-store' } })
+    return shell
+  }
   return fail(404, 'Not found')
 }
 
@@ -246,7 +304,7 @@ export function startServer(options: ServerOptions): RunningServer {
     async fetch(request) {
       const url = new URL(request.url)
       if (url.pathname.startsWith('/api/')) return handleApi(request, url.pathname)
-      return serveStatic(options.webRoot, url.pathname)
+      return serveStatic(options.webRoot, url.pathname, request.headers.get('accept-encoding'))
     }
   })
 

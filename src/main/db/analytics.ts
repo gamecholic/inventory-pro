@@ -395,7 +395,6 @@ export function getMonthlyExpenses(months: number, db: AppDb = getDb()): Array<{
 
 /** Â§2.1 cards beyond FinancialMetrics. Today = local midnight boundary. */
 export function getInventoryOverview(db: AppDb = getDb()): InventoryOverview {
-  const active = db.select().from(products).where(isNull(products.archivedAt)).all()
   const midnight = new Date()
   midnight.setHours(0, 0, 0, 0)
   const todaySales =
@@ -404,7 +403,16 @@ export function getInventoryOverview(db: AppDb = getDb()): InventoryOverview {
       .from(sales)
       .where(and(gte(sales.createdAt, midnight.toISOString()), COMPLETED))
       .get()?.t ?? 0
-  const inventoryValue = round2(active.reduce((s, p) => s + p.stockQty * p.costPrice, 0))
+  const agg = db
+    .select({
+      totalProducts: sql<number>`COUNT(*)`,
+      lowStockItems: sql<number>`COALESCE(SUM(CASE WHEN ${products.stockQty} <= ${products.minStock} THEN 1 ELSE 0 END), 0)`,
+      inventoryValue: sql<number>`COALESCE(SUM(${products.stockQty} * ${products.costPrice}), 0)`
+    })
+    .from(products)
+    .where(isNull(products.archivedAt))
+    .get()
+  const inventoryValue = round2(agg?.inventoryValue ?? 0)
   const monthStart = new Date(midnight.getFullYear(), midnight.getMonth(), 1).toISOString()
   const monthCogs =
     db
@@ -415,8 +423,8 @@ export function getInventoryOverview(db: AppDb = getDb()): InventoryOverview {
       .get()?.c ?? 0
   const roundedCogs = round2(monthCogs)
   return {
-    totalProducts: active.length,
-    lowStockItems: active.filter((p) => p.stockQty <= p.minStock).length,
+    totalProducts: agg?.totalProducts ?? 0,
+    lowStockItems: agg?.lowStockItems ?? 0,
     todaySales: round2(todaySales),
     inventoryValue,
     // True turnover needs average inventory over time; current value is the
@@ -431,22 +439,57 @@ export function getInventoryValue(
   by: 'supplier' | 'category',
   db: AppDb = getDb()
 ): InventoryValueRow[] {
-  const rows = db.select().from(products).where(isNull(products.archivedAt)).all()
-  const supNames = new Map(db.select().from(suppliers).all().map((s) => [s.id, s.companyName]))
-  const catNames = new Map(db.select().from(categories).all().map((c) => [c.id, c.name]))
-  const groups = new Map<string, { name: string; value: number; items: number }>()
-  for (const p of rows) {
-    const id = by === 'supplier' ? p.supplierId : p.categoryId
-    const key = id === null ? '' : String(id)
-    const names = by === 'supplier' ? supNames : catNames
-    const entry = groups.get(key) ?? { name: names.get(id as number) ?? '', value: 0, items: 0 }
-    entry.value = round2(entry.value + p.stockQty * p.costPrice)
-    entry.items += 1
-    groups.set(key, entry)
+  if (by === 'supplier') {
+    const rows = db
+      .select({
+        supplierId: products.supplierId,
+        name: suppliers.companyName,
+        value: sql<number>`COALESCE(SUM(${products.stockQty} * ${products.costPrice}), 0)`,
+        items: sql<number>`COUNT(*)`
+      })
+      .from(products)
+      .leftJoin(suppliers, eq(products.supplierId, suppliers.id))
+      .where(isNull(products.archivedAt))
+      .groupBy(products.supplierId, suppliers.companyName)
+      .all()
+    const total = rows.reduce((s, r) => s + r.value, 0)
+    return rows
+      .map((r) => {
+        const value = round2(r.value)
+        return {
+          key: r.supplierId === null ? '' : String(r.supplierId),
+          name: r.name ?? '',
+          value,
+          items: r.items,
+          share: total > 0 ? (value / total) * 100 : 0
+        }
+      })
+      .sort((a, b) => b.value - a.value)
   }
-  const total = [...groups.values()].reduce((s, g) => s + g.value, 0)
-  return [...groups.entries()]
-    .map(([key, g]) => ({ key, name: g.name, value: g.value, items: g.items, share: total > 0 ? (g.value / total) * 100 : 0 }))
+  const rows = db
+    .select({
+      categoryId: products.categoryId,
+      name: categories.name,
+      value: sql<number>`COALESCE(SUM(${products.stockQty} * ${products.costPrice}), 0)`,
+      items: sql<number>`COUNT(*)`
+    })
+    .from(products)
+    .leftJoin(categories, eq(products.categoryId, categories.id))
+    .where(isNull(products.archivedAt))
+    .groupBy(products.categoryId, categories.name)
+    .all()
+  const total = rows.reduce((s, r) => s + r.value, 0)
+  return rows
+    .map((r) => {
+      const value = round2(r.value)
+      return {
+        key: r.categoryId === null ? '' : String(r.categoryId),
+        name: r.name ?? '',
+        value,
+        items: r.items,
+        share: total > 0 ? (value / total) * 100 : 0
+      }
+    })
     .sort((a, b) => b.value - a.value)
 }
 
@@ -490,6 +533,8 @@ export function getWeekdayAverages(input: RangeInput, db: AppDb = getDb()): Week
     .where(and(gte(sales.createdAt, from), lte(sales.createdAt, to), COMPLETED))
     .all()
   // Monday=0..Sunday=6 buckets plus occurrence counts in the window.
+  // Kept in JS (not SQLite 'localtime'): the shell's TZ and SQLite's localtime
+  // can disagree, JS Date is the wall-clock source of truth for the UI.
   const salesByDay: number[][] = Array.from({ length: 7 }, () => [])
   const occurrences = [0, 0, 0, 0, 0, 0, 0] as number[]
   for (let d = new Date(from.slice(0, 10)); d <= new Date(to.slice(0, 10)); d.setDate(d.getDate() + 1)) {

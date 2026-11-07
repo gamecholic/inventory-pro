@@ -1,7 +1,6 @@
 import { renameSync, rmSync } from 'node:fs'
 import { toISO } from '../shared/dates'
 import { pruneSameDayScheduledFiles, scheduledBackupPath } from './db/backup'
-import { writeExcelBackup } from './db/excel'
 import { getSettings, updateSettings } from './db/settingsStore'
 
 /**
@@ -64,6 +63,7 @@ export async function runScheduledBackupOnce(now: Date = new Date()): Promise<bo
   const filePath = scheduledBackupPath(now)
   const tmpPath = `${filePath}.tmp`
   try {
+    const { writeExcelBackup } = await import('./db/excel')
     await writeExcelBackup(tmpPath)
     renameSync(tmpPath, filePath)
     // Retention: drop earlier hours of today (and legacy daily/auto files).

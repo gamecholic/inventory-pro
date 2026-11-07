@@ -1,4 +1,4 @@
-import ExcelJS from 'exceljs'
+import type { Workbook, Worksheet } from 'exceljs'
 import { toISO } from '../../shared/dates'
 import { EXPENSE_PAYMENTS, type ExpensePayment } from '../../shared/expenses'
 import { defaultSettings, withDefaults, type SettingsValues } from '../../shared/settings'
@@ -8,7 +8,7 @@ const LEGACY_REQUIRED_SHEETS = ['categories', 'products', 'sales', 'sale_items',
 
 type Row = Record<string, unknown>
 
-function rowsFrom(sheet: ExcelJS.Worksheet | undefined): Row[] {
+function rowsFrom(sheet: Worksheet | undefined): Row[] {
   if (!sheet) return []
   const header = (sheet.getRow(1).values ?? []) as unknown[]
   const rows: Row[] = []
@@ -165,7 +165,7 @@ function cancelledAt(row: Row, fallback: Date): string | null {
 }
 
 /** Convert the old app's lowercase table export into the current backup contract. */
-export function legacyWorkbookToBackup(workbook: ExcelJS.Workbook, now: Date = new Date()): Record<string, unknown> {
+export function legacyWorkbookToBackup(workbook: Workbook, now: Date = new Date()): Record<string, unknown> {
   const missing = LEGACY_REQUIRED_SHEETS.filter((name) => !workbook.getWorksheet(name))
   if (missing.length > 0) throw new Error(`Legacy Excel file is missing sheets: ${missing.join(', ')}`)
 
@@ -325,6 +325,7 @@ export function legacyWorkbookToBackup(workbook: ExcelJS.Workbook, now: Date = n
 }
 
 export async function readLegacyExcelBackup(filePath: string): Promise<{ categories: number; products: number }> {
+  const { default: ExcelJS } = await import('exceljs')
   const workbook = new ExcelJS.Workbook()
   await workbook.xlsx.readFile(filePath)
   return replaceAll(legacyWorkbookToBackup(workbook))

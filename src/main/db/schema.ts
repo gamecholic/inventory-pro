@@ -46,7 +46,9 @@ export const expenses = sqliteTable('expenses', {
   notes: text('notes'),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull()
-})
+}, (t) => [
+  index('expenses_date_idx').on(t.date)
+])
 
 export const products = sqliteTable('products', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -68,7 +70,8 @@ export const products = sqliteTable('products', {
   // while duplicates are rejected (protects POS exact-barcode lookup, §3.3).
   uniqueIndex('products_barcode_unique').on(t.barcode),
   index('products_category_idx').on(t.categoryId),
-  index('products_supplier_idx').on(t.supplierId)
+  index('products_supplier_idx').on(t.supplierId),
+  index('products_archived_idx').on(t.archivedAt)
 ])
 
 /** Completed/canceled sales (features §3, §6). Product data snapshotted into items. */
@@ -86,7 +89,8 @@ export const sales = sqliteTable('sales', {
   status: text('status').notNull().default('completed'),
   canceledAt: text('canceled_at')
 }, (t) => [
-  index('sales_created_at_idx').on(t.createdAt)
+  index('sales_created_at_idx').on(t.createdAt),
+  index('sales_status_created_idx').on(t.status, t.createdAt)
 ])
 
 export const saleItems = sqliteTable('sale_items', {
@@ -102,7 +106,8 @@ export const saleItems = sqliteTable('sale_items', {
   unitCost: real('unit_cost').notNull().default(0),
   lineTotal: real('line_total').notNull()
 }, (t) => [
-  index('sale_items_sale_id_idx').on(t.saleId)
+  index('sale_items_sale_id_idx').on(t.saleId),
+  index('sale_items_product_idx').on(t.productId)
 ])
 
 /**
@@ -120,5 +125,6 @@ export const stockAdjustments = sqliteTable('stock_adjustments', {
   sellingPrice: real('selling_price'),
   createdAt: text('created_at').notNull()
 }, (t) => [
-  index('stock_adjustments_product_idx').on(t.productId)
+  index('stock_adjustments_product_idx').on(t.productId),
+  index('stock_adjustments_created_idx').on(t.createdAt)
 ])

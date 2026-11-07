@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import {
   Select,
@@ -117,7 +116,7 @@ export function CartPanel({ onPay }: { onPay: (method: PaymentMethod) => void })
           <p className="text-sm text-muted-foreground">{t('pos.emptyCart')}</p>
         </div>
       ) : (
-        <ScrollArea className="min-h-0 flex-1">
+        <div className="native-scroll min-h-0 flex-1 overflow-y-auto">
           <div className="flex flex-col gap-2 pr-3">
             {items.map((i) => {
               const maxQty = Math.max(1, i.product.stockQty)
@@ -219,7 +218,7 @@ export function CartPanel({ onPay }: { onPay: (method: PaymentMethod) => void })
               )
             })}
           </div>
-        </ScrollArea>
+        </div>
       )}
 
       {/* Footer: totals + discount + pay */}

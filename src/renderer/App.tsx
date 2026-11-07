@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { HashRouter, Route, Routes, useLocation } from 'react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from 'next-themes'
@@ -6,21 +6,32 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Toaster } from '@/components/ui/sonner'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { Skeleton } from '@/components/ui/skeleton'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SiteHeader } from '@/components/site-header'
 import { UpdateCard } from '@/components/update-card'
 import { useSettings } from '@/hooks/useSettings'
-import { DashboardPage } from '@/pages/dashboard/DashboardPage'
-import { ExpensesPage } from '@/pages/expenses/ExpensesPage'
-import { ProductsPage } from '@/pages/products/ProductsPage'
-import { PosPage } from '@/pages/pos/PosPage'
-import { ReportsPage } from '@/pages/reports/ReportsPage'
-import { SalesPage } from '@/pages/sales/SalesPage'
-import { SettingsPage } from '@/pages/settings/SettingsPage'
-import { StockPage } from '@/pages/stock/StockPage'
 import { routes, type AppRoute } from '@/routes'
+
+const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })))
+const ExpensesPage = lazy(() => import('./pages/expenses/ExpensesPage').then((m) => ({ default: m.ExpensesPage })))
+const ProductsPage = lazy(() => import('./pages/products/ProductsPage').then((m) => ({ default: m.ProductsPage })))
+const PosPage = lazy(() => import('./pages/pos/PosPage').then((m) => ({ default: m.PosPage })))
+const ReportsPage = lazy(() => import('./pages/reports/ReportsPage').then((m) => ({ default: m.ReportsPage })))
+const SalesPage = lazy(() => import('./pages/sales/SalesPage').then((m) => ({ default: m.SalesPage })))
+const SettingsPage = lazy(() => import('./pages/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
+const StockPage = lazy(() => import('./pages/stock/StockPage').then((m) => ({ default: m.StockPage })))
+
+function PageFallback(): React.JSX.Element {
+  return (
+    <div className="flex flex-col gap-4 px-4 lg:px-6" aria-busy="true">
+      <Skeleton className="h-10 w-48" />
+      <Skeleton className="h-24 w-full" />
+      <Skeleton className="h-64 w-full" />
+    </div>
+  )
+}
 
 const PAGES: Record<AppRoute['key'], () => React.JSX.Element> = {
   dashboard: () => <DashboardPage />,
@@ -96,21 +107,23 @@ function Shell(): React.JSX.Element {
     >
       <AppSidebar routes={routes} />
       <SidebarInset className="min-h-0 overflow-hidden md:peer-data-[variant=inset]:overflow-clip">
-        <ScrollArea className="mb-2 h-full min-h-0 flex-1">
+        <div className="mb-2 native-scroll h-full min-h-0 flex-1 overflow-y-auto">
           <SiteHeader title={t(`nav.${active.key}`)} />
           <UpdateCard />
           <div className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col gap-2">
               <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-                <Routes>
-                  {routes.map((r) => (
-                    <Route key={r.key} path={r.path} element={pageFor(r.key)} />
-                  ))}
-                </Routes>
+                <Suspense fallback={<PageFallback />}>
+                  <Routes>
+                    {routes.map((r) => (
+                      <Route key={r.key} path={r.path} element={pageFor(r.key)} />
+                    ))}
+                  </Routes>
+                </Suspense>
               </div>
             </div>
           </div>
-        </ScrollArea>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   )

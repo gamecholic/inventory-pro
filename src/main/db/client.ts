@@ -79,6 +79,15 @@ export function openDatabase(filePath: string): { db: AppDb; sqlite: Database } 
   const handle = new Database(filePath)
   handle.exec('PRAGMA journal_mode = WAL')
   handle.exec('PRAGMA foreign_keys = ON')
+  // Tuned for low-end disks (eMMC/HDD, small RAM): NORMAL sync is safe with
+  // WAL and far cheaper than FULL, 8MB page cache covers a shop's working set,
+  // 64MB mmap avoids page-by-page read() churn without ballooning RAM.
+  handle.exec('PRAGMA synchronous = NORMAL')
+  handle.exec('PRAGMA cache_size = -8000')
+  handle.exec('PRAGMA temp_store = MEMORY')
+  handle.exec('PRAGMA busy_timeout = 5000')
+  handle.exec('PRAGMA mmap_size = 67108864')
+  handle.exec('PRAGMA journal_size_limit = 67108864')
   const database = drizzle(handle, { schema })
   migrate(database, { migrationsFolder: migrationsPath() })
   return { db: database, sqlite: handle }

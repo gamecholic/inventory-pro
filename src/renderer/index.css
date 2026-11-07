@@ -122,6 +122,26 @@
   }
 }
 
+/* Native scroll that mirrors shadcn ScrollArea thumb (rounded-full bg-border). */
+.native-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+.native-scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.native-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.native-scroll::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
 /* Receipt printing (§3.11): only the receipt paints. */
 @media print {
   body * {

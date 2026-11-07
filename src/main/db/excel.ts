@@ -1,4 +1,4 @@
-import ExcelJS from 'exceljs'
+import type { Worksheet } from 'exceljs'
 import { toISO } from '../../shared/dates'
 import { BACKUP_VERSION, collectAll, replaceAll } from './backup'
 
@@ -49,6 +49,7 @@ const ITEM_COLUMNS = ['id', 'sale_id', 'product_id', 'product_name', 'unit', 'qt
 
 /** One workbook, one sheet per table. First row is the header. */
 export async function writeExcelBackup(filePath: string): Promise<void> {
+  const { default: ExcelJS } = await import('exceljs')
   const dump = collectAll()
   const wb = new ExcelJS.Workbook()
   wb.creator = 'Inventory Pro'
@@ -116,15 +117,16 @@ export async function writeExcelBackup(filePath: string): Promise<void> {
 
 /** Read a workbook written by writeExcelBackup and replace all data. */
 export async function readExcelBackup(filePath: string): Promise<{ categories: number; products: number }> {
+  const { default: ExcelJS } = await import('exceljs')
   const wb = new ExcelJS.Workbook()
   await wb.xlsx.readFile(filePath)
-  const getSheet = (name: string): ExcelJS.Worksheet => {
+  const getSheet = (name: string): Worksheet => {
     const sheet = wb.getWorksheet(name)
     if (!sheet) throw new Error(`Missing sheet: ${name}`)
     return sheet
   }
   // Sales sheets are absent in v1 backups — treat as empty, keep them importable.
-  const optSheet = (name: string): ExcelJS.Worksheet | null => wb.getWorksheet(name) ?? null
+  const optSheet = (name: string): Worksheet | null => wb.getWorksheet(name) ?? null
   const settingsObj: Record<string, unknown> = {}
   getSheet('Settings').eachRow((row, n) => {
     if (n === 1) return
@@ -138,7 +140,7 @@ export async function readExcelBackup(filePath: string): Promise<{ categories: n
       }
     }
   })
-  const readRows = (sheet: ExcelJS.Worksheet): Array<Record<string, unknown>> => {
+  const readRows = (sheet: Worksheet): Array<Record<string, unknown>> => {
     const header = (sheet.getRow(1).values ?? []) as unknown[]
     const rows: Array<Record<string, unknown>> = []
     sheet.eachRow((row, n) => {

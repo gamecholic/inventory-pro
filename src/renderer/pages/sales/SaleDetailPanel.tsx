@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Sheet,
   SheetContent,
@@ -99,7 +98,7 @@ export function SaleDetailPanel({
             </SheetTitle>
           </SheetHeader>
           {detail && (
-            <ScrollArea className="mb-4 min-h-0 flex-1">
+            <div className="native-scroll mb-4 min-h-0 flex-1 overflow-y-auto">
             <div className="mr-4 ml-4 flex flex-col gap-2 text-sm">
               <div className="flex flex-col gap-0.5 rounded-lg bg-muted/40 p-4">
                 {business?.name !== '' && <p className="text-base font-bold">{business?.name}</p>}
@@ -199,7 +198,7 @@ export function SaleDetailPanel({
                 )}
               </div>
             </div>
-            </ScrollArea>
+            </div>
           )}
         </SheetContent>
       </Sheet>

@@ -11,8 +11,6 @@ import {
   writeTextFile,
   type BackupDirInfo
 } from '../db/backup'
-import { readExcelBackup, writeExcelBackup } from '../db/excel'
-import { readLegacyExcelBackup } from '../db/legacyExcel'
 
 export function registerBackupIpc(): void {
   ipcMain.handle('backup:export-json', async () => {
@@ -44,6 +42,7 @@ export function registerBackupIpc(): void {
       filters: [{ name: 'Excel', extensions: ['xlsx'] }]
     })
     if (canceled || !filePath) return null
+    const { writeExcelBackup } = await import('../db/excel')
     await writeExcelBackup(filePath)
     return filePath
   })
@@ -55,6 +54,7 @@ export function registerBackupIpc(): void {
       properties: ['openFile']
     })
     if (canceled || filePaths.length === 0) return null
+    const { readExcelBackup } = await import('../db/excel')
     const counts = await readExcelBackup(filePaths[0] as string)
     return { filePath: filePaths[0], ...counts }
   })
@@ -66,6 +66,7 @@ export function registerBackupIpc(): void {
       properties: ['openFile']
     })
     if (canceled || filePaths.length === 0) return null
+    const { readLegacyExcelBackup } = await import('../db/legacyExcel')
     const counts = await readLegacyExcelBackup(filePaths[0] as string)
     return { filePath: filePaths[0], ...counts }
   })

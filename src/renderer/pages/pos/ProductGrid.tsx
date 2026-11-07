@@ -1,10 +1,9 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
+import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { ChevronDown } from 'lucide-react'
 import { normalizeTR } from '@shared/normalizeTR'
 import { formatMoney, type StoreCurrency } from '@shared/money'
@@ -13,6 +12,30 @@ import type { ProductRow } from '@shared/products'
 import type { CategoryRow } from '@shared/products'
 import { useSettings } from '@/hooks/useSettings'
 
+interface SearchKeys {
+  name: string
+  barcode: string
+  price: string
+}
+
+// Cache normalized search keys per product object identity so a keystroke
+// doesn't re-normalize the whole catalog (catalog objects are stable until
+// a query refetch replaces them, WeakMap lets old entries GC).
+const searchKeysCache = new WeakMap<ProductRow, SearchKeys>()
+
+function getSearchKeys(p: ProductRow): SearchKeys {
+  let keys = searchKeysCache.get(p)
+  if (!keys) {
+    keys = {
+      name: normalizeTR(p.name),
+      barcode: normalizeTR(p.barcode ?? ''),
+      price: String(p.sellingPrice)
+    }
+    searchKeysCache.set(p, keys)
+  }
+  return keys
+}
+
 /** Shared by live grid filtering and submit auto-add (§3.1, §3.3). */
 export function filterPosProducts(catalog: ProductRow[], search: string, categoryId: number | null): ProductRow[] {
   const query = search.trim()
@@ -20,9 +43,10 @@ export function filterPosProducts(catalog: ProductRow[], search: string, categor
   return catalog.filter((p) => {
     if (categoryId !== null && p.categoryId !== categoryId) return false
     if (query === '') return true
-    if (normalizeTR(p.name).includes(normalizedQuery)) return true
-    if (normalizeTR(p.barcode ?? '').includes(normalizedQuery)) return true
-    if (String(p.sellingPrice).includes(query)) return true
+    const keys = getSearchKeys(p)
+    if (keys.name.includes(normalizedQuery)) return true
+    if (keys.barcode.includes(normalizedQuery)) return true
+    if (keys.price.includes(query)) return true
     return false
   })
 }
@@ -97,16 +121,11 @@ export function ProductGrid({
   const { t } = useTranslation()
   const { data: settings } = useSettings()
   const currency = settings?.general.currency ?? 'USD'
-  const filtered = useMemo(() => filterPosProducts(catalog, search, categoryId), [catalog, search, categoryId])
+  const deferredSearch = useDeferredValue(search)
+  const filtered = useMemo(() => filterPosProducts(catalog, deferredSearch, categoryId), [catalog, deferredSearch, categoryId])
 
-  // The virtualizer needs the actual scrolling element. shadcn's ScrollArea
-  // renders a Radix root + viewport, so query its viewport instead of using a
-  // plain overflow div and losing the themed scrollbar.
   const scrollRootRef = useRef<HTMLDivElement | null>(null)
-  const getScrollElement = useCallback((): HTMLElement | null => {
-    const root = scrollRootRef.current
-    return root?.querySelector<HTMLElement>('[data-slot="scroll-area-viewport"]') ?? null
-  }, [])
+  const getScrollElement = useCallback((): HTMLElement | null => scrollRootRef.current, [])
 
   const viewportWidth = useViewportWidth()
   const columns = viewportWidth >= THREE_COLUMN_BREAKPOINT ? 3 : 2
@@ -126,7 +145,7 @@ export function ProductGrid({
   // Filter changes should always start at the top of the results.
   useEffect(() => {
     getScrollElement()?.scrollTo({ top: 0 })
-  }, [search, categoryId, getScrollElement])
+  }, [deferredSearch, categoryId, getScrollElement])
 
   // Column changes rebuild rows, so stale row measurements must be dropped.
   useEffect(() => {
@@ -152,7 +171,7 @@ export function ProductGrid({
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <ScrollArea className="mt-2 h-32 max-h-32">
+          <div className="native-scroll mt-2 h-32 max-h-32 overflow-y-auto">
             <div className="flex flex-wrap gap-2 pr-3">
               <Button
                 size="sm"
@@ -172,7 +191,7 @@ export function ProductGrid({
                 </Button>
               ))}
             </div>
-          </ScrollArea>
+          </div>
         </CollapsibleContent>
       </Collapsible>
       {catalog.length === 0 ? (
@@ -180,10 +199,10 @@ export function ProductGrid({
       ) : filtered.length === 0 ? (
         <p className="rounded-lg border border-border p-8 text-center text-muted-foreground">{t('pos.noResults')}</p>
       ) : (
-        <ScrollArea
+        <div
           ref={scrollRootRef}
           data-testid="product-grid"
-          className="min-h-0 h-[65vh] pr-3 lg:h-auto lg:flex-1"
+          className="native-scroll min-h-0 h-[65vh] overflow-y-auto pr-3 lg:h-auto lg:flex-1"
         >
           <div style={{ height: `${virtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
             {virtualizer.getVirtualItems().map((virtualRow) => {
@@ -213,7 +232,7 @@ export function ProductGrid({
               )
             })}
           </div>
-        </ScrollArea>
+        </div>
       )}
     </div>
   )

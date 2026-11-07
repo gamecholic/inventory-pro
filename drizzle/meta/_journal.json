@@ -57,6 +57,13 @@
       "when": 1788689140468,
       "tag": "0007_talented_robbie_robertson",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1794051065249,
+      "tag": "0008_concerned_black_tarantula",
+      "breakpoints": true
     }
   ]
 }

@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatMoney } from '@shared/money'
 import { normalizeTR } from '@shared/normalizeTR'
@@ -113,7 +112,7 @@ export function StockPage(): React.JSX.Element {
           ) : filtered.length === 0 ? (
             <p className="p-4 text-center text-sm text-muted-foreground">{t('stock.noResults')}</p>
           ) : (
-            <ScrollArea data-testid="stock-list" className="min-h-0 lg:flex-1">
+            <div data-testid="stock-list" className="native-scroll min-h-0 overflow-y-auto lg:flex-1">
               <div className="flex flex-col gap-2 pr-3">
                 {filtered.map((p) => (
                 <Button
@@ -137,10 +136,10 @@ export function StockPage(): React.JSX.Element {
                 </Button>
               ))}
               </div>
-            </ScrollArea>
+            </div>
           )}
         </div>
-        <ScrollArea className="min-h-0 lg:h-full">
+        <div className="native-scroll min-h-0 overflow-y-auto lg:h-full">
           <div className="flex flex-col gap-4 pr-3">
             {selected ? (
               <>
@@ -185,7 +184,7 @@ export function StockPage(): React.JSX.Element {
               </p>
             )}
           </div>
-        </ScrollArea>
+        </div>
       </div>
       {selected && (
         <ReceiveDialog

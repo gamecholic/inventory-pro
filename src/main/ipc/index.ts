@@ -1,6 +1,4 @@
 import { app, ipcMain } from 'electron'
-import { defaultBackupPath } from '../db/backup'
-import { writeExcelBackup } from '../db/excel'
 import { registerAnalyticsIpc } from './analytics'
 import { registerBackupIpc } from './backup'
 import { registerCatalogIpc } from './catalog'
@@ -21,5 +19,3 @@ export function registerIpc(): void {
   registerSalesIpc()
   registerUpdaterIpc()
 }
-
-export { defaultBackupPath, writeExcelBackup }

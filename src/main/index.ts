@@ -3,10 +3,10 @@ import { join } from 'node:path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { getDb } from './db/client'
 import { getSettings } from './db/settingsStore'
-import { defaultBackupPath, registerIpc, writeExcelBackup } from './ipc'
+import { registerIpc } from './ipc'
+import { startScheduledBackups, stopScheduledBackups } from './scheduledBackup'
 
 let mainWindow: BrowserWindow | null = null
-let closingAfterBackupChoice = false
 
 // Dev-only shared session: expose renderer over CDP so a local agent can
 // attach to the same `npm run dev` window (console / network / DOM).
@@ -38,49 +38,6 @@ function createWindow(): void {
     mainWindow?.show()
   })
 
-  // Backup prompt on close (features §1.8). Reads the live setting every time.
-  mainWindow.on('close', (event) => {
-    if (closingAfterBackupChoice || mainWindow?.isDestroyed()) return
-    let backupOnClose: boolean
-    try {
-      backupOnClose = getSettings().general.backupOnClose
-    } catch {
-      backupOnClose = false
-    }
-    if (!backupOnClose) return
-    event.preventDefault()
-    void (async () => {
-      const { response } = await dialog.showMessageBox(mainWindow!, {
-        type: 'question',
-        title: 'Close Application',
-        message: 'Do you want to export an Excel backup before closing?',
-        buttons: ['Yes', 'No', 'Cancel'],
-        defaultId: 1,
-        cancelId: 2
-      })
-      if (response === 2) return // Cancel: stay open
-      closingAfterBackupChoice = true
-      if (response === 0) {
-        try {
-          const filePath = defaultBackupPath()
-          await writeExcelBackup(filePath)
-          await dialog.showMessageBox(mainWindow!, {
-            type: 'info',
-            title: 'Backup Complete',
-            message: `Backup saved to:\n${filePath}`
-          })
-        } catch (error) {
-          await dialog.showMessageBox(mainWindow!, {
-            type: 'error',
-            title: 'Backup Failed',
-            message: error instanceof Error ? error.message : String(error)
-          })
-        }
-      }
-      mainWindow?.close()
-    })()
-  })
-
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     void mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
@@ -99,11 +56,20 @@ app.whenReady().then(() => {
   }
   app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
   registerIpc()
+  // Hourly scheduled backup (features §1.8): on the hour, one file per day
+  // (latest hour). Success is silent (time recorded for Settings); a failure
+  // shows a toast. Reads the live setting each tick, so toggling takes
+  // effect without a restart. No backup at launch — first run is next hour.
+  startScheduledBackups()
   createWindow()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+})
+
+app.on('before-quit', () => {
+  stopScheduledBackups()
 })
 
 app.on('window-all-closed', () => {

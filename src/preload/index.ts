@@ -79,7 +79,12 @@ const api = {
     importLegacyExcel: (): Promise<ImportResult | null> => ipcRenderer.invoke('backup:import-legacy-excel'),
     dir: (): Promise<BackupDirInfo> => ipcRenderer.invoke('backup:dir'),
     selectDir: (): Promise<string | null> => ipcRenderer.invoke('backup:select-dir'),
-    openDir: (): Promise<boolean> => ipcRenderer.invoke('backup:open-dir')
+    openDir: (): Promise<boolean> => ipcRenderer.invoke('backup:open-dir'),
+    onScheduledFailed: (callback: (message: string) => void): (() => void) => {
+      const handler = (_event: unknown, message: string): void => callback(message)
+      ipcRenderer.on('backup:scheduled-failed', handler)
+      return () => ipcRenderer.removeListener('backup:scheduled-failed', handler)
+    }
   },
   db: {
     reset: (): Promise<boolean> => ipcRenderer.invoke('db:reset'),

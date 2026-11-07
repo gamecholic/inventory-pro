@@ -24,6 +24,7 @@ export const channels = [
   'backup:dir',
   'backup:select-dir',
   'backup:open-dir',
+  'backup:scheduled-failed',
   'db:dir',
   'db:select-dir',
   'db:set-dir',

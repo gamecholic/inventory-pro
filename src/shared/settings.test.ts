@@ -33,4 +33,23 @@ describe('settings schemas', () => {
     expect(withDefaults({ general: { language: 'tr' } }).general.currency).toBe('USD')
     expect(withDefaults(null)).toEqual(defaultSettings)
   })
+
+  it('migrates the removed backup-on-close flag to scheduledBackup', () => {
+    expect(withDefaults({ general: { backupOnClose: true } }).general.scheduledBackup).toBe(true)
+    expect(withDefaults({ general: { backupOnClose: false } }).general.scheduledBackup).toBe(false)
+    // An explicit new value wins over the legacy one.
+    expect(withDefaults({ general: { backupOnClose: true, scheduledBackup: false } }).general.scheduledBackup).toBe(false)
+    expect('backupOnClose' in withDefaults({ general: { backupOnClose: true } }).general).toBe(false)
+  })
+
+  it('defaults scheduledBackupLastAt to null and validates ISO or null', () => {
+    expect(defaultSettings.general.scheduledBackupLastAt).toBeNull()
+    expect(withDefaults({}).general.scheduledBackupLastAt).toBeNull()
+    expect(
+      generalSettings.safeParse({ ...defaultSettings.general, scheduledBackupLastAt: 'not-a-date' }).success
+    ).toBe(false)
+    expect(
+      generalSettings.safeParse({ ...defaultSettings.general, scheduledBackupLastAt: '2026-11-07T14:00:00.000Z' }).success
+    ).toBe(true)
+  })
 })

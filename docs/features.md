@@ -73,21 +73,22 @@ Global behaviors apply across pages and are described first.
 - Delete / archive / restore / reset / import actions always ask for
   confirmation first.
 
-### 1.8 Backup Prompt on App Close
+### 1.8 Scheduled Backup
 
-- When the backup-on-close option is enabled, closing the app does not close
-  immediately. A confirmation dialog appears first, in the user's language:
-  - Title: `Close Application`.
-  - Message: `Do you want to export an Excel backup before closing?`.
-  - Buttons: `Yes` / `No` / `Cancel` (`No` is the default).
-- `Yes`: the app exports a full Excel backup, shows a `Backup Complete`
-  confirmation with the backup file path, then closes.
-- `Yes` when the export fails: the app shows a `Backup Failed` message with
-  the reason, then still closes.
-- `No`: the app closes immediately without creating a backup.
-- `Cancel`: the close is aborted and the app stays open.
-- When the option is disabled (the default), the app closes directly with no
-  prompt.
+- When the scheduled-backup option is enabled, the app writes an automatic
+  Excel backup once an hour, on the hour (e.g. `14:00`, `15:00`), while it is
+  running. No prompt appears and closing is never blocked. The first backup
+  after launch is the next hour, not immediately.
+- Each day gets one file, `inventory-YYYY-MM-DD-HHMM.xlsx` (local date +
+  time), in the backup folder. Each hourly run writes the file for its hour
+  and deletes same-day files from earlier hours (and the legacy date-only
+  file), so only the latest hour's file per day is kept. Previous days'
+  files are kept.
+- Successful backups are silent. Settings > Database shows the last backup
+  time (store date format + time). Failed backups show an error toast with
+  the reason.
+- When the option is disabled (the default), no automatic backups are written
+  and the app closes directly with no prompt.
 
 ---
 
@@ -823,11 +824,12 @@ Every option the user sees:
 - **Reset Database** (danger, red): warning that all data will be deleted and
   cannot be undone. Confirmation required. App reloads on success. Button
   `Reset Database`.
-- **Backup on close (optional)**: when enabled, the app asks on every close
-  whether to export an Excel backup first. See `1.8 Backup Prompt on App
-  Close` for the Yes / No / Cancel behavior. The target folder is shown
-  below the toggle and can be changed via a folder picker (empty = app
-  default, reversible via `Use default`).
+- **Scheduled backup (optional)**: when enabled, the app silently writes an
+  Excel backup once an hour (one file per day, `inventory-YYYY-MM-DD-HHMM.xlsx`,
+  latest hour kept; last backup time shown, failures show a toast). See `1.8
+  Scheduled Backup`. The target folder is shown below the toggle and can be
+  changed via a folder picker (empty = app default, reversible via `Use
+  default`).
 - Loading messages during operations: exporting/importing JSON/Excel,
   resetting database.
 

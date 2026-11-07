@@ -4,31 +4,29 @@ Status: [DECIDED] = agreed, not locked. [OPEN] = needs decision.
 
 ## 1. Stack
 - [DECIDED] Shell: Bun single-process server (Windows). `server/boot.ts` compiles to `Inventory Pro.exe` (Bun runtime) which serves the Vite renderer + API on 127.0.0.1 and opens a Chrome/Edge `--app` window. Packaging via `scripts/build-app.ts` + Inno Setup (`scripts/build-installer.ts`, `packaging/inventory-pro.iss`). Auto-update is installer-based (see `server/updater.ts`, `docs/migrate-to-bun.md` §6.3/§9). Electron is fully removed from the tree; Linux is not currently shipped.
-- [DECIDED] Frontend: Vite + React + TypeScript + React Router (8 routes) + Zustand (ephemeral: cart, selection, filters) + TanStack Query over IPC (query keys per page/filter, invalidate on mutations).
-- [DECIDED] DB: SQLite file per shop, better-sqlite3 (Electron, retired) / bun:sqlite (Bun port, ship path), Drizzle ORM + migrations. Sale completion = one transaction (insert sale + lines, decrement stock). Cost-averaging (§5.3) computed in main.
-- [DECIDED] Validation: Zod schemas in `shared/` for forms + IPC payloads, both sides.
-- [DECIDED] Backup: ExcelJS + JSON dump in main (§9.4, §1.8 scheduled hourly Excel, started from `server/boot.ts` via `src/main/scheduledBackup.ts`). Import replaces data after confirm + reload. The old-app Excel import (`main/db/legacyExcel.ts`) maps legacy sheets/columns into the same backup contract, then reuses `replaceAll()`.
-- [DECIDED] Print: one HTML receipt template shared by POS (§3.11) + Sales History (§6.4) → `BrowserWindow.print()`. No thermal.
-- [DECIDED] Tests: Vitest (unit: discount/split math §3.7–3.10, normalizeTR, cost-averaging) + Playwright (E2E: POS sale flow first). Main-process tests run against an electron stub (vitest alias), never the real binary.
-- [DECIDED] Dates at API boundary: every IPC request/response carries dates as ISO8601 UTC strings (`z.string().datetime()`). Renderer converts Date/preset → ISO at the edge via `shared/dates.toISO()`; main parses/stores/filters in UTC and returns ISO. SQLite stores ISO text. No local-format or epoch-ms on the wire. This kills TZ bugs in dashboard/report/chart filters.
+- [DECIDED] Frontend: Vite + React + TypeScript + React Router (8 routes) + Zustand (ephemeral: cart, selection, filters) + TanStack Query over HTTP (query keys per page/filter, invalidate on mutations). Renderer calls `window.api.*` installed by `renderer/lib/http-api.ts` (`POST /api/<channel>`).
+- [DECIDED] DB: SQLite file per shop via `bun:sqlite`, Drizzle ORM + migrations. Sale completion = one transaction (insert sale + lines, decrement stock). Cost-averaging (§5.3) computed server-side.
+- [DECIDED] Validation: Zod schemas in `shared/` for forms + API payloads, both sides.
+- [DECIDED] Backup: ExcelJS + JSON dump in `src/main/db/` (§9.4, §1.8 scheduled hourly Excel, started from `server/boot.ts` via `src/main/scheduledBackup.ts`). Import replaces data after confirm + reload. The old-app Excel import (`main/db/legacyExcel.ts`) maps legacy sheets/columns into the same backup contract, then reuses `replaceAll()`.
+- [DECIDED] Print: one HTML receipt template shared by POS (§3.11) + Sales History (§6.4) → `window.print()` in the Chrome/Edge `--app` tab. No thermal.
+- [DECIDED] Tests: `bun:test` (`npm run test:bun`, unit: discount/split math §3.7–3.10, normalizeTR, cost-averaging, analytics) + Playwright (E2E: POS sale flow first). Main-process tests run against `:memory:` SQLite with the `electron` module aliased to `server/electron.ts` (see `tsconfig.bun.json`), never the real binary.
+- [DECIDED] Dates at API boundary: every API request/response carries dates as ISO8601 UTC strings (`z.string().datetime()`). Renderer converts Date/preset → ISO at the edge via `shared/dates.toISO()`; server parses/stores/filters in UTC and returns ISO. SQLite stores ISO text. No local-format or epoch-ms on the wire. This kills TZ bugs in dashboard/report/chart filters.
 
 ## 2. Layout
 ```
+server/{boot,index,electron,updater,dialogs}.ts        (Bun process: serve + shim + dialogs)
 main/db/{client,schema,settingsStore,backup,excel,legacyExcel,categories,suppliers,products,stock,sales}.ts
-main/ipc/{index,settings,backup,catalog,sales,updater}.ts  (./ipc resolves to index)
-preload/ (window.api.* only)
+main/ipc/{settings,backup,catalog,sales,updater}.ts    (register*Ipc() handlers; served as POST /api/<channel>)
+renderer/{main.tsx,App.tsx,lib/http-api.ts}             ( installs window.api over fetch before React mounts)
 renderer/pages/{dashboard,pos,products,stock,sales,expenses,reports,settings}
 renderer/{hooks,stores,components,lib}  renderer/i18n/{en,tr}.ts
-shared/{api,settings,products,sale,stock,normalizeTR,money,dates,units}.ts (+ *.test.ts)
+shared/{api,api-surface,settings,products,sale,stock,normalizeTR,money,dates,units}.ts (+ *.test.ts)
 ```
-Print (receipt template → BrowserWindow.print) and updater (GitHub Releases) live in
-`main/index.ts` + `main/ipc/` for now; split into `main/print|updater` when they grow.
+Print (receipt template → `window.print()`) lives in the renderer (`ReceiptDialog` + print CSS); updater checks live in `server/updater.ts` + `server/index.ts` stubs until the installer-based updater lands (see `migrate-to-bun.md` §6).
 
 ## 3. Separation (enforced)
-- Two builds (electron-vite main + renderer). ESLint `no-restricted-imports` blocks renderer → `main/*`.
-- Contracts first: channel names in `shared/api.ts`, Zod schemas beside them in `shared/*.ts`, then main handler in `main/ipc/<domain>.ts`, then renderer hook. No `any` across the boundary.
-- Backend owns truth (SQLite). UI caches and invalidates after each mutation.
-- Preload output is `out/preload/index.mjs` — main must reference the `.mjs` path, not `.js`.
+- Single Bun build: `scripts/build-app.ts` compiles `server/boot.ts` → exe and copies `out/web/` + `drizzle/` beside it. ESLint `no-restricted-imports` blocks renderer → `main/*`.
+- Contracts first: channel names in `shared/api.ts`, Zod schemas beside them in `shared/*.ts`, then server handler in `main/ipc/<domain>.ts` (registered via the `server/electron.ts` shim in `server/index.ts`), then renderer hook. No `any` across the boundary.
 - Settings live in a `settings` key-value table (one JSON row per section), merged over `shared/settings.ts` defaults. Display prefs (language/currency/dates) are read from the `['settings']` TanStack Query cache.
 
 ## 4. Must-not-break (from features.md)

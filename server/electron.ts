@@ -59,10 +59,10 @@ export const app = {
  * uploaded files, so these should never be reached.
  */
 export const dialog = {
-  async showSaveDialog(): Promise<{ canceled: boolean; filePath: undefined }> {
+  async showSaveDialog(_options?: unknown): Promise<{ canceled: boolean; filePath: undefined }> {
     return { canceled: true, filePath: undefined }
   },
-  async showOpenDialog(): Promise<{ canceled: boolean; filePaths: string[] }> {
+  async showOpenDialog(_options?: unknown): Promise<{ canceled: boolean; filePaths: string[] }> {
     return { canceled: true, filePaths: [] }
   }
 }

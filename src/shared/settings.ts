@@ -13,10 +13,10 @@ export const generalSettings = z.object({
   scheduledBackupLastAt: z.string().datetime({ offset: true }).nullable(),
   /** Custom scheduled-backup folder. Empty = app-managed default. Chosen via folder picker (§9.4). */
   backupDir: z.string().max(500),
-  /** Start the app window maximized (full screen) on launch. */
-  startMaximized: z.boolean(),
   /** Allow other devices on the LAN to reach the app (binds to 0.0.0.0). Requires restart. */
-  networkAccess: z.boolean()
+  networkAccess: z.boolean(),
+  /** Start the app automatically when the user logs in to Windows (Run registry key). */
+  autoStartOnLogin: z.boolean()
 })
 
 /** Features §9.2 — Business Information. All optional, shown on receipts when set (§1.4). */
@@ -62,6 +62,9 @@ export function withDefaults(stored: unknown): SettingsValues {
   }
   delete generalStored.autoBackup
   delete generalStored.backupOnClose
+  // Electron-era window flag: the Bun port opens a plain browser tab, so
+  // startMaximized is a no-op and is dropped from stored settings.
+  delete generalStored.startMaximized
   return {
     general: { ...defaultSettings.general, ...generalStored },
     business: { ...defaultSettings.business, ...(isRecord(rec.business) ? rec.business : {}) },
@@ -79,8 +82,8 @@ export const defaultSettings: SettingsValues = {
     scheduledBackup: false,
     scheduledBackupLastAt: null,
     backupDir: '',
-    startMaximized: false,
-    networkAccess: false
+    networkAccess: false,
+    autoStartOnLogin: false
   },
   business: { name: '', address: '', phone: '', email: '', taxId: '' },
   receipt: { header: '', footer: 'Thank you for your purchase!', showLogo: false }

@@ -769,6 +769,8 @@ Customization, Database Management.
 - Currency dropdown: USD ($), EUR (€), GBP (£), TRY (₺).
 - Date Format dropdown: `MM/DD/YYYY`, `DD/MM/YYYY`, `YYYY-MM-DD`.
 - `Enable Low Stock Notifications` checkbox.
+- `Start with Windows` switch — when on, Inventory Pro launches automatically
+  at Windows log-in (per-user Run entry pointing at the installed exe).
 - `Credit Card Vendor Fee (%)` number input (0.01 steps, default 0.68). Used
   to compute net card amounts shown on Dashboard and Reports.
 - Buttons: `Save Changes` + `Reset Settings` (danger: resets all settings to

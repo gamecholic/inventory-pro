@@ -22,6 +22,7 @@ import { createServer } from 'node:net'
 import { basename, dirname, join } from 'node:path'
 import { startServer, notifyScheduledBackupFailed } from './index'
 import { getSettings } from '../src/main/db/settingsStore'
+import { syncAutostart } from '../src/main/autostart'
 import { setScheduledBackupFailureNotifier, startScheduledBackups, stopScheduledBackups } from '../src/main/scheduledBackup'
 
 const APP_NAME = 'Inventory Pro'
@@ -224,6 +225,14 @@ async function main(): Promise<void> {
     } catch {
       HOST = '127.0.0.1'
     }
+  }
+
+  // Start-with-Windows: reconcile the Run entry with the saved setting so a
+  // moved/updated exe keeps autostart working. Never blocks launch.
+  try {
+    syncAutostart(getSettings().general.autoStartOnLogin)
+  } catch (error) {
+    log(`autostart sync failed: ${error instanceof Error ? error.message : String(error)}`)
   }
 
   const webRoot = resolveWebRoot()

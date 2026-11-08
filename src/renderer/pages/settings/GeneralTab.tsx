@@ -217,14 +217,14 @@ export function GeneralTab(): React.JSX.Element {
             </div>
             <div className="flex items-center justify-between gap-4">
               <div>
-                <Label htmlFor="startMaximized">{t('settings.startMaximized')}</Label>
-                <p className="text-xs text-muted-foreground">{t('settings.startMaximizedDesc')}</p>
+                <Label htmlFor="autoStartOnLogin">{t('settings.autoStartOnLogin')}</Label>
+                <p className="text-xs text-muted-foreground">{t('settings.autoStartOnLoginDesc')}</p>
               </div>
               <Controller
-                name="startMaximized"
+                name="autoStartOnLogin"
                 control={form.control}
                 render={({ field }) => (
-                  <Switch id="startMaximized" checked={field.value} onCheckedChange={field.onChange} />
+                  <Switch id="autoStartOnLogin" checked={field.value} onCheckedChange={field.onChange} />
                 )}
               />
             </div>

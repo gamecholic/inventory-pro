@@ -9,11 +9,13 @@
  * lifecycle (single instance, port choice, opening the window).
  */
 import { extname, join, normalize } from 'node:path'
+import { networkInterfaces } from 'node:os'
 import { ZodError } from 'zod'
 import { app, handlers } from './electron'
 import { showNativeDialog } from './dialogs'
 import { getDb } from '../src/main/db/client'
 import { backupDir, fromBackupJson, readTextFile, toBackupJson, writeTextFile } from '../src/main/db/backup'
+import { getSettings } from '../src/main/db/settingsStore'
 import { registerAnalyticsIpc } from '../src/main/ipc/analytics'
 import { registerBackupIpc } from '../src/main/ipc/backup'
 import { registerCatalogIpc } from '../src/main/ipc/catalog'
@@ -163,13 +165,58 @@ function backupEventsResponse(): Response {
 
 // --- HTTP -------------------------------------------------------------------
 
+/** First private IPv4 LAN address, preferring 192.168.* > 10.* > 172.16-31.*. */
+function getLanIp(): string | null {
+  const nets = networkInterfaces()
+  const candidates: string[] = []
+  for (const list of Object.values(nets).flat()) {
+    if (!list) continue
+    if (list.family === 'IPv4' && !list.internal) candidates.push(list.address)
+  }
+  if (candidates.length === 0) return null
+  const score = (ip: string): number => {
+    if (ip.startsWith('192.168.')) return 0
+    if (ip.startsWith('10.')) return 1
+    const second = Number(ip.split('.')[1])
+    if (ip.startsWith('172.') && second >= 16 && second <= 31) return 2
+    return 3
+  }
+  return candidates.sort((a, b) => score(a) - score(b))[0] ?? null
+}
+
+function networkInfo(port: number, host: string): Response {
+  const lanIp = getLanIp()
+  let networkAccess = false
+  try {
+    networkAccess = getSettings().general.networkAccess
+  } catch {
+    // DB not open yet; host binding already reflects the flag.
+  }
+  return Response.json({
+    lanIp,
+    port,
+    host,
+    networkAccess,
+    url: lanIp ? `http://${lanIp}:${port}` : null,
+    lanReachable: host === '0.0.0.0'
+  })
+}
+
 function fail(status: number, message: string): Response {
   return new Response(message, { status, headers: { 'content-type': 'text/plain; charset=utf-8' } })
 }
 
-async function handleApi(request: Request, pathname: string): Promise<Response> {
+async function handleApi(
+  request: Request,
+  pathname: string,
+  ctx?: { port: number; host: string }
+): Promise<Response> {
   if (pathname === '/api/health') {
     return Response.json({ ok: true, version: app.getVersion(), pid: process.pid })
+  }
+
+  if (pathname === '/api/network-info') {
+    return networkInfo(ctx?.port ?? 5178, ctx?.host ?? '127.0.0.1')
   }
 
   if (pathname === '/api/backup-events' && request.method === 'GET') {
@@ -303,7 +350,9 @@ export function startServer(options: ServerOptions): RunningServer {
     idleTimeout: 0,
     async fetch(request) {
       const url = new URL(request.url)
-      if (url.pathname.startsWith('/api/')) return handleApi(request, url.pathname)
+      if (url.pathname.startsWith('/api/')) {
+        return handleApi(request, url.pathname, { port: server.port ?? options.port, host })
+      }
       return serveStatic(options.webRoot, url.pathname, request.headers.get('accept-encoding'))
     }
   })

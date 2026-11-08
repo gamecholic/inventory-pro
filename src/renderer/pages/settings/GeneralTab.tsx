@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTheme } from 'next-themes'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'
+import { Check, Copy, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -43,6 +43,7 @@ import type { StoreDateFormat } from '@shared/dates'
 import { formatISO } from '@shared/dates'
 import { settingsKey, useSettings, useUpdateSettings } from '@/hooks/useSettings'
 import { useAppVersion } from '@/hooks/useAppVersion'
+import QRCode from 'react-qr-code'
 
 const CURRENCIES = [
   { value: 'USD', label: 'USD ($)' },
@@ -62,6 +63,8 @@ export function GeneralTab(): React.JSX.Element {
   const queryClient = useQueryClient()
   const { data: appVersion } = useAppVersion()
   const [resetting, setResetting] = useState(false)
+  const [networkInfo, setNetworkInfo] = useState<{ lanIp: string | null; port: number; host: string; networkAccess: boolean; url: string | null; lanReachable: boolean } | null>(null)
+  const [urlCopied, setUrlCopied] = useState(false)
 
   const form = useForm({
     resolver: zodResolver(generalSettings),
@@ -75,11 +78,44 @@ export function GeneralTab(): React.JSX.Element {
 
   const currency = form.watch('currency') as StoreCurrency
   const dateFormat = form.watch('dateFormat') as StoreDateFormat
+  const networkAccess = form.watch('networkAccess')
   const preview = `${formatMoney(1234.5, currency)} • ${formatISO(new Date().toISOString(), dateFormat)}`
+
+  useEffect(() => {
+    if (!networkAccess) {
+      setNetworkInfo(null)
+      return
+    }
+    let cancelled = false
+    fetch('/api/network-info')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json: unknown) => {
+        if (!cancelled && json && typeof json === 'object') {
+          setNetworkInfo(json as typeof networkInfo)
+        }
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [networkAccess])
 
   const onSubmit = form.handleSubmit((values) => {
     update.mutate({ section: 'general', patch: values })
   })
+
+  const copyNetworkUrl = (): void => {
+    const url = networkInfo?.url
+    if (!url) return
+    void navigator.clipboard.writeText(url).then(
+      () => {
+        setUrlCopied(true)
+        setTimeout(() => setUrlCopied(false), 2000)
+        toast.success(t('settings.networkUrlCopied'))
+      },
+      () => toast.error(t('settings.saveFailed'))
+    )
+  }
 
   const onReset = async (): Promise<void> => {
     setResetting(true)
@@ -311,6 +347,47 @@ export function GeneralTab(): React.JSX.Element {
                 )}
               />
             </div>
+            {networkAccess ? (
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="networkUrl">{t('settings.networkUrl')}</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="networkUrl"
+                    readOnly
+                    value={networkInfo?.url ?? '…'}
+                    className="font-mono"
+                    aria-label={t('settings.networkUrl')}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    disabled={!networkInfo?.url}
+                    onClick={copyNetworkUrl}
+                    aria-label={t('settings.networkUrlCopied')}
+                    title={t('settings.networkUrlCopied')}
+                  >
+                    {urlCopied ? <Check className="size-4" /> : <Copy className="size-4" />}
+                  </Button>
+                </div>
+                {networkInfo?.url ? (
+                  <>
+                    <div className="flex items-center gap-4 rounded-md border bg-white p-3 dark:bg-white">
+                      <QRCode value={networkInfo.url} size={144} fgColor="#000000" bgColor="#FFFFFF" aria-label={t('settings.networkUrl')} />
+                      <div className="flex flex-col gap-1">
+                        <p className="text-xs font-medium">{t('settings.networkUrlHint')}</p>
+                        <p className="font-mono text-xs break-all">{networkInfo.url}</p>
+                      </div>
+                    </div>
+                    {!networkInfo.lanReachable ? (
+                      <p className="text-xs text-amber-600 dark:text-amber-400">{t('settings.networkUrlPending')}</p>
+                    ) : null}
+                  </>
+                ) : networkInfo && !networkInfo.url ? (
+                  <p className="text-xs text-muted-foreground">{t('settings.networkUrlNoLan')}</p>
+                ) : null}
+              </div>
+            ) : null}
           </CardContent>
           <CardFooter className="gap-2">{saveButton}</CardFooter>
         </Card>

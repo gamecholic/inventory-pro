@@ -79,6 +79,10 @@ export function createApi(invoke: Invoke) {
   return {
     ping: (): Promise<string> => invoke<string>('app:ping'),
     version: (): Promise<string> => invoke<string>('app:version'),
+    network: {
+      enableFirewall: (): Promise<{ started: boolean; script: string | null }> =>
+        invoke<{ started: boolean; script: string | null }>('network:enable-firewall')
+    },
     settings: {
       get: (): Promise<SettingsValues> => invoke<SettingsValues>('settings:get'),
       update: (section: SettingsSection, patch: Record<string, unknown>): Promise<SettingsValues> =>

@@ -65,6 +65,7 @@ export function GeneralTab(): React.JSX.Element {
   const [resetting, setResetting] = useState(false)
   const [networkInfo, setNetworkInfo] = useState<{ lanIp: string | null; port: number; host: string; networkAccess: boolean; url: string | null; lanReachable: boolean } | null>(null)
   const [urlCopied, setUrlCopied] = useState(false)
+  const [showFirewallPrompt, setShowFirewallPrompt] = useState(false)
 
   const form = useForm({
     resolver: zodResolver(generalSettings),
@@ -103,6 +104,15 @@ export function GeneralTab(): React.JSX.Element {
   const onSubmit = form.handleSubmit((values) => {
     update.mutate({ section: 'general', patch: values })
   })
+
+  const confirmFirewall = (): void => {
+    form.setValue('networkAccess', true, { shouldDirty: true })
+    setShowFirewallPrompt(false)
+    void window.api.network.enableFirewall().then(
+      () => toast.success(t('settings.networkFirewallStarted')),
+      () => toast.error(t('settings.networkFirewallFailed'))
+    )
+  }
 
   const copyNetworkUrl = (): void => {
     const url = networkInfo?.url
@@ -343,7 +353,17 @@ export function GeneralTab(): React.JSX.Element {
                 name="networkAccess"
                 control={form.control}
                 render={({ field }) => (
-                  <Switch id="networkAccess" checked={field.value} onCheckedChange={field.onChange} />
+                  <Switch
+                    id="networkAccess"
+                    checked={field.value}
+                    onCheckedChange={(next) => {
+                      if (next && !field.value) {
+                        setShowFirewallPrompt(true)
+                        return
+                      }
+                      field.onChange(next)
+                    }}
+                  />
                 )}
               />
             </div>
@@ -430,6 +450,18 @@ export function GeneralTab(): React.JSX.Element {
           {t('settings.version', { version: appVersion })}
         </p>
       ) : null}
+      <AlertDialog open={showFirewallPrompt} onOpenChange={setShowFirewallPrompt}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('settings.networkFirewallTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('settings.networkFirewallDesc')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('settings.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmFirewall}>{t('settings.networkFirewallAllow')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

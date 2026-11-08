@@ -518,6 +518,12 @@ export const tr = {
         networkUrlPending: 'Kaydedildi ama henüz dinlenmiyor — yeniden başlatın.',
         networkUrlNoLan: 'LAN adresi bulunamadı — önce bir ağa bağlanın.',
         networkUrlCopied: 'Adres kopyalandı',
+        networkFirewallTitle: 'Diğer cihazlar için LAN paylaşımına izin verilsin mi?',
+        networkFirewallDesc:
+          'Bu işlem, Windows’tan yönetici izni isteyip TCP 5178 için bir güvenlik duvarı kuralı ekleyecek ve LAN Paylaşım yardımcısını çalıştıracaktır. Ardından ağınızdaki diğer cihazlar LAN adresini açabilecektir.',
+        networkFirewallAllow: 'İzin ver ve yardımcıyı çalıştır',
+        networkFirewallStarted: 'Güvenlik duvarı yardımcısı başlatıldı — Windows istemini onaylayın.',
+        networkFirewallFailed: 'Güvenlik duvarı yardımcısı başlatılamadı.',
         cardFeeHint: 'Pano ve Raporlardaki net kart tutarları için kullanılır. Varsayılan %0,68.',
         businessDesc: 'Satış detaylarında ve yazdırılan fişlerde gösterilir.',
         receiptDesc: 'Fişlerin üst ve altına yazdırılan özel metin.',

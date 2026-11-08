@@ -518,6 +518,12 @@ export const en = {
         networkUrlPending: 'Saved, but not listening yet — restart the app to share.',
         networkUrlNoLan: 'No LAN address found — connect to a network first.',
         networkUrlCopied: 'Address copied',
+        networkFirewallTitle: 'Allow LAN sharing for other devices?',
+        networkFirewallDesc:
+          'This will ask Windows for Administrator to add a firewall rule for TCP 5178 and run the Enable LAN Sharing helper. Other devices on your network will then be able to open the LAN address.',
+        networkFirewallAllow: 'Allow & run helper',
+        networkFirewallStarted: 'Firewall helper started — approve the Windows prompt.',
+        networkFirewallFailed: 'Could not start the firewall helper.',
         cardFeeHint: 'Used for net card amounts on Dashboard and Reports. Default 0.68%.',
         businessDesc: 'Shown on sale details and printed receipts.',
         receiptDesc: 'Custom text printed at the top and bottom of receipts.',

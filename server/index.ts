@@ -8,8 +8,10 @@
  * `startServer` has no side effects on import; server/boot.ts owns the process
  * lifecycle (single instance, port choice, opening the window).
  */
-import { extname, join, normalize } from 'node:path'
+import { extname, join, normalize, dirname } from 'node:path'
 import { networkInterfaces } from 'node:os'
+import { existsSync, appendFileSync as appendFileSyncUtil } from 'node:fs'
+import { spawn } from 'node:child_process'
 import { ZodError } from 'zod'
 import { app, handlers } from './electron'
 import { showNativeDialog } from './dialogs'
@@ -35,6 +37,70 @@ registerSalesIpc()
 // Trivial channels that lived in main/index.ts.
 handlers.set('app:ping', () => 'pong')
 handlers.set('app:version', () => app.getVersion())
+
+/**
+ * Launch scripts/enable-lan.ps1 elevated (UAC) so LAN sharing works on the
+ * first try. A visible PowerShell window is intentional here: the elevated
+ * child must show its OK line (hidden + ignore hid UAC/success entirely).
+ * Falls back to an inline New-NetFirewallRule when the .ps1 wasn't bundled.
+ */
+handlers.set('network:enable-firewall', async () => {
+  const candidates = [
+    join(dirname(process.execPath), 'enable-lan.ps1'),
+    join(process.cwd(), 'scripts', 'enable-lan.ps1'),
+    join(process.cwd(), 'enable-lan.ps1')
+  ]
+  const script = candidates.find((p) => existsSync(p)) ?? null
+  // Single-quote the path for PowerShell (doubling internal apostrophes).
+  const psQuote = (s: string): string => `'${s.replace(/'/g, "''")}'`
+  let elevArgs: string
+  let cwd: string
+  if (script) {
+    // ArgumentArray form avoids the -File "C:\path with spaces" double-quote trap.
+    elevArgs = `'-ExecutionPolicy','Bypass','-NoProfile','-File',${psQuote(script)}`
+    cwd = dirname(script)
+  } else {
+    elevArgs = `'-ExecutionPolicy','Bypass','-NoProfile','-Command',"Get-NetFirewallRule -DisplayName 'Inventory Pro (5178)' -ErrorAction SilentlyContinue | Remove-NetFirewallRule; New-NetFirewallRule -DisplayName 'Inventory Pro (5178)' -Direction Inbound -Protocol TCP -LocalPort 5178 -Action Allow -Profile Any -Description 'Inventory Pro LAN sharing' | Out-Null"`
+    cwd = process.cwd()
+  }
+  // Absolute path: a windowless GUI exe may not inherit the dev shell's PATH,
+  // so 'powershell.exe' can fail to resolve and silently never elevate.
+  const psPath = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe')
+  // -Wait so the HTTP request stays open through the UAC prompt and script
+  // run; the Settings toast then reflects the real result instead of a
+  // fire-and-forget "started" that may have never elevated.
+  const psCmd = `Start-Process -FilePath '${psPath.replace(/'/g, "''")}' -Verb RunAs -WorkingDirectory ${psQuote(cwd)} -ArgumentList ${elevArgs} -Wait`
+  console.log(`network:enable-firewall -> ${script ?? '(inline fallback)'} :: ${psCmd}`)
+  const logFile = join(process.env.APPDATA ?? '.', 'Inventory Pro', 'launcher.log')
+  const stamp = (level: string, msg: string): void => {
+    try { appendFileSyncUtil(logFile, `${new Date().toISOString()} ${level} ${msg}\n`) } catch { /* ignore */ }
+  }
+  stamp('INFO', `enable-firewall cmd=${psCmd}`)
+
+  await new Promise<void>((resolve) => {
+    const child = spawn(psPath, ['-NoProfile', '-NoLogo', '-Command', psCmd], {
+      stdio: ['ignore', 'pipe', 'pipe']
+    })
+    const timer = setTimeout(() => {
+      stamp('WARN', 'enable-firewall timed out after 120s (UAC dismissed?)')
+      try { child.kill() } catch { /* ignore */ }
+      resolve()
+    }, 120_000)
+    child.stdout?.on('data', (d) => stamp('OUT', String(d).trimEnd()))
+    child.stderr?.on('data', (d) => stamp('ERR', String(d).trimEnd()))
+    child.on('error', (err) => {
+      stamp('ERR', `spawn failed (psPath=${psPath}, script=${script}): ${err.message}`)
+      clearTimeout(timer)
+      resolve()
+    })
+    child.on('exit', (code, sig) => {
+      stamp('INFO', `elevate parent exit code=${code} signal=${sig ?? ''}`)
+      clearTimeout(timer)
+      resolve()
+    })
+  })
+  return { started: true, script }
+})
 
 // electron-updater is gone. Stubs keep the update card quiet until the
 // installer-based updater (docs/migrate-to-bun.md §6) exists.

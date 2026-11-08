@@ -57,6 +57,14 @@ if (buildCode !== 0) throw new Error(`bun build failed with exit code ${buildCod
 cpSync(join(root, 'out/web'), join(outDir, 'web'), { recursive: true })
 cpSync(join(root, 'drizzle'), join(outDir, 'drizzle'), { recursive: true })
 
+// LAN-sharing firewall helper, launched elevated from Settings when the user
+// enables Network access. Optional in dev (scripts/ in repo), bundled beside
+// the exe in installs so the Settings prompt always finds it.
+for (const f of ['enable-lan.ps1', 'enable-lan.bat']) {
+  const src = join(root, 'scripts', f)
+  if (existsSync(src)) cpSync(src, join(outDir, f))
+}
+
 const sizeMb = (path: string): string => `${(statSync(path).size / 1024 / 1024).toFixed(1)} MB`
 
 console.log(`\nexe:   ${exePath} (${sizeMb(exePath)})`)

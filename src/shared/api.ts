@@ -14,6 +14,7 @@ export type DateRangeFilter = z.infer<typeof dateRangeFilter>
 export const channels = [
   'app:ping',
   'app:version',
+  'app:restart',
   'network:enable-firewall',
   'settings:get',
   'settings:update',

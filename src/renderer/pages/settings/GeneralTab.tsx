@@ -66,6 +66,8 @@ export function GeneralTab(): React.JSX.Element {
   const [networkInfo, setNetworkInfo] = useState<{ lanIp: string | null; port: number; host: string; networkAccess: boolean; url: string | null; lanReachable: boolean } | null>(null)
   const [urlCopied, setUrlCopied] = useState(false)
   const [showFirewallPrompt, setShowFirewallPrompt] = useState(false)
+  const [showRestartPrompt, setShowRestartPrompt] = useState(false)
+  const [restarting, setRestarting] = useState(false)
 
   const form = useForm({
     resolver: zodResolver(generalSettings),
@@ -111,6 +113,22 @@ export function GeneralTab(): React.JSX.Element {
     void window.api.network.enableFirewall().then(
       () => toast.success(t('settings.networkFirewallStarted')),
       () => toast.error(t('settings.networkFirewallFailed'))
+    )
+  }
+
+  const confirmRestart = (): void => {
+    setShowRestartPrompt(false)
+    setRestarting(true)
+    void window.api.restart().then(
+      () => {
+        toast.success(t('settings.restartStarted'))
+        // The server stops then starts again (same port); reload once it is back.
+        setTimeout(() => window.location.reload(), 3000)
+      },
+      () => {
+        setRestarting(false)
+        toast.error(t('settings.restartFailed'))
+      }
     )
   }
 
@@ -413,6 +431,30 @@ export function GeneralTab(): React.JSX.Element {
         </Card>
         <Card>
           <CardHeader>
+            <CardTitle>{t('settings.restartServer')}</CardTitle>
+            <CardDescription>{t('settings.restartServerDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex items-center justify-between gap-4">
+            <p className="text-sm font-medium">{t('settings.restartServer')}</p>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={restarting}
+              onClick={() => setShowRestartPrompt(true)}
+            >
+              {restarting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  {t('settings.restartStarted')}
+                </>
+              ) : (
+                t('settings.restartServer')
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
             <CardTitle>{t('settings.sections.danger')}</CardTitle>
             <CardDescription>{t('settings.resetSettingsDesc')}</CardDescription>
           </CardHeader>
@@ -459,6 +501,18 @@ export function GeneralTab(): React.JSX.Element {
           <AlertDialogFooter>
             <AlertDialogCancel>{t('settings.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmFirewall}>{t('settings.networkFirewallAllow')}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={showRestartPrompt} onOpenChange={setShowRestartPrompt}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('settings.restartTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('settings.restartDesc')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('settings.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRestart}>{t('settings.restartServer')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

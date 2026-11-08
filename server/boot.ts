@@ -15,13 +15,14 @@
  * dev server is spawned beside it on 127.0.0.1:5173 and serves the UI with
  * HMR, proxying /api to Bun. Set HMR=0 to disable and serve out/web statically.
  */
-import { spawn } from 'node:child_process'
+import { spawn, spawnSync } from 'node:child_process'
 import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { createServer } from 'node:net'
 import { basename, dirname, join } from 'node:path'
-import { startServer, notifyScheduledBackupFailed } from './index'
+import { startServer, notifyScheduledBackupFailed, setShutdownHandler } from './index'
 import { getSettings } from '../src/main/db/settingsStore'
+import { closeDb } from '../src/main/db/client'
 import { syncAutostart } from '../src/main/autostart'
 import { setScheduledBackupFailureNotifier, startScheduledBackups, stopScheduledBackups } from '../src/main/scheduledBackup'
 
@@ -156,6 +157,84 @@ async function pickPort(): Promise<{ port: number; alreadyRunning: boolean }> {
   throw new Error(`No free port between ${FIRST_PORT} and ${LAST_PORT}`)
 }
 
+// --- CLI: --stop / --restart --------------------------------------------------
+// Outside-the-app control (shortcut with args, command line):
+//   Inventory Pro.exe              start, or open a tab if already running
+//   Inventory Pro.exe --restart    stop the running instance, then start fresh
+//   Inventory Pro.exe --stop       stop the running instance and exit
+
+interface CliMode {
+  restart: boolean
+  stop: boolean
+}
+
+function parseCliMode(): CliMode {
+  // Whole argv is safe to scan: the exe/script paths never equal these flags.
+  const args = process.argv
+  return { restart: args.includes('--restart'), stop: args.includes('--stop') }
+}
+
+interface HealthResult {
+  port: number
+  pid: number
+}
+
+async function getHealth(port: number): Promise<HealthResult | null> {
+  try {
+    const response = await fetch(`http://127.0.0.1:${port}/api/health`, { signal: AbortSignal.timeout(800) })
+    if (!response.ok) return null
+    const body = (await response.json()) as { ok?: boolean; pid?: number }
+    if (body.ok !== true || typeof body.pid !== 'number') return null
+    return { port, pid: body.pid }
+  } catch {
+    return null
+  }
+}
+
+async function findRunningInstance(): Promise<HealthResult | null> {
+  for (let port = FIRST_PORT; port <= LAST_PORT; port++) {
+    const hit = await getHealth(port)
+    if (hit) return hit
+  }
+  return null
+}
+
+async function waitUntilStopped(port: number, timeoutMs: number): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    if (!(await healthy(port))) return true
+    await new Promise((resolve) => setTimeout(resolve, 200))
+  }
+  return !(await healthy(port))
+}
+
+/** Graceful stop first (DB checkpoint via app:stop), force-kill as fallback. */
+async function ensureStopped(instance: HealthResult): Promise<void> {
+  log(`stopping existing instance on ${instance.port} (pid ${instance.pid})`)
+  try {
+    await fetch(`http://127.0.0.1:${instance.port}/api/app:stop`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ payload: {} }),
+      signal: AbortSignal.timeout(3000)
+    })
+  } catch {
+    // Graceful endpoint may be missing on an old build — fall through to kill.
+  }
+  if (await waitUntilStopped(instance.port, 4000)) return
+
+  const taskkill = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'taskkill.exe')
+  log(`graceful stop timed out, force-killing pid ${instance.pid}`)
+  try {
+    spawnSync(taskkill, ['/PID', String(instance.pid), '/F'], { stdio: 'ignore' })
+  } catch (error) {
+    log(`taskkill failed: ${error instanceof Error ? error.message : String(error)}`)
+  }
+  if (!(await waitUntilStopped(instance.port, 4000))) {
+    throw new Error(`Could not stop the running instance on port ${instance.port}`)
+  }
+}
+
 // --- Window -----------------------------------------------------------------
 
 function findBrowser(): string | null {
@@ -216,6 +295,22 @@ async function main(): Promise<void> {
       }
     }
   } catch { /* ignore */ }
+
+  // Outside-the-app modes: --stop exits after stopping a running instance,
+  // --restart stops it and then falls through to a fresh start below.
+  // No args keeps the normal behaviour (start, or open a tab if running).
+  const cli = parseCliMode()
+  if (cli.restart || cli.stop) {
+    const running = await findRunningInstance()
+    if (!running) {
+      log(`${cli.stop && !cli.restart ? '--stop' : '--restart'}: no running instance`)
+      if (cli.stop && !cli.restart) return
+    } else {
+      await ensureStopped(running)
+      log(`${cli.stop && !cli.restart ? '--stop' : '--restart'}: stopped`)
+      if (cli.stop && !cli.restart) return
+    }
+  }
 
   resolveMigrations()
 
@@ -289,8 +384,14 @@ async function main(): Promise<void> {
     } catch {
       // already stopped
     }
+    try {
+      closeDb()
+    } catch {
+      // already closed
+    }
     process.exit(0)
   }
+  setShutdownHandler(shutdown)
   process.on('SIGINT', shutdown)
   process.on('SIGTERM', shutdown)
 }

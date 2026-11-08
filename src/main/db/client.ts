@@ -118,3 +118,14 @@ export function getSqlite(): Database {
   if (!sqlite) throw new Error('Database not open')
   return sqlite
 }
+
+/** Close the shop database (WAL checkpoint) and clear the cached handles. */
+export function closeDb(): void {
+  try {
+    sqlite?.close()
+  } catch {
+    // already closed / never opened
+  }
+  sqlite = null
+  db = null
+}

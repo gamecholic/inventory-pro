@@ -38,6 +38,74 @@ registerSalesIpc()
 handlers.set('app:ping', () => 'pong')
 handlers.set('app:version', () => app.getVersion())
 
+// Graceful stop hook: boot.ts registers its shutdown() here so an outside
+// `Inventory Pro.exe --stop/--restart` can stop this instance over HTTP
+// without an abrupt taskkill (which would skip the DB WAL checkpoint).
+let shutdownHook: (() => void) | null = null
+export function setShutdownHandler(fn: () => void): void {
+  shutdownHook = fn
+}
+
+handlers.set('app:stop', () => {
+  if (!shutdownHook) return { stopping: false }
+  // Delay so this HTTP response flushes before the process exits.
+  setTimeout(() => {
+    try {
+      shutdownHook?.()
+    } catch {
+      process.exit(0)
+    }
+  }, 150)
+  return { stopping: true }
+})
+
+/**
+ * UI-triggered restart: launch scripts/server-restart.bat (which calls the
+ * exe with --restart) detached. The new instance stops this one gracefully
+ * via app:stop, then starts fresh — settings like Network / DB location
+ * are re-read. Falls back to spawning the exe directly if the .bat is not
+ * bundled (dev without dist\app).
+ */
+handlers.set('app:restart', () => {
+  const cmdPath = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'cmd.exe')
+  const batCandidates = [
+    join(dirname(process.execPath), 'server-restart.bat'),
+    join(process.cwd(), 'scripts', 'server-restart.bat'),
+    join(process.cwd(), 'server-restart.bat')
+  ]
+  const bat = batCandidates.find((p) => existsSync(p)) ?? null
+  const logFile = join(process.env.APPDATA ?? '.', 'Inventory Pro', 'launcher.log')
+  const stamp = (level: string, msg: string): void => {
+    try { appendFileSyncUtil(logFile, `${new Date().toISOString()} ${level} ${msg}\n`) } catch { /* ignore */ }
+  }
+  if (bat) {
+    stamp('INFO', `restart via bat=${bat}`)
+    const child = spawn(cmdPath, ['/c', bat], { detached: true, stdio: 'ignore', cwd: dirname(bat) })
+    child.on('error', (err) => stamp('ERR', `restart bat spawn failed (cmd=${cmdPath}, bat=${bat}): ${err.message}`))
+    child.unref()
+    return { restarting: true, script: bat }
+  }
+  // Fallback: spawn the exe itself with --restart (compiled only; in dev
+  // process.execPath is bun.exe, so use the boot entry instead).
+  const isDev = process.execPath.toLowerCase().endsWith('bun.exe')
+  if (isDev) {
+    stamp('INFO', 'restart via bun dev boot.ts')
+    const child = spawn(process.execPath, ['run', '--tsconfig-override', './tsconfig.bun.json', 'server/boot.ts', '--restart'], {
+      detached: true,
+      stdio: 'ignore',
+      cwd: process.cwd()
+    })
+    child.on('error', (err) => stamp('ERR', `restart dev spawn failed: ${err.message}`))
+    child.unref()
+    return { restarting: true, script: null }
+  }
+  stamp('INFO', `restart via exe=${process.execPath} --restart`)
+  const child = spawn(process.execPath, ['--restart'], { detached: true, stdio: 'ignore', cwd: dirname(process.execPath) })
+  child.on('error', (err) => stamp('ERR', `restart exe spawn failed: ${err.message}`))
+  child.unref()
+  return { restarting: true, script: null }
+})
+
 /**
  * Launch scripts/enable-lan.ps1 elevated (UAC) so LAN sharing works on the
  * first try. A visible PowerShell window is intentional here: the elevated

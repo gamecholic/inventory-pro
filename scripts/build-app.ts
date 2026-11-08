@@ -62,7 +62,9 @@ cpSync(join(root, 'drizzle'), join(outDir, 'drizzle'), { recursive: true })
 // LAN-sharing firewall helper, launched elevated from Settings when the user
 // enables Network access. Optional in dev (scripts/ in repo), bundled beside
 // the exe in installs so the Settings prompt always finds it.
-for (const f of ['enable-lan.ps1', 'enable-lan.bat']) {
+// Server-control menu (restart / stop via --restart / --stop), double-clicked
+// outside the app, is bundled the same way.
+for (const f of ['enable-lan.ps1', 'enable-lan.bat', 'server-control.bat', 'server-restart.bat']) {
   const src = join(root, 'scripts', f)
   if (existsSync(src)) cpSync(src, join(outDir, f))
 }

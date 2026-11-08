@@ -4,12 +4,16 @@
  * One windowless exe that:
  *   1. reuses a running instance (or starts one),
  *   2. serves the app on 127.0.0.1,
- *   3. opens it in a chromeless Chrome/Edge window,
+ *   3. opens it in the browser as a new tab,
  *   4. stays resident (owns the SQLite file, backups, update check).
  *
  * No environment variables are needed by the end user; everything is resolved
  * from the install folder and %APPDATA%. The env overrides below exist for
  * development and for the installer's update step.
+ *
+ * Dev (`npm run bun:start`, not compiled): Bun serves /api only and a Vite
+ * dev server is spawned beside it on 127.0.0.1:5173 and serves the UI with
+ * HMR, proxying /api to Bun. Set HMR=0 to disable and serve out/web statically.
  */
 import { spawn } from 'node:child_process'
 import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync } from 'node:fs'
@@ -24,7 +28,44 @@ const APP_NAME = 'Inventory Pro'
 // PORT is a development knob; the installed app just tries the default range.
 const FIRST_PORT = Number(process.env.PORT ?? 5178)
 const LAST_PORT = FIRST_PORT + 10
+const VITE_PORT = Number(process.env.VITE_PORT ?? 5173)
 let HOST = process.env.HOST ?? '127.0.0.1'
+
+// --- HMR (dev only) -------------------------------------------------------
+
+/**
+ * True when running from source (`bun run server/boot.ts`) so Vite can serve
+ * the UI live. The compiled exe never spawns Vite.
+ */
+function isHmr(): boolean {
+  return !isCompiled() && process.env.HMR !== '0'
+}
+
+let viteChild: ReturnType<typeof spawn> | null = null
+
+function startViteDev(bunPort: number): void {
+  const viteBin = join(process.cwd(), 'node_modules', 'vite', 'bin', 'vite.js')
+  if (!existsSync(viteBin)) {
+    log('hmr: vite binary not found, serving static build only')
+    return
+  }
+  viteChild = spawn('node', [viteBin, '--config', 'vite.renderer.config.ts', '--port', String(VITE_PORT), '--host', '127.0.0.1', '--strictPort'], {
+    cwd: process.cwd(),
+    stdio: 'inherit',
+    env: { ...process.env, PORT: String(bunPort) }
+  })
+  viteChild.on('error', (err) => log(`hmr: vite failed to start (${err.message})`))
+  log(`hmr: vite http://127.0.0.1:${VITE_PORT} (api -> bun :${bunPort})`)
+}
+
+async function viteRunning(): Promise<boolean> {
+  try {
+    const r = await fetch(`http://127.0.0.1:${VITE_PORT}/`, { signal: AbortSignal.timeout(800) })
+    return r.ok
+  } catch {
+    return false
+  }
+}
 
 // --- Paths ------------------------------------------------------------------
 
@@ -133,7 +174,7 @@ function openWindow(port: number): void {
   const url = `http://127.0.0.1:${port}`
   const browser = findBrowser()
   if (browser) {
-    spawn(browser, [`--app=${url}`, '--window-size=1280,800'], { detached: true, stdio: 'ignore' }).unref()
+    spawn(browser, ['--new-tab', url], { detached: true, stdio: 'ignore' }).unref()
     log(`window: ${browser}`)
     return
   }
@@ -186,19 +227,27 @@ async function main(): Promise<void> {
   }
 
   const webRoot = resolveWebRoot()
-  if (!existsSync(join(webRoot, 'index.html'))) {
+  // In HMR dev mode Vite serves the UI from src/renderer, so a missing
+  // out/web/index.html (fresh clone) must not be fatal. The compiled exe
+  // always requires the built web root.
+  if (!existsSync(join(webRoot, 'index.html')) && !isHmr()) {
     fatal(`The application files are incomplete.\n\nMissing: ${join(webRoot, 'index.html')}\n\nReinstall Inventory Pro.`)
   }
 
   const { port, alreadyRunning } = await pickPort()
   if (alreadyRunning) {
     log(`already running on ${port}`)
-    openWindow(port)
+    // Re-opening a dev session: prefer the HMR Vite tab when Vite is up.
+    if (isHmr() && (await viteRunning())) {
+      openWindow(VITE_PORT)
+    } else {
+      openWindow(port)
+    }
     return
   }
 
   const server = startServer({ port, webRoot, host: HOST })
-  log(`serving on http://${HOST === '0.0.0.0' ? '0.0.0.0 (LAN)' : HOST}:${server.port}`)
+  log(`api on http://${HOST === '0.0.0.0' ? '0.0.0.0 (LAN)' : HOST}:${server.port}`)
   log(`data: ${dataDir()}`)
 
   // Hourly scheduled backup (§1.8): on the hour, one file per day (latest
@@ -210,10 +259,22 @@ async function main(): Promise<void> {
   })
   startScheduledBackups()
 
-  openWindow(server.port)
+  if (isHmr() && !isCompiled()) {
+    startViteDev(server.port)
+    openWindow(VITE_PORT)
+  } else {
+    openWindow(server.port)
+  }
 
   const shutdown = (): void => {
     stopScheduledBackups()
+    if (viteChild) {
+      try {
+        viteChild.kill()
+      } catch {
+        // already stopped
+      }
+    }
     try {
       server.stop()
     } catch {

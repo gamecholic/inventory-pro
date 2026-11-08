@@ -53,8 +53,11 @@ function ApplySettings(): React.JSX.Element | null {
   const { data } = useSettings()
   const { i18n } = useTranslation()
   useEffect(() => {
-    if (data && i18n.language !== data.general.language) {
-      void i18n.changeLanguage(data.general.language)
+    if (data) {
+      document.documentElement.lang = data.general.language
+      if (i18n.language !== data.general.language) {
+        void i18n.changeLanguage(data.general.language)
+      }
     }
   }, [data, i18n])
   return null

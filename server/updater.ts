@@ -1,4 +1,4 @@
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { mkdirSync, createWriteStream } from 'node:fs'
 import { spawn } from 'node:child_process'
@@ -84,9 +84,19 @@ export function registerUpdaterHandlers(): void {
   handlers.set('updater:install', () => {
     if (!downloaded || !downloadPath) return false
     try {
-      const child = spawn(downloadPath, ['/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/FORCECLOSEAPPLICATIONS'], {
+      // Silent install replaces the exe, then the freshly installed copy is
+      // launched by this detached cmd wrapper (which outlives us). The
+      // installer does NOT auto-launch (/VERYSILENT skips [Run] postinstall),
+      // so without the wrapper the app would stop and never come back —
+      // that is why Restart Now previously did nothing visible.
+      const cmdPath = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'cmd.exe')
+      const newExe = join(dirname(process.execPath), 'Inventory Pro.exe')
+      const q = (s: string): string => `"${s.replace(/"/g, '""')}"`
+      const cmd = `${q(downloadPath)} /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /FORCECLOSEAPPLICATIONS && start "" ${q(newExe)}`
+      const child = spawn(cmdPath, ['/c', cmd], {
         detached: true,
-        stdio: 'ignore'
+        stdio: 'ignore',
+        cwd: dirname(process.execPath)
       })
       child.unref()
       setTimeout(() => process.exit(0), 500)

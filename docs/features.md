@@ -61,7 +61,7 @@ Global behaviors apply across pages and are described first.
   - Title: `Updates Available`.
   - Message: new updates are available and the update utility can be used.
   - Close (X) button to dismiss.
-  - Auto-dismisses after 10 seconds if not closed.
+  - Auto-dismisses after 60 seconds if not closed.
 
 ### 1.7 Common List Behaviors
 

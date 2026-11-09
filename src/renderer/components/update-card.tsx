@@ -8,7 +8,7 @@ import { useUpdaterCheck } from '@/hooks/useUpdater'
 
 type Phase = 'available' | 'downloading' | 'downloaded' | 'error'
 
-/** Features §1.6 — small top-right card when a new release is available. Auto-dismisses after 10 seconds. */
+/** Features §1.6 — small top-right card when a new release is available. Auto-dismisses after 60 seconds. */
 export function UpdateCard(): React.JSX.Element | null {
   const { t } = useTranslation()
   const { data } = useUpdaterCheck()
@@ -19,7 +19,7 @@ export function UpdateCard(): React.JSX.Element | null {
 
   useEffect(() => {
     if (phase !== 'available' || dismissed) return
-    const id = setTimeout(() => setDismissed(true), 10_000)
+    const id = setTimeout(() => setDismissed(true), 60_000)
     return () => clearTimeout(id)
   }, [phase, dismissed])
 

@@ -6,6 +6,13 @@ import { app, handlers } from './electron'
 
 const UPDATE_REPO = 'gamecholic/inventory-pro'
 
+// Override for local testing: point at a mock server (see
+// scripts/mock-updater-server.mjs) instead of GitHub, e.g.
+// INVENTORY_UPDATE_API_URL=http://127.0.0.1:8899/releases/latest
+function updateApiUrl(): string {
+  return process.env.INVENTORY_UPDATE_API_URL ?? `https://api.github.com/repos/${UPDATE_REPO}/releases/latest`
+}
+
 let updateVersion: string | null = null
 let updateAssetUrl: string | null = null
 let downloadPath: string | null = null
@@ -26,7 +33,7 @@ function isNewer(candidate: string, current: string): boolean {
 export function registerUpdaterHandlers(): void {
   handlers.set('updater:check', async () => {
     try {
-      const res = await fetch(`https://api.github.com/repos/${UPDATE_REPO}/releases/latest`, {
+      const res = await fetch(updateApiUrl(), {
         headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'inventory-pro' }
       })
       if (!res.ok) return { status: 'error', message: `GitHub returned ${res.status}` }

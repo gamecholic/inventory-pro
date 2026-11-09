@@ -1,6 +1,6 @@
 import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { mkdirSync, createWriteStream } from 'node:fs'
+import { mkdirSync, createWriteStream, writeFileSync, appendFileSync } from 'node:fs'
 import { spawn } from 'node:child_process'
 import { app, handlers } from './electron'
 
@@ -83,25 +83,41 @@ export function registerUpdaterHandlers(): void {
 
   handlers.set('updater:install', () => {
     if (!downloaded || !downloadPath) return false
+    const logFile = join(process.env.APPDATA ?? '.', 'Inventory Pro', 'launcher.log')
+    const stamp = (level: string, msg: string): void => {
+      try { appendFileSync(logFile, `${new Date().toISOString()} ${level} ${msg}\n`) } catch { /* ignore */ }
+    }
     try {
       // Silent install replaces the exe, then the freshly installed copy is
-      // launched by this detached cmd wrapper (which outlives us). The
-      // installer does NOT auto-launch (/VERYSILENT skips [Run] postinstall),
-      // so without the wrapper the app would stop and never come back —
-      // that is why Restart Now previously did nothing visible.
-      const cmdPath = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'cmd.exe')
+      // launched by a detached .bat wrapper (which outlives us). The installer
+      // does NOT auto-launch (/VERYSILENT skips [Run] postinstall), so
+      // without the wrapper the app would stop and never come back. Use a
+      // .bat file (not an inline `cmd /c "... && start ..."` string): Node's
+      // quoting of cmd /c made && inside the quoted string a literal, so the
+      // installer never ran at all in 1.3.7.
+      const dir = join(tmpdir(), 'inventory-pro-update')
+      mkdirSync(dir, { recursive: true })
+      const batPath = join(dir, 'launch-update.bat')
       const newExe = join(dirname(process.execPath), 'Inventory Pro.exe')
       const q = (s: string): string => `"${s.replace(/"/g, '""')}"`
-      const cmd = `${q(downloadPath)} /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /FORCECLOSEAPPLICATIONS && start "" ${q(newExe)}`
-      const child = spawn(cmdPath, ['/c', cmd], {
+      const bat = `@echo off\r\n` +
+        `ping -n 3 127.0.0.1 >nul\r\n` +
+        `${q(downloadPath)} /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /FORCECLOSEAPPLICATIONS\r\n` +
+        `start "" ${q(newExe)}\r\n`
+      writeFileSync(batPath, bat, 'utf-8')
+      stamp('INFO', `update install via bat=${batPath} installer=${downloadPath}`)
+      const cmdPath = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'cmd.exe')
+      const child = spawn(cmdPath, ['/c', batPath], {
         detached: true,
         stdio: 'ignore',
         cwd: dirname(process.execPath)
       })
+      child.on('error', (err) => stamp('ERR', `update spawn failed: ${err.message}`))
       child.unref()
       setTimeout(() => process.exit(0), 500)
       return true
-    } catch {
+    } catch (error) {
+      stamp('ERR', `update install failed: ${error instanceof Error ? error.message : String(error)}`)
       return false
     }
   })

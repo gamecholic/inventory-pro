@@ -1,4 +1,4 @@
-import { join, isAbsolute } from 'node:path'
+import { basename, dirname, join, isAbsolute } from 'node:path'
 import { existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import { app } from 'electron'
 import { Database } from 'bun:sqlite'
@@ -19,14 +19,35 @@ export function dbPath(): string {
   return join(custom !== '' ? custom : app.getPath('userData'), DB_FILE_NAME)
 }
 
+function isCompiledExe(): boolean {
+  return basename(process.execPath).toLowerCase() !== 'bun.exe'
+}
+
 /**
- * Custom database folder. The pointer lives in a sidecar JSON file next to
- * userData because the setting itself cannot live inside the database.
- * Corrupt/missing sidecar falls back to the default location.
+ * Where the DB-location pointer lives — beside the exe only, never the
+ * Electron-era %APPDATA% file:
+ *   Bun compiled: <exe folder>\db-location.json (dist\app in dev builds,
+ *   %LOCALAPPDATA%\Programs\Inventory Pro when installed)
+ *   Bun dev (bun.exe): <repo root>\db-location.json (cwd)
+ * The Electron build keeps reading its own %APPDATA%\Inventory Pro\
+ * db-location.json; the two never touch each other. A shop that had a
+ * custom folder in the old file needs to re-pick it once in the new
+ * build (Settings > Database) — it will then live beside the exe.
+ */
+function locationPath(): string {
+  return isCompiledExe()
+    ? join(dirname(process.execPath), LOCATION_FILE)
+    : join(process.cwd(), LOCATION_FILE)
+}
+
+/**
+ * Custom database folder. The pointer lives in a sidecar JSON file
+ * beside the exe (Bun) because the setting itself cannot live inside
+ * the database. Corrupt/missing sidecar falls back to the default.
  */
 export function getCustomDbDir(): string {
   try {
-    const raw = readFileSync(join(app.getPath('userData'), LOCATION_FILE), 'utf-8')
+    const raw = readFileSync(locationPath(), 'utf-8')
     const parsed = JSON.parse(raw) as unknown
     const dir = typeof parsed === 'object' && parsed !== null ? (parsed as Record<string, unknown>).dir : ''
     return typeof dir === 'string' ? dir.trim() : ''
@@ -53,7 +74,7 @@ export function getDbInfo(): DbInfo {
  */
 export function setDbDir(dir: string): DbInfo {
   const trimmed = dir.trim()
-  const sidecar = join(app.getPath('userData'), LOCATION_FILE)
+  const sidecar = locationPath()
   if (trimmed === '') {
     if (existsSync(sidecar)) unlinkSync(sidecar)
     return getDbInfo()
@@ -61,6 +82,7 @@ export function setDbDir(dir: string): DbInfo {
   if (!isAbsolute(trimmed)) throw new Error('Database folder must be an absolute path')
   if (existsSync(trimmed) && !statSync(trimmed).isDirectory()) throw new Error('Database path is not a folder')
   mkdirSync(trimmed, { recursive: true })
+  mkdirSync(dirname(sidecar), { recursive: true })
   writeFileSync(sidecar, JSON.stringify({ dir: trimmed }), 'utf-8')
   return getDbInfo()
 }

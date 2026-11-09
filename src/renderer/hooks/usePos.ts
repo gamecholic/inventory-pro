@@ -19,9 +19,19 @@ export function useCompleteSale(onPaid: (receipt: Receipt) => void) {
   return useMutation({
     mutationFn: (input: CheckoutInput) => window.api.sales.complete(input),
     onSuccess: (receipt) => {
+      // A completed sale changes stock (catalog) AND every sales-derived
+      // dashboard/report figure. Without these the dashboard ("Today's
+      // Sales") and Sales History serve the 30s-stale cache on return.
       void queryClient.invalidateQueries({ queryKey: ['pos-catalog'] })
       void queryClient.invalidateQueries({ queryKey: ['products'] })
       void queryClient.invalidateQueries({ queryKey: ['product-search'] })
+      void queryClient.invalidateQueries({ queryKey: ['sales'] })
+      void queryClient.invalidateQueries({
+        predicate: (q) => {
+          const k = String(q.queryKey[0] ?? '')
+          return k.startsWith('dash-') || k.startsWith('report-')
+        }
+      })
       onPaid(receipt)
     },
     onError: (error) => {

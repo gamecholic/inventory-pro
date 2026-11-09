@@ -34,6 +34,12 @@ export function useCancelSale() {
       void queryClient.invalidateQueries({ queryKey: ['pos-catalog'] })
       void queryClient.invalidateQueries({ queryKey: ['products'] })
       void queryClient.invalidateQueries({ queryKey: ['product-search'] })
+      void queryClient.invalidateQueries({
+        predicate: (q) => {
+          const k = String(q.queryKey[0] ?? '')
+          return k.startsWith('dash-') || k.startsWith('report-')
+        }
+      })
       toast.success(t('sales.canceledMsg'))
     },
     onError: (error) => {

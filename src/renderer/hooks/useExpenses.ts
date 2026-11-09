@@ -11,6 +11,15 @@ function useInvalidateExpenses() {
   return () => {
     void queryClient.invalidateQueries({ queryKey: ['expenses'] })
     void queryClient.invalidateQueries({ queryKey: expenseCategoriesKey })
+    // A new/edited/deleted expense changes every dashboard/report figure
+    // derived from expenses (monthly expenses, total cash, trends). Without
+    // this the dashboard serves the 30s-stale cache on return.
+    void queryClient.invalidateQueries({
+      predicate: (q) => {
+        const k = String(q.queryKey[0] ?? '')
+        return k.startsWith('dash-') || k.startsWith('report-')
+      }
+    })
   }
 }
 

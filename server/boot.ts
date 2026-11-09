@@ -278,8 +278,14 @@ function readPackageVersion(): string {
 }
 
 // The compiled exe ships without package.json, so the version is baked in.
-process.env.INVENTORY_VERSION ??=
-  typeof INVENTORY_VERSION === 'string' ? INVENTORY_VERSION : readPackageVersion()
+// Always overwrite when compiled: an updated exe may inherit
+// INVENTORY_VERSION from the old process via the updater wrapper, which
+// would make it keep reporting the old version forever.
+if (isCompiled() && typeof INVENTORY_VERSION === 'string') {
+  process.env.INVENTORY_VERSION = INVENTORY_VERSION
+} else {
+  process.env.INVENTORY_VERSION ??= readPackageVersion()
+}
 
 // --- Main -------------------------------------------------------------------
 

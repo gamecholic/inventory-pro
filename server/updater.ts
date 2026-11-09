@@ -1,7 +1,7 @@
 import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { mkdirSync, createWriteStream, writeFileSync, appendFileSync } from 'node:fs'
-import { spawn } from 'node:child_process'
+import { existsSync, mkdirSync, createWriteStream, writeFileSync, appendFileSync } from 'node:fs'
+import { spawn, spawnSync } from 'node:child_process'
 import { app, handlers } from './electron'
 
 const UPDATE_REPO = 'gamecholic/inventory-pro'
@@ -28,6 +28,35 @@ function isNewer(candidate: string, current: string): boolean {
     if (x !== y) return x > y
   }
   return false
+}
+
+/**
+ * Where the silent installer puts the new exe. Running from `dist\app`
+ * is NOT the install location, so `dirname(execPath)` can be the old
+ * copy — launching that makes the version never change (the bug seen
+ * when testing from dist). Prefer Inno's recorded InstallLocation,
+ * then the default per-user install folder.
+ */
+function installedExePath(): string {
+  const regPath = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'reg.exe')
+  try {
+    const result = spawnSync(regPath, ['query', 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{7E2C4B10-9A6D-4F3E-8B21-5C7D9E0A1F42}_is1', '/v', 'InstallLocation'], {
+      encoding: 'utf-8',
+      stdio: ['ignore', 'pipe', 'ignore']
+    })
+    if (result.status === 0) {
+      const line = String(result.stdout ?? '').split(/\r?\n/).find((l) => l.includes('InstallLocation'))
+      const parts = line?.trim().split(/\s+/) ?? []
+      const idx = parts.indexOf('REG_SZ')
+      if (idx !== -1 && parts[idx + 1]) {
+        const dir = parts.slice(idx + 1).join(' ').replace(/^"|"$/g, '')
+        if (dir) return join(dir, 'Inventory Pro.exe')
+      }
+    }
+  } catch { /* fall through */ }
+  const local = process.env.LOCALAPPDATA
+  if (local) return join(local, 'Programs', 'Inventory Pro', 'Inventory Pro.exe')
+  return join(dirname(process.execPath), 'Inventory Pro.exe')
 }
 
 export function registerUpdaterHandlers(): void {
@@ -105,11 +134,12 @@ export function registerUpdaterHandlers(): void {
       const dir = join(tmpdir(), 'inventory-pro-update')
       mkdirSync(dir, { recursive: true })
       const batPath = join(dir, 'launch-update.bat')
-      const newExe = join(dirname(process.execPath), 'Inventory Pro.exe')
+      const newExe = installedExePath()
       const q = (s: string): string => `"${s.replace(/"/g, '""')}"`
       const bat = `@echo off\r\n` +
         `ping -n 3 127.0.0.1 >nul\r\n` +
         `${q(downloadPath)} /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /FORCECLOSEAPPLICATIONS\r\n` +
+        `set "INVENTORY_VERSION="\r\n` +
         `start "" ${q(newExe)}\r\n`
       writeFileSync(batPath, bat, 'utf-8')
       stamp('INFO', `update install via bat=${batPath} installer=${downloadPath}`)

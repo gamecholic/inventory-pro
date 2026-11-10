@@ -3,6 +3,9 @@
   "compilerOptions": {
     "paths": {
       "@shared/*": ["./src/shared/*"],
+      // The renderer uses this alias; `bun test` scans src/ (bunfig.toml),
+      // so the Bun runtime must be able to resolve it too.
+      "@/*": ["./src/renderer/*"],
       "electron": ["./server/electron.ts"]
     }
   },

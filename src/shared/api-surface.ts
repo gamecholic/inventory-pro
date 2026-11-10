@@ -35,7 +35,8 @@ import type {
   TopProductRow,
   TopProductsInput,
   TrendPoint,
-  WeekdayPoint
+  WeekdayPoint,
+  YearComparisonReport
 } from './analytics'
 import type {
   ExpenseCategoryInput,
@@ -192,7 +193,9 @@ export function createApi(invoke: Invoke) {
       hourly: (range: RangeInput): Promise<HourlyPoint[]> => invoke<HourlyPoint[]>('analytics:hourly', range),
       affinity: (input: AffinityInput): Promise<AffinityRow[]> => invoke<AffinityRow[]>('analytics:affinity', input),
       lowMargin: (input: LowMarginInput): Promise<LowMarginRow[]> =>
-        invoke<LowMarginRow[]>('analytics:low-margin', input)
+        invoke<LowMarginRow[]>('analytics:low-margin', input),
+      yearComparison: (year: number): Promise<YearComparisonReport> =>
+        invoke<YearComparisonReport>('analytics:year-comparison', { year })
     },
     suppliers: {
       list: (): Promise<SupplierRow[]> => invoke<SupplierRow[]>('suppliers:list'),

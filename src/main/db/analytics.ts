@@ -1,4 +1,4 @@
-import { and, eq, gte, isNull, lte, sql } from 'drizzle-orm'
+import { and, eq, gte, isNull, lt, lte, sql } from 'drizzle-orm'
 import { round2 } from '../../shared/money'
 import type {
   AffinityInput,
@@ -25,6 +25,9 @@ import type {
   TopProductsInput,
   TrendPoint,
   WeekdayPoint,
+  YearComparisonNumbers,
+  YearComparisonReport,
+  YearComparisonRow,
   YearInput
 } from '../../shared/analytics'
 import { getDb, type AppDb } from './client'
@@ -731,4 +734,78 @@ export function getLowMarginProducts(input: LowMarginInput, db: AppDb = getDb())
     .filter((r) => r.margin < threshold)
     .sort((a, b) => a.margin - b.margin)
     .slice(0, limit)
+}
+
+/** Signed movement with a percentage that stays null when there is no baseline. */
+function comparisonNumbers(
+  revenue: number,
+  profit: number,
+  prevRevenue: number,
+  prevProfit: number
+): YearComparisonNumbers {
+  const revenueDelta = round2(revenue - prevRevenue)
+  const profitDelta = round2(profit - prevProfit)
+  return {
+    revenue,
+    profit,
+    prevRevenue,
+    prevProfit,
+    revenueDelta,
+    revenueDeltaPct: prevRevenue > 0 ? (revenueDelta / prevRevenue) * 100 : null,
+    profitDelta,
+    // A loss last year has no meaningful percentage base.
+    profitDeltaPct: prevProfit > 0 ? (profitDelta / prevProfit) * 100 : null
+  }
+}
+
+/**
+ * Year-over-year: every calendar month of `year` against the same month of
+ * `year - 1`. Months are wall-clock months (JS Date), so a sale made at 00:30
+ * local lands in the month the shop sees, not the UTC one. Query bounds are
+ * the two local calendar years, converted to UTC.
+ */
+export function getYearComparison(input: YearInput, db: AppDb = getDb()): YearComparisonReport {
+  const { year } = input
+  const prevYear = year - 1
+  const from = new Date(prevYear, 0, 1).toISOString()
+  const to = new Date(year + 1, 0, 1).toISOString()
+
+  const rows = db
+    .select({
+      createdAt: sales.createdAt,
+      total: sales.total,
+      cost: sql<number>`COALESCE(SUM(${saleItems.qty} * ${saleItems.unitCost}), 0)`
+    })
+    .from(sales)
+    .leftJoin(saleItems, eq(saleItems.saleId, sales.id))
+    .where(and(gte(sales.createdAt, from), lt(sales.createdAt, to), COMPLETED))
+    .groupBy(sales.id, sales.createdAt, sales.total)
+    .all()
+
+  const current = Array.from({ length: 12 }, () => ({ revenue: 0, profit: 0 }))
+  const previous = Array.from({ length: 12 }, () => ({ revenue: 0, profit: 0 }))
+  for (const r of rows) {
+    const at = new Date(r.createdAt)
+    const month = at.getMonth()
+    const bucket = at.getFullYear() === year ? current : previous
+    const entry = bucket[month] as { revenue: number; profit: number }
+    entry.revenue = round2(entry.revenue + r.total)
+    entry.profit = round2(entry.profit + r.total - r.cost)
+  }
+
+  const monthRows: YearComparisonRow[] = current.map((c, i) => {
+    const p = previous[i] as { revenue: number; profit: number }
+    return { month: i + 1, ...comparisonNumbers(c.revenue, c.profit, p.revenue, p.profit) }
+  })
+
+  const sum = (buckets: Array<{ revenue: number; profit: number }>, key: 'revenue' | 'profit'): number =>
+    round2(buckets.reduce((s, b) => s + b[key], 0))
+  const totals = comparisonNumbers(
+    sum(current, 'revenue'),
+    sum(current, 'profit'),
+    sum(previous, 'revenue'),
+    sum(previous, 'profit')
+  )
+
+  return { year, prevYear, rows: monthRows, totals }
 }

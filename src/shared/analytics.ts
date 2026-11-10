@@ -198,6 +198,35 @@ export const lowMarginInput = rangeInput.extend({
 export type LowMarginInput = z.infer<typeof lowMarginInput>
 
 /**
+ * One metric pair with its year-over-year movement. `*DeltaPct` is null when
+ * last year had no (or negative) baseline to compare against — a percentage
+ * against zero or a loss would read as a lie.
+ */
+export interface YearComparisonNumbers {
+  revenue: number
+  profit: number
+  prevRevenue: number
+  prevProfit: number
+  revenueDelta: number
+  revenueDeltaPct: number | null
+  profitDelta: number
+  profitDeltaPct: number | null
+}
+
+/** Year-over-year row for one calendar month (1 = January … 12 = December). */
+export interface YearComparisonRow extends YearComparisonNumbers {
+  month: number
+}
+
+/** A calendar year against the same year before it, month by month. */
+export interface YearComparisonReport {
+  year: number
+  prevYear: number
+  rows: YearComparisonRow[]
+  totals: YearComparisonNumbers
+}
+
+/**
  * Net-margin row with sale-level discounts prorated by line share
  * (discount × lineTotal ÷ subtotal). Sorted ascending by margin.
  */

@@ -19,7 +19,8 @@ import {
   getRevenueProfitTrend,
   getSupplierRevenue,
   getTopProducts,
-  getWeekdayAverages
+  getWeekdayAverages,
+  getYearComparison
 } from '../db/analytics'
 import { affinityInput, deadStockInput, inventoryGroupInput, lowMarginInput, monthsInput, rangeInput, topProductsInput, yearInput } from '../../shared/analytics'
 
@@ -50,4 +51,5 @@ export function registerAnalyticsIpc(): void {
   ipcMain.handle('analytics:hourly', (_event, input: unknown) => getHourlySales(rangeInput.parse(input)))
   ipcMain.handle('analytics:affinity', (_event, input: unknown) => getAffinityPairs(affinityInput.parse(input)))
   ipcMain.handle('analytics:low-margin', (_event, input: unknown) => getLowMarginProducts(lowMarginInput.parse(input)))
+  ipcMain.handle('analytics:year-comparison', (_event, input: unknown) => getYearComparison(yearInput.parse(input)))
 }

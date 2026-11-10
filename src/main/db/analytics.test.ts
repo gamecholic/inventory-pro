@@ -24,7 +24,8 @@ import {
   getRevenueProfitTrend,
   getSupplierRevenue,
   getTopProducts,
-  getWeekdayAverages
+  getWeekdayAverages,
+  getYearComparison
 } from './analytics'
 
 let db: AppDb
@@ -364,4 +365,134 @@ describe('hourly, affinity and low-margin', () => {
 
 afterAll(() => {
   sqlite.close()
+})
+
+/** Year-over-year comparison: one fixture spanning two calendar years. */
+describe('year-over-year comparison', () => {
+  let db3: AppDb
+  let sqlite3: Database
+
+  beforeAll(() => {
+    sqlite3 = new Database(':memory:')
+    db3 = drizzle(sqlite3, { schema })
+    migrate(db3, { migrationsFolder: join(process.cwd(), 'drizzle') })
+
+    const productId = db3
+      .insert(schema.products)
+      .values({
+        name: 'Cola',
+        barcode: null,
+        categoryId: null,
+        unit: 'pcs',
+        sellingPrice: 50,
+        costPrice: 10,
+        stockQty: 100,
+        minStock: 5,
+        supplierId: null,
+        description: null,
+        archivedAt: null,
+        createdAt: '2025-01-01T12:00:00.000Z',
+        updatedAt: '2025-01-01T12:00:00.000Z'
+      })
+      .returning({ id: schema.products.id }).get()!.id
+
+    const mkSale = (createdAt: string, total: number, status = 'completed'): number =>
+      db3
+        .insert(schema.sales)
+        .values({
+          receiptNo: `Y-${createdAt}`,
+          createdAt,
+          subtotal: total,
+          discount: 0,
+          total,
+          paymentMethod: 'cash',
+          cashAmount: total,
+          cardAmount: null,
+          changeAmount: 0,
+          status,
+          canceledAt: status === 'canceled' ? createdAt : null
+        })
+        .returning({ id: schema.sales.id }).get()!.id
+
+    const mkItem = (saleId: number, qty: number): void => {
+      db3
+        .insert(schema.saleItems)
+        .values({
+          saleId,
+          productId,
+          productName: 'Cola',
+          unit: 'pcs',
+          qty,
+          unitPrice: 50,
+          unitCost: 10,
+          lineTotal: qty * 50
+        })
+        .run()
+    }
+
+    // 2025: March only.
+    mkItem(mkSale('2025-03-10T12:00:00.000Z', 50), 1)
+    // 2026: March (double last year) and July (nothing last year).
+    mkItem(mkSale('2026-03-10T12:00:00.000Z', 100), 2)
+    mkItem(mkSale('2026-07-20T12:00:00.000Z', 200), 4)
+    // Canceled sale must not count anywhere.
+    mkItem(mkSale('2026-03-11T12:00:00.000Z', 999, 'canceled'), 20)
+  })
+
+  afterAll(() => {
+    sqlite3.close()
+  })
+
+  it('compares every month of the year with the same month last year', () => {
+    const report = getYearComparison({ year: 2026 }, db3)
+    expect(report.year).toBe(2026)
+    expect(report.prevYear).toBe(2025)
+    expect(report.rows).toHaveLength(12)
+
+    const march = report.rows[2]!
+    expect(march.month).toBe(3)
+    expect(march).toMatchObject({
+      revenue: 100,
+      profit: 80,
+      prevRevenue: 50,
+      prevProfit: 40,
+      revenueDelta: 50,
+      revenueDeltaPct: 100,
+      profitDelta: 40,
+      profitDeltaPct: 100
+    })
+
+    // July had no sales last year: no percentage to show.
+    const july = report.rows[6]!
+    expect(july).toMatchObject({ revenue: 200, profit: 160, prevRevenue: 0, prevProfit: 0 })
+    expect(july.revenueDeltaPct).toBeNull()
+    expect(july.profitDeltaPct).toBeNull()
+
+    // A month with no sales at all stays zero on both sides.
+    const january = report.rows[0]!
+    expect(january).toMatchObject({ revenue: 0, profit: 0, prevRevenue: 0, prevProfit: 0 })
+    expect(january.revenueDeltaPct).toBeNull()
+  })
+
+  it('totals the year and its predecessor', () => {
+    const report = getYearComparison({ year: 2026 }, db3)
+    expect(report.totals).toMatchObject({
+      revenue: 300,
+      profit: 240,
+      prevRevenue: 50,
+      prevProfit: 40,
+      revenueDelta: 250,
+      revenueDeltaPct: 500,
+      profitDelta: 200,
+      profitDeltaPct: 500
+    })
+  })
+
+  it('reads the year before as an empty baseline', () => {
+    const report = getYearComparison({ year: 2025 }, db3)
+    expect(report.prevYear).toBe(2024)
+    expect(report.totals.revenue).toBe(50)
+    expect(report.totals.prevRevenue).toBe(0)
+    expect(report.totals.revenueDeltaPct).toBeNull()
+  })
 })

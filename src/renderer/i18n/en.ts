@@ -113,6 +113,8 @@ export const en = {
         invValueDesc: 'Current stock value distribution by category.',
         supValue: 'Stock Value by Supplier',
         supValueDesc: 'Current stock value distribution by supplier.',
+        yearComparison: 'Year-over-Year',
+        yearComparisonDesc: 'Revenue and profit this year against the same months last year.',
         generate: 'Generate Report',
         period: 'For period: {{from}} to {{to}}',
         loading: 'Loading report…',
@@ -171,7 +173,11 @@ export const en = {
         threshold: 'Margin Threshold',
         netRevenue: 'Net Revenue',
         loss: 'Loss-Making Product',
-        flagged: 'At-Risk Product'
+        flagged: 'At-Risk Product',
+        year: 'Year',
+        month: 'Month',
+        change: 'Change',
+        vsYear: 'vs {{year}}'
       },
       expenses: {
         title: 'Expenses',

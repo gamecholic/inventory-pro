@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { affinityInput, deadStockInput, lowMarginInput, rangeInput, topProductsInput } from './analytics'
+import { affinityInput, deadStockInput, lowMarginInput, rangeInput, topProductsInput, yearInput } from './analytics'
 
 const RANGE = { from: '2026-01-01T00:00:00.000Z', to: '2026-12-31T23:59:59.999Z' }
 
@@ -30,5 +30,11 @@ describe('analytics inputs', () => {
     expect(parsed.threshold).toBe(20)
     expect(parsed.limit).toBe(20)
     expect(lowMarginInput.safeParse({ ...RANGE, threshold: 101 }).success).toBe(false)
+  })
+
+  it('keeps the year picker inside a sane calendar range', () => {
+    expect(yearInput.parse({ year: 2026 }).year).toBe(2026)
+    expect(yearInput.safeParse({ year: 1999 }).success).toBe(false)
+    expect(yearInput.safeParse({ year: 2026.5 }).success).toBe(false)
   })
 })

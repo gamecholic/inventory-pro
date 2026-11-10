@@ -82,7 +82,8 @@ export const channels = [
   'analytics:monthly',
   'analytics:hourly',
   'analytics:affinity',
-  'analytics:low-margin'
+  'analytics:low-margin',
+  'analytics:year-comparison'
 ] as const
 export type Channel = (typeof channels)[number]
 

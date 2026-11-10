@@ -113,6 +113,8 @@ export const tr = {
         invValueDesc: 'Kategorilere göre güncel stok değer dağılımı.',
         supValue: 'Tedarikçi Stok Değeri',
         supValueDesc: 'Tedarikçilere göre güncel stok değer dağılımı.',
+        yearComparison: 'Yıllık Karşılaştırma',
+        yearComparisonDesc: 'Bu yılın cirosu ve kârı, geçen yılın aynı aylarıyla karşılaştırması.',
         generate: 'Rapor Oluştur',
         period: 'Dönem: {{from}} - {{to}}',
         loading: 'Rapor yükleniyor…',
@@ -171,7 +173,11 @@ export const tr = {
         threshold: 'Marj Eşiği',
         netRevenue: 'Net Ciro',
         loss: 'Zarar Eden Ürün',
-        flagged: 'Riskli Ürün'
+        flagged: 'Riskli Ürün',
+        year: 'Yıl',
+        month: 'Ay',
+        change: 'Değişim',
+        vsYear: '{{year}} yılına göre'
       },
       expenses: {
         title: 'Giderler',

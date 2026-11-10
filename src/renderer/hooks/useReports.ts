@@ -157,3 +157,13 @@ export function useLowMarginReport(input: LowMarginInput | null) {
     placeholderData: keepPreviousData
   })
 }
+
+/** Year-over-year comparison. The year picker owns the window, not the shared range. */
+export function useYearComparisonReport(year: number | null) {
+  return useQuery({
+    queryKey: ['report-year-comparison', year],
+    queryFn: () => window.api.analytics.yearComparison(year as number),
+    enabled: year !== null,
+    placeholderData: keepPreviousData
+  })
+}

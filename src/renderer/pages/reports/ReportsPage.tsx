@@ -5,6 +5,7 @@ import {
   Archive,
   Boxes,
   CreditCard,
+  GitCompareArrows,
   LayoutGrid,
   Link2,
   Package,
@@ -37,6 +38,7 @@ import { PaymentReport } from './PaymentReport'
 import { ReorderReport } from './ReorderReport'
 import { SupplierReport } from './SupplierReport'
 import { TopProductsReport } from './TopProductsReport'
+import { YearComparisonReport } from './YearComparisonReport'
 
 type ReportKey =
   | 'financial'
@@ -53,8 +55,15 @@ type ReportKey =
   | 'lowMargin'
   | 'invValue'
   | 'supValue'
+  | 'yearComparison'
 
-const NO_RANGE_REPORTS: ReadonlySet<ReportKey> = new Set(['reorder', 'deadStock', 'invValue', 'supValue'])
+const NO_RANGE_REPORTS: ReadonlySet<ReportKey> = new Set([
+  'reorder',
+  'deadStock',
+  'invValue',
+  'supValue',
+  'yearComparison'
+])
 
 const REPORT_GROUPS: Array<{ labelKey: string; items: Array<{ key: ReportKey; icon: LucideIcon }> }> = [
   {
@@ -62,6 +71,7 @@ const REPORT_GROUPS: Array<{ labelKey: string; items: Array<{ key: ReportKey; ic
     items: [
       { key: 'financial', icon: Wallet },
       { key: 'topProducts', icon: TrendingUp },
+      { key: 'yearComparison', icon: GitCompareArrows },
       { key: 'basket', icon: ShoppingCart },
       { key: 'discounts', icon: Tag }
     ]
@@ -189,6 +199,9 @@ export function ReportsPage(): React.JSX.Element {
           </TabsContent>
           <TabsContent value="supValue" className="mt-0">
             <SupplierValueReport />
+          </TabsContent>
+          <TabsContent value="yearComparison" className="mt-0">
+            <YearComparisonReport />
           </TabsContent>
         </div>
       </Tabs>

@@ -18,6 +18,19 @@ function useInvalidateCatalog() {
     void queryClient.invalidateQueries({ queryKey: ['products'] })
     void queryClient.invalidateQueries({ queryKey: categoriesKey })
     void queryClient.invalidateQueries({ queryKey: suppliersKey })
+    // The POS grid and the stock-page search are separate queries: a new,
+    // renamed, repriced or archived product only shows there after a
+    // refresh unless they are invalidated too.
+    void queryClient.invalidateQueries({ queryKey: ['pos-catalog'] })
+    void queryClient.invalidateQueries({ queryKey: ['product-search'] })
+    // Product count / value / low-stock counters on the dashboard and the
+    // product breakdowns in reports follow catalog changes.
+    void queryClient.invalidateQueries({
+      predicate: (q) => {
+        const k = String(q.queryKey[0] ?? '')
+        return k.startsWith('dash-') || k.startsWith('report-')
+      }
+    })
   }
 }
 

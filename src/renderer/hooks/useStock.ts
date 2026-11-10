@@ -30,6 +30,17 @@ export function useAdjustStock() {
       void queryClient.invalidateQueries({ queryKey: ['products'] })
       void queryClient.invalidateQueries({ queryKey: ['product-search'] })
       void queryClient.invalidateQueries({ queryKey: ['price-history'] })
+      // The POS grid is its own query: without this the new quantity only
+      // shows after a page refresh.
+      void queryClient.invalidateQueries({ queryKey: ['pos-catalog'] })
+      // Stock level feeds the dashboard counters (low stock, inventory value,
+      // turnover) and the reports.
+      void queryClient.invalidateQueries({
+        predicate: (q) => {
+          const k = String(q.queryKey[0] ?? '')
+          return k.startsWith('dash-') || k.startsWith('report-')
+        }
+      })
       toast.success(t('stock.updated'))
     },
     onError: (error) => {

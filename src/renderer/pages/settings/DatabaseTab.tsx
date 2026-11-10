@@ -208,7 +208,16 @@ function DbLocationRow(): React.JSX.Element {
       .then(
         (info) => {
           queryClient.setQueryData(dbDirKey, info)
-          toast.success(t('settings.db.restartRequired'))
+          // The pointer is only read at boot, so restart the server for the
+          // user (same flow as Settings > Restart server) instead of
+          // leaving a "restart required" toast for a manual restart.
+          void window.api.restart().then(
+            () => {
+              toast.success(t('settings.restartStarted'))
+              setTimeout(() => window.location.reload(), 3000)
+            },
+            () => toast.success(t('settings.db.restartRequired'))
+          )
         },
         (error: unknown) => {
           toast.error(error instanceof Error ? error.message : t('settings.db.importFailed'))

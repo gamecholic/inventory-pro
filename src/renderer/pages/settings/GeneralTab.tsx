@@ -104,7 +104,27 @@ export function GeneralTab(): React.JSX.Element {
   }, [networkAccess])
 
   const onSubmit = form.handleSubmit((values) => {
-    update.mutate({ section: 'general', patch: values })
+    const prevNetwork = data?.general.networkAccess
+    update.mutate(
+      { section: 'general', patch: values },
+      {
+        onSuccess: () => {
+          // Network sharing rebinds 0.0.0.0/127.0.0.1 only on boot, so a
+          // toggle change restarts the server for the user (same flow as
+          // the manual Restart button below) instead of leaving a
+          // "restart required" pending state to discover.
+          if (prevNetwork !== undefined && prevNetwork !== values.networkAccess) {
+            void window.api.restart().then(
+              () => {
+                toast.success(t('settings.restartStarted'))
+                setTimeout(() => window.location.reload(), 3000)
+              },
+              () => toast.error(t('settings.restartFailed'))
+            )
+          }
+        }
+      }
+    )
   })
 
   const confirmFirewall = (): void => {

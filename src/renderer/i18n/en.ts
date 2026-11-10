@@ -488,7 +488,7 @@ export const en = {
       theme: { toggle: 'Toggle theme', light: 'Light', dark: 'Dark', system: 'System' },
       settings: {
         title: 'Settings',
-        tabs: { general: 'General', business: 'Business Information', receipt: 'Receipt', database: 'Database' },
+        tabs: { general: 'General', business: 'Business Information', receipt: 'Receipt', database: 'Database', about: 'About' },
         language: 'Language',
         theme: 'Theme',
         currency: 'Currency',
@@ -530,6 +530,18 @@ export const en = {
         restartDesc: 'The app will briefly disconnect and start again. You will be signed back in automatically.',
         restartStarted: 'Restarting…',
         restartFailed: 'Could not restart the server.',
+        about: {
+          title: 'About',
+          desc: 'App information and updates.',
+          appName: 'Inventory Pro',
+          tagline: 'Inventory, point of sale, expenses and reports — works offline.',
+          version: 'Version {{version}}',
+          checkUpdates: 'Check for updates',
+          checking: 'Checking…',
+          upToDate: 'You are running the latest version.',
+          available: 'Version {{version}} is available.',
+          error: 'Could not check for updates: {{message}}'
+        },
         cardFeeHint: 'Used for net card amounts on Dashboard and Reports. Default 0.68%.',
         businessDesc: 'Shown on sale details and printed receipts.',
         receiptDesc: 'Custom text printed at the top and bottom of receipts.',

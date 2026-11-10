@@ -38,6 +38,9 @@ if (!installerPath) {
   installerPath = candidates[0] ? join(installerDir, candidates[0]) : ''
 }
 const version = process.argv[4] ?? (basename(installerPath).match(/(\d+\.\d+\.\d+)/)?.[1] ?? '0.0.0')
+// Optional delay between 256 KB chunks so the UI progress bar is visible
+// (a local file downloads in well under a second).
+const throttleMs = Number(process.env.MOCK_THROTTLE_MS ?? 0)
 
 if (!installerPath || !existsSync(installerPath)) {
   console.error(`No installer found. Build one first: npm run app:installer`)
@@ -59,6 +62,23 @@ const server = createServer((req, res) => {
   if (url.pathname === '/installer.exe') {
     const data = readFileSync(installerPath)
     res.writeHead(200, { 'content-type': 'application/octet-stream', 'content-length': data.length })
+    if (throttleMs > 0) {
+      // Slow the stream down so the UI download progress is observable.
+      const chunkSize = 256 * 1024
+      let offset = 0
+      const pump = () => {
+        if (offset >= data.length) {
+          res.end()
+          console.log(`[mock] GET /installer.exe done (${(data.length / 1024 / 1024).toFixed(1)} MB, throttled)`)
+          return
+        }
+        res.write(data.subarray(offset, offset + chunkSize))
+        offset += chunkSize
+        setTimeout(pump, throttleMs)
+      }
+      pump()
+      return
+    }
     res.end(data)
     console.log(`[mock] GET /installer.exe (${(data.length / 1024 / 1024).toFixed(1)} MB)`)
     return

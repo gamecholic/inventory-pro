@@ -4,54 +4,32 @@ import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { useUpdaterCheck } from '@/hooks/useUpdater'
+import { useDownloadUpdate, useUpdaterCheck } from '@/hooks/useUpdater'
 
-type Phase = 'available' | 'downloading' | 'downloaded' | 'error'
+type Phase = 'available' | 'downloaded'
 
 /** Features §1.6 — small top-right card when a new release is available. Auto-dismisses after 60 seconds. */
 export function UpdateCard(): React.JSX.Element | null {
   const { t } = useTranslation()
   const { data } = useUpdaterCheck()
+  const { downloading, percent, download } = useDownloadUpdate()
   const [dismissed, setDismissed] = useState(false)
   const [phase, setPhase] = useState<Phase>('available')
-  const [percent, setPercent] = useState(0)
-  const [error, setError] = useState('')
 
   useEffect(() => {
-    if (phase !== 'available' || dismissed) return
+    if (phase !== 'available' || dismissed || downloading) return
     const id = setTimeout(() => setDismissed(true), 60_000)
     return () => clearTimeout(id)
-  }, [phase, dismissed])
+  }, [phase, dismissed, downloading])
 
+  // The server reports 'downloaded' when the installer is already staged,
+  // so the card offers Restart Now instead of downloading again.
   useEffect(() => {
-    if (phase !== 'downloading') return
-    const id = setInterval(() => {
-      void window.api.updater.progress().then((p) => setPercent(Math.round(p.percent)))
-    }, 500)
-    return () => clearInterval(id)
-  }, [phase])
+    if (data?.status === 'downloaded' && phase !== 'downloaded') setPhase('downloaded')
+  }, [data?.status, phase])
 
-  if (data?.status !== 'available' || dismissed) return null
+  if (!data || (data.status !== 'available' && data.status !== 'downloaded') || dismissed) return null
   const version = data.version ?? ''
-
-  const startDownload = (): void => {
-    setPhase('downloading')
-    setPercent(0)
-    void window.api.updater.download().then(
-      (result) => {
-        if (result.status === 'downloaded') {
-          setPhase('downloaded')
-        } else {
-          setPhase('error')
-          setError(result.message ?? t('updates.failed'))
-        }
-      },
-      (failure: unknown) => {
-        setPhase('error')
-        setError(failure instanceof Error ? failure.message : t('updates.failed'))
-      }
-    )
-  }
 
   return (
     <div className="fixed top-4 right-4 z-50 w-80">
@@ -63,19 +41,15 @@ export function UpdateCard(): React.JSX.Element | null {
           </Button>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          {phase === 'error' ? (
-            <p className="text-sm text-muted-foreground">{error}</p>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {phase === 'downloaded' ? t('updates.downloaded') : t('updates.message', { version })}
-            </p>
-          )}
-          {phase === 'available' && (
-            <Button variant="outline" size="sm" onClick={startDownload}>
+          <p className="text-sm text-muted-foreground">
+            {phase === 'downloaded' ? t('updates.downloaded') : t('updates.message', { version })}
+          </p>
+          {phase === 'available' && !downloading && (
+            <Button variant="outline" size="sm" onClick={download}>
               {t('updates.download')}
             </Button>
           )}
-          {phase === 'downloading' && (
+          {downloading && (
             <div className="flex flex-col gap-2">
               <Progress value={percent} />
               <p className="text-xs text-muted-foreground text-center">{t('updates.downloading', { percent })}</p>

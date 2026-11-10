@@ -74,12 +74,20 @@ export function registerUpdaterHandlers(): void {
       }
       const asset = data.assets?.find((a) => /setup/i.test(a.name) && a.name.endsWith('.exe'))
       if (!asset) return { status: 'error', message: 'No installer asset found in the latest release' }
+      // Keep an already staged installer for the same version: a second
+      // check must not throw away the download (the About tab and the
+      // update card both re-check after downloading).
+      const alreadyDownloaded = updateVersion === version && downloaded
       updateVersion = version
       updateAssetUrl = asset.browser_download_url
-      downloaded = false
-      downloadPath = null
-      downloadPercent = 0
-      return { status: 'available', version }
+      if (!alreadyDownloaded) {
+        downloaded = false
+        downloadPath = null
+        downloadPercent = 0
+      }
+      return alreadyDownloaded
+        ? { status: 'downloaded', version }
+        : { status: 'available', version }
     } catch (error) {
       return { status: 'error', message: error instanceof Error ? error.message : String(error) }
     }

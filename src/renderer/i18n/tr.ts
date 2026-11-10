@@ -488,7 +488,7 @@ export const tr = {
       theme: { toggle: 'Temayı değiştir', light: 'Açık', dark: 'Koyu', system: 'Sistem' },
       settings: {
         title: 'Ayarlar',
-        tabs: { general: 'Genel', business: 'İşletme Bilgileri', receipt: 'Fiş', database: 'Veritabanı' },
+        tabs: { general: 'Genel', business: 'İşletme Bilgileri', receipt: 'Fiş', database: 'Veritabanı', about: 'Hakkında' },
         language: 'Dil',
         theme: 'Tema',
         currency: 'Para Birimi',
@@ -530,6 +530,18 @@ export const tr = {
         restartDesc: 'Uygulama kısa süreliğine bağlantıyı kesip yeniden başlayacak. Otomatik olarak yeniden oturum açılır.',
         restartStarted: 'Yeniden başlatılıyor…',
         restartFailed: 'Sunucu yeniden başlatılamadı.',
+        about: {
+          title: 'Hakkında',
+          desc: 'Uygulama bilgileri ve güncellemeler.',
+          appName: 'Inventory Pro',
+          tagline: 'Stok, satış noktası, gider ve raporlar — çevrimdışı çalışır.',
+          version: 'Sürüm {{version}}',
+          checkUpdates: 'Güncellemeleri denetle',
+          checking: 'Denetleniyor…',
+          upToDate: 'En son sürümü kullanıyorsunuz.',
+          available: '{{version}} sürümü mevcut.',
+          error: 'Güncellemeler denetlenemedi: {{message}}'
+        },
         cardFeeHint: 'Pano ve Raporlardaki net kart tutarları için kullanılır. Varsayılan %0,68.',
         businessDesc: 'Satış detaylarında ve yazdırılan fişlerde gösterilir.',
         receiptDesc: 'Fişlerin üst ve altına yazdırılan özel metin.',

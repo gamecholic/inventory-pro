@@ -42,7 +42,6 @@ import { formatMoney } from '@shared/money'
 import type { StoreDateFormat } from '@shared/dates'
 import { formatISO } from '@shared/dates'
 import { settingsKey, useSettings, useUpdateSettings } from '@/hooks/useSettings'
-import { useAppVersion } from '@/hooks/useAppVersion'
 import QRCode from 'react-qr-code'
 
 const CURRENCIES = [
@@ -61,7 +60,6 @@ export function GeneralTab(): React.JSX.Element {
   const { data } = useSettings()
   const update = useUpdateSettings()
   const queryClient = useQueryClient()
-  const { data: appVersion } = useAppVersion()
   const [resetting, setResetting] = useState(false)
   const [networkInfo, setNetworkInfo] = useState<{ lanIp: string | null; port: number; host: string; networkAccess: boolean; url: string | null; lanReachable: boolean } | null>(null)
   const [urlCopied, setUrlCopied] = useState(false)
@@ -507,11 +505,6 @@ export function GeneralTab(): React.JSX.Element {
           </CardContent>
         </Card>
       </form>
-      {appVersion ? (
-        <p className="text-right text-xs text-muted-foreground">
-          {t('settings.version', { version: appVersion })}
-        </p>
-      ) : null}
       <AlertDialog open={showFirewallPrompt} onOpenChange={setShowFirewallPrompt}>
         <AlertDialogContent>
           <AlertDialogHeader>

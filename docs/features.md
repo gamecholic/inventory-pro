@@ -760,8 +760,8 @@ products.
 
 ## 9. Settings
 
-Left tab navigation with 4 sections: General, Business Information, Receipt
-Customization, Database Management.
+Left tab navigation with 5 sections: General, Business Information, Receipt
+Customization, Database Management, About.
 
 ### 9.1 General Tab
 
@@ -775,7 +775,7 @@ Customization, Database Management.
   to compute net card amounts shown on Dashboard and Reports.
 - Buttons: `Save Changes` + `Reset Settings` (danger: resets all settings to
   defaults, does not delete data, asks for confirmation).
-- Read-only app version, muted and right-aligned in the card footer.
+- The read-only app version lives in the About tab (§9.5).
 
 Note: tax-setting labels (enable tax calculation, default tax rate %, tax
 name such as Sales Tax/VAT/GST) exist in the app's wording but no Tax tab is
@@ -834,5 +834,16 @@ Every option the user sees:
   default`).
 - Loading messages during operations: exporting/importing JSON/Excel,
   resetting database.
+
+### 9.5 About Tab
+
+- App icon, app name, one-line description and the read-only app version.
+- `Check for updates` button: checks the latest release.
+  - Up to date: confirms the app is on the latest version.
+  - Update available: shows the new version and a `Download & Install`
+    button; the top-right update card appears as well.
+  - Check failed: shows the reason.
+- The update card (top-right, §1.6) appears on launch when a newer release
+  exists; it stays visible for 60 seconds unless dismissed.
 
 ---

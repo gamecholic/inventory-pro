@@ -1,12 +1,13 @@
 import { useTranslation } from 'react-i18next'
-import { Building2, Database, Receipt, SlidersHorizontal } from 'lucide-react'
+import { Building2, Database, Info, Receipt, SlidersHorizontal } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AboutTab } from './AboutTab'
 import { BusinessTab } from './BusinessTab'
 import { DatabaseTab } from './DatabaseTab'
 import { GeneralTab } from './GeneralTab'
 import { ReceiptTab } from './ReceiptTab'
 
-/** Features §9 — four sections, left-aligned tab navigation. */
+/** Features §9 — five sections, left-aligned tab navigation. */
 export function SettingsPage(): React.JSX.Element {
   const { t } = useTranslation()
   return (
@@ -29,6 +30,10 @@ export function SettingsPage(): React.JSX.Element {
             <Database />
             {t('settings.tabs.database')}
           </TabsTrigger>
+          <TabsTrigger value="about" className="justify-start gap-2 px-3">
+            <Info />
+            {t('settings.tabs.about')}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="general" className="mt-0 min-w-0 flex-1">
           <GeneralTab />
@@ -41,6 +46,9 @@ export function SettingsPage(): React.JSX.Element {
         </TabsContent>
         <TabsContent value="database" className="mt-0 min-w-0 flex-1">
           <DatabaseTab />
+        </TabsContent>
+        <TabsContent value="about" className="mt-0 min-w-0 flex-1">
+          <AboutTab />
         </TabsContent>
       </Tabs>
     </div>

@@ -21,6 +21,7 @@ import { tmpdir } from 'node:os'
 import { createServer } from 'node:net'
 import { basename, dirname, join } from 'node:path'
 import { startServer, notifyScheduledBackupFailed, setShutdownHandler } from './index'
+import { setUpdaterPort } from './updater'
 import { getSettings } from '../src/main/db/settingsStore'
 import { closeDb } from '../src/main/db/client'
 import { syncAutostart } from '../src/main/autostart'
@@ -32,6 +33,14 @@ const FIRST_PORT = Number(process.env.PORT ?? 5178)
 const LAST_PORT = FIRST_PORT + 10
 const VITE_PORT = Number(process.env.VITE_PORT ?? 5173)
 let HOST = process.env.HOST ?? '127.0.0.1'
+
+// Relaunch after an update (set by the installer's .bat wrapper): the
+// browser tab that requested the update is still open and reloads itself
+// once this instance answers. So we come back on the very same port and
+// must NOT open a second tab — that would leave the old one frozen on a
+// dead server.
+const RELAUNCH = process.env.INVENTORY_RELAUNCH === '1'
+const RELAUNCH_PORT = Number(process.env.INVENTORY_RELAUNCH_PORT ?? 0)
 
 // --- HMR (dev only) -------------------------------------------------------
 
@@ -149,7 +158,28 @@ function portFree(port: number): Promise<boolean> {
   })
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 async function pickPort(): Promise<{ port: number; alreadyRunning: boolean }> {
+  // A relaunch must come back on the port the browser tab is already
+  // pointed at, otherwise the tab never finds the server again. Wait for
+  // the old instance to release that exact port instead of falling back
+  // to another one.
+  if (RELAUNCH && RELAUNCH_PORT > 0) {
+    const deadline = Date.now() + 20_000
+    while (Date.now() < deadline) {
+      if (await healthy(RELAUNCH_PORT)) {
+        // The old instance is still up — it is about to exit.
+        await sleep(300)
+        continue
+      }
+      if (await portFree(RELAUNCH_PORT)) return { port: RELAUNCH_PORT, alreadyRunning: false }
+      await sleep(300)
+    }
+    log(`relaunch: port ${RELAUNCH_PORT} never freed up, falling back`)
+  }
   for (let port = FIRST_PORT; port <= LAST_PORT; port++) {
     if (await healthy(port)) return { port, alreadyRunning: true }
     if (await portFree(port)) return { port, alreadyRunning: false }
@@ -251,6 +281,14 @@ function findBrowser(): string | null {
 }
 
 function openWindow(port: number): void {
+  // After an update the browser tab that requested it is still open and
+  // reloads itself when the new server answers (see the relaunch contract
+  // in server/updater.ts). Opening a second tab would leave the old one
+  // frozen on a dead server.
+  if (RELAUNCH) {
+    log('window: relaunch — the existing tab reloads itself')
+    return
+  }
   const url = `http://127.0.0.1:${port}`
   const browser = findBrowser()
   if (browser) {
@@ -357,6 +395,9 @@ async function main(): Promise<void> {
   }
 
   const server = startServer({ port, webRoot, host: HOST })
+  // The updater's relaunch wrapper needs the port: the browser tab reloads
+  // itself against this exact address once the new instance answers.
+  setUpdaterPort(server.port)
   log(`api on http://${HOST === '0.0.0.0' ? '0.0.0.0 (LAN)' : HOST}:${server.port}`)
   log(`data: ${dataDir()}`)
 

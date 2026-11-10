@@ -62,6 +62,16 @@ Global behaviors apply across pages and are described first.
   - Message: new updates are available and the update utility can be used.
   - Close (X) button to dismiss.
   - Auto-dismisses after 60 seconds if not closed.
+- `Restart Now` (update card, or Settings > About) installs the update and
+  restarts the app. The local server stops while the new version is
+  installed, so a full-screen overlay covers the app until it is back:
+  - Title: `Restarting Inventory Pro`, with the version being installed.
+  - An indeterminate progress bar, the restart steps (preparing, installing,
+    starting the new version, ready) and the elapsed seconds.
+  - The window reloads itself when the new version is up. No second window
+    is opened.
+  - If the new version does not start, the overlay says so and offers a
+    `Reload` button.
 
 ### 1.7 Common List Behaviors
 

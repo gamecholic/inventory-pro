@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress'
 import { useAppVersion } from '@/hooks/useAppVersion'
 import { useDownloadUpdate, useUpdaterCheck } from '@/hooks/useUpdater'
+import { restartForUpdate } from '@/lib/restart'
 
 /**
  * Features §9 — About tab: app icon, version information and a manual
@@ -41,12 +42,9 @@ export function AboutTab(): React.JSX.Element {
   }
 
   const installNow = (): void => {
-    void window.api.updater.install().then(
-      (ok) => {
-        if (!ok) toast.error(t('updates.failed'))
-      },
-      () => toast.error(t('updates.failed'))
-    )
+    // The install stops the server, so the restart overlay takes over:
+    // it shows the progress and reloads this tab when the new version is up.
+    void restartForUpdate(update?.version ?? null)
   }
 
   const status = update?.status

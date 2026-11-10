@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { useDownloadUpdate, useUpdaterCheck } from '@/hooks/useUpdater'
+import { restartForUpdate } from '@/lib/restart'
 
 type Phase = 'available' | 'downloaded'
 
@@ -56,7 +57,14 @@ export function UpdateCard(): React.JSX.Element | null {
             </div>
           )}
           {phase === 'downloaded' && (
-            <Button variant="outline" size="sm" onClick={() => void window.api.updater.install()}>
+            // The install kills the server, so the card is replaced by the
+            // restart overlay: it explains the wait and reloads the tab
+            // when the new instance is up.
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void restartForUpdate(data?.version ?? null)}
+            >
               {t('updates.restart')}
             </Button>
           )}

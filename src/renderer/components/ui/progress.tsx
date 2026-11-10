@@ -7,6 +7,9 @@ function Progress({
   value,
   ...props
 }: React.ComponentProps<typeof ProgressPrimitive.Root>) {
+  // value={null} -> indeterminate bar: the work has no known end (the
+  // restart overlay cannot know how long the installer takes).
+  const indeterminate = value === null
   return (
     <ProgressPrimitive.Root
       data-slot="progress"
@@ -18,8 +21,11 @@ function Progress({
     >
       <ProgressPrimitive.Indicator
         data-slot="progress-indicator"
-        className="h-full w-full flex-1 bg-primary transition-all"
-        style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
+        className={cn(
+          "h-full w-full flex-1 bg-primary transition-all",
+          indeterminate && "animate-indeterminate"
+        )}
+        style={indeterminate ? undefined : { transform: `translateX(-${100 - (value || 0)}%)` }}
       />
     </ProgressPrimitive.Root>
   )

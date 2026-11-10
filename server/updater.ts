@@ -19,6 +19,16 @@ let downloadPath: string | null = null
 let downloadPercent = 0
 let downloaded = false
 
+// The port the renderer is served on. The relaunch must come back on the
+// same port: the browser tab is already pointed at it and reloads itself
+// when the new server answers.
+let serverPort = 0
+
+/** Called by boot.ts once the server knows its port. */
+export function setUpdaterPort(port: number): void {
+  serverPort = port
+}
+
 function isNewer(candidate: string, current: string): boolean {
   const a = candidate.replace(/^v/, '').split('.').map((n) => parseInt(n, 10) || 0)
   const b = current.split('.').map((n) => parseInt(n, 10) || 0)
@@ -148,6 +158,13 @@ export function registerUpdaterHandlers(): void {
         `ping -n 3 127.0.0.1 >nul\r\n` +
         `${q(downloadPath)} /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /FORCECLOSEAPPLICATIONS\r\n` +
         `set "INVENTORY_VERSION="\r\n` +
+        // Relaunch contract: the browser tab that asked for the update stays
+        // open and reloads itself when the new server answers, so the new
+        // instance must not open a second tab (the old one would be left
+        // frozen on a dead server). INVENTORY_RELAUNCH_PORT pins the port
+        // the tab is already using.
+        `set "INVENTORY_RELAUNCH=1"\r\n` +
+        `set "INVENTORY_RELAUNCH_PORT=${serverPort}"\r\n` +
         `start "" ${q(newExe)}\r\n`
       writeFileSync(batPath, bat, 'utf-8')
       stamp('INFO', `update install via bat=${batPath} installer=${downloadPath}`)

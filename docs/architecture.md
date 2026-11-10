@@ -34,6 +34,7 @@ Single-user offline-first, no auth/cloud. No hold/park sale (§3.12), no bulk pr
 
 ## 5. Approved deviations (owner-signed, override the spec above)
 - Theme toggle (header → Settings > General). Spec has no theme requirement.
+- Update restart overlay: installing an update stops the local server, so the browser tab would look frozen (the page still runs, every request fails). The renderer shows a full-screen overlay (indeterminate progress, restart steps, elapsed seconds) and a background watch polls `/api/health` until a *different* instance answers — then the tab reloads itself (`src/renderer/lib/restart.ts`, `src/renderer/components/restart-overlay.tsx`). The relaunch comes back on the same port and opens no second tab: the installer's `.bat` sets `INVENTORY_RELAUNCH=1` + `INVENTORY_RELAUNCH_PORT` (`server/updater.ts`), `server/boot.ts` honours them.
 - Reports: extra insight reports beside the spec's 5 (§8) — reorder, dead stock, basket, discounts, card fees, frequently bought together, low margin, stock value by category/supplier, and year-over-year (own year picker; revenue and profit per month against the same months of the previous year, plus totals).
 - Stock price-history chart + silent `stock_adjustments` log incl. prices. §5.4 forbids shown history; the log has no UI except this chart.
 - Expense category manager dialog (§7.1 names only Add buttons; edit/delete needs a list).

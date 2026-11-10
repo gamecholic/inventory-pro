@@ -19,7 +19,21 @@ export const tr = {
         downloaded: 'Güncelleme indirildi. Uygulamak için uygulamayı yeniden başlatın.',
         restart: 'Şimdi Yeniden Başlat',
         failed: 'Güncelleme başarısız oldu',
-        close: 'Kapat'
+        close: 'Kapat',
+        restartTitle: 'Inventory Pro yeniden başlatılıyor',
+        restartSubtitle: '{{version}} sürümü kuruluyor. Bu pencere kendini yenileyecek.',
+        restartSubtitleGeneric: 'Uygulama yeniden başlatılıyor. Bu pencere kendini yenileyecek.',
+        restartSteps: {
+          preparing: 'Güncelleme hazırlanıyor',
+          installing: 'Güncelleme kuruluyor',
+          starting: 'Yeni sürüm başlatılıyor',
+          ready: 'Hazır'
+        },
+        restartElapsed: '{{seconds}} sn geçti',
+        restartNote: 'Bu pencereyi kapatmayın.',
+        restartFailed: 'Güncelleme kurulamadı.',
+        restartTimeout: 'Yeni sürüm zamanında başlamadı.',
+        restartReload: 'Yeniden Yükle'
       },
       dashboard: {
         welcome: 'Hoş geldiniz',

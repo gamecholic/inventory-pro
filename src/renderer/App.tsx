@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SiteHeader } from '@/components/site-header'
 import { UpdateCard } from '@/components/update-card'
+import { RestartOverlay } from '@/components/restart-overlay'
 import { useSettings } from '@/hooks/useSettings'
 import { routes, type AppRoute } from '@/routes'
 
@@ -150,6 +151,8 @@ export default function App(): React.JSX.Element {
             <Shell />
           </HashRouter>
           <Toaster richColors />
+          {/* Covers the app while it restarts itself (update install). */}
+          <RestartOverlay />
         </TooltipProvider>
       </QueryClientProvider>
     </ThemeProvider>

@@ -19,7 +19,21 @@ export const en = {
         downloaded: 'Update downloaded. Restart the app to apply it.',
         restart: 'Restart Now',
         failed: 'Update failed',
-        close: 'Dismiss'
+        close: 'Dismiss',
+        restartTitle: 'Restarting Inventory Pro',
+        restartSubtitle: 'Version {{version}} is being installed. This window reloads itself.',
+        restartSubtitleGeneric: 'The app is restarting. This window reloads itself.',
+        restartSteps: {
+          preparing: 'Preparing the update',
+          installing: 'Installing the update',
+          starting: 'Starting the new version',
+          ready: 'Ready'
+        },
+        restartElapsed: '{{seconds}}s elapsed',
+        restartNote: 'Do not close this window.',
+        restartFailed: 'The update could not be installed.',
+        restartTimeout: 'The new version did not start in time.',
+        restartReload: 'Reload'
       },
       dashboard: {
         welcome: 'Welcome',

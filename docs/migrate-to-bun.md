@@ -345,11 +345,23 @@ gone.
   round-trip byte for byte.
 - `FolderBrowserDialog` and the modern shell dialogs are separate windows owned
   by the PowerShell process. They open *behind* the Chrome app window by
-  default, which looks like a dead button. A WinForms `Timer` (it keeps ticking
-  during the modal loop) finds the dialog by title and applies
-  `SetWindowPos(HWND_TOPMOST)` + `SetForegroundWindow` once.
+  default, and Windows refuses `SetForegroundWindow` from a process that is not
+  the foreground one. A WinForms `Timer` (it keeps ticking during the modal
+  loop) therefore retries for ~4 s, not once: find the process's `#32770` dialog
+  box (its caption is the localized "Browse For Folder", not the description, so
+  a title lookup alone misses it), then topmost + `BringWindowToTop` + attach to
+  the foreground thread + `SetForegroundWindow`/`SetActiveWindow`/`SetFocus`,
+  then `SwitchToThisWindow`. Once the dialog really owns the foreground
+  (`GetForegroundWindow()`), the topmost flag is cleared again so it stops
+  floating above every other window. If Windows still refuses after ~2.5 s, one
+  synthetic ALT press/release makes the process count as "last input" and the
+  next attempt goes through.
 - Do not add an invisible owner form to force z-order: it also drags the dialog
   into a screen corner.
+- `path` is resolved against the filesystem, not the request kind: a directory
+  starts *in* itself, a file in its parent. Trusting `dirname()` for folder
+  requests opened the picker one level too high (and "import from old app"
+  started above the backup folder).
 - Folder selection uses `FolderBrowserDialog`, which is the classic tree dialog
   on .NET Framework 4.8 (Windows 10 has no modern folder picker there). File
   selection uses the modern shell dialog.
@@ -358,5 +370,7 @@ gone.
 - Windows only; `showNativeDialog` throws elsewhere. This app is Windows only.
 
 **Verified:** Save As writes the backup to the chosen path (766-byte JSON,
-correct shape), cancel returns `null`, Unicode paths survive, and the dialog is
-foreground when it appears.
+correct shape), cancel returns `null`, Unicode paths survive. The dialog is
+foreground when it appears: measured with another app in front, the dialog owns
+`GetForegroundWindow()` ~250 ms after it is created and its topmost flag is
+cleared.

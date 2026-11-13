@@ -52,7 +52,10 @@ function installedExePath(): string {
   try {
     const result = spawnSync(regPath, ['query', 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{7E2C4B10-9A6D-4F3E-8B21-5C7D9E0A1F42}_is1', '/v', 'InstallLocation'], {
       encoding: 'utf-8',
-      stdio: ['ignore', 'pipe', 'ignore']
+      stdio: ['ignore', 'pipe', 'ignore'],
+      // No console window: the app is a GUI-subsystem process, but reg.exe
+      // would otherwise be started in a fresh visible console.
+      windowsHide: true
     })
     if (result.status === 0) {
       const line = String(result.stdout ?? '').split(/\r?\n/).find((l) => l.includes('InstallLocation'))
@@ -69,7 +72,7 @@ function installedExePath(): string {
   return join(dirname(process.execPath), 'Inventory Pro.exe')
 }
 
-export function registerUpdaterHandlers(): void {
+export function registerUpdaterHandlers(shutdown: (delayMs?: number) => void): void {
   handlers.set('updater:check', async () => {
     try {
       const res = await fetch(updateApiUrl(), {
@@ -155,7 +158,9 @@ export function registerUpdaterHandlers(): void {
       const newExe = installedExePath()
       const q = (s: string): string => `"${s.replace(/"/g, '""')}"`
       const bat = `@echo off\r\n` +
-        `ping -n 3 127.0.0.1 >nul\r\n` +
+        // Time for the graceful shutdown (DB WAL checkpoint) to finish before
+        // the installer is allowed to force-close the exe.
+        `ping -n 5 127.0.0.1 >nul\r\n` +
         `${q(downloadPath)} /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /FORCECLOSEAPPLICATIONS\r\n` +
         `set "INVENTORY_VERSION="\r\n` +
         // Relaunch contract: the browser tab that asked for the update stays
@@ -170,13 +175,20 @@ export function registerUpdaterHandlers(): void {
       stamp('INFO', `update install via bat=${batPath} installer=${downloadPath}`)
       const cmdPath = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'cmd.exe')
       const child = spawn(cmdPath, ['/c', batPath], {
-        detached: true,
+        // Do NOT pass detached here: on Windows `detached: true` maps to
+        // DETACHED_PROCESS, which makes cmd.exe allocate a fresh visible
+        // console window and silently ignores windowsHide. A hidden console
+        // still outlives this process (Windows does not kill children when
+        // the parent exits).
         stdio: 'ignore',
+        windowsHide: true,
         cwd: dirname(process.execPath)
       })
       child.on('error', (err) => stamp('ERR', `update spawn failed: ${err.message}`))
       child.unref()
-      setTimeout(() => process.exit(0), 500)
+      // Let the HTTP response flush, then shut down gracefully so the DB
+      // checkpoint runs before the installer replaces the exe.
+      shutdown(400)
       return true
     } catch (error) {
       stamp('ERR', `update install failed: ${error instanceof Error ? error.message : String(error)}`)

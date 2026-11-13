@@ -46,63 +46,85 @@ export function setShutdownHandler(fn: () => void): void {
   shutdownHook = fn
 }
 
-handlers.set('app:stop', () => {
-  if (!shutdownHook) return { stopping: false }
-  // Delay so this HTTP response flushes before the process exits.
-  setTimeout(() => {
+/**
+ * Run the graceful shutdown (WAL checkpoint, server stop) after the current
+ * HTTP response has had time to flush. Shared by app:stop and the update
+ * install, which used to call process.exit() and could lose WAL data.
+ */
+export function requestShutdown(delayMs = 0): void {
+  const run = (): void => {
     try {
       shutdownHook?.()
     } catch {
       process.exit(0)
     }
-  }, 150)
+  }
+  if (delayMs > 0) setTimeout(run, delayMs)
+  else run()
+}
+
+handlers.set('app:stop', () => {
+  if (!shutdownHook) return { stopping: false }
+  requestShutdown(150)
   return { stopping: true }
 })
 
+/** Port the running server listens on (0 before startServer). */
+let runningPort = 0
+
 /**
- * UI-triggered restart: launch scripts/server-restart.bat (which calls the
- * exe with --restart) detached. The new instance stops this one gracefully
- * via app:stop, then starts fresh — settings like Network / DB location
- * are re-read. Falls back to spawning the exe directly if the .bat is not
- * bundled (dev without dist\app).
+ * UI-triggered restart (Settings > General / Database).
+ *
+ * The running process starts its own successor and then shuts itself down
+ * gracefully. No helper .bat, no second `--restart` instance and no console
+ * window: the old flow spawned cmd.exe + the exe + taskkill, one visible
+ * terminal per step.
+ *
+ * The successor inherits INVENTORY_RELAUNCH, so boot.ts waits for this
+ * process to release the port, comes back on the same one and does not open
+ * a second browser tab; the tab that asked for the restart reloads itself
+ * once the new instance answers (src/renderer/lib/restart.ts).
  */
-handlers.set('app:restart', () => {
-  const cmdPath = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'cmd.exe')
-  const batCandidates = [
-    join(dirname(process.execPath), 'server-restart.bat'),
-    join(process.cwd(), 'scripts', 'server-restart.bat'),
-    join(process.cwd(), 'server-restart.bat')
-  ]
-  const bat = batCandidates.find((p) => existsSync(p)) ?? null
+handlers.set('app:restart', async () => {
+  if (!shutdownHook || runningPort <= 0) return { restarting: false, script: null }
   const logFile = join(process.env.APPDATA ?? '.', 'Inventory Pro', 'launcher.log')
   const stamp = (level: string, msg: string): void => {
     try { appendFileSyncUtil(logFile, `${new Date().toISOString()} ${level} ${msg}\n`) } catch { /* ignore */ }
   }
-  if (bat) {
-    stamp('INFO', `restart via bat=${bat}`)
-    const child = spawn(cmdPath, ['/c', bat], { detached: true, stdio: 'ignore', cwd: dirname(bat) })
-    child.on('error', (err) => stamp('ERR', `restart bat spawn failed (cmd=${cmdPath}, bat=${bat}): ${err.message}`))
-    child.unref()
-    return { restarting: true, script: bat }
-  }
-  // Fallback: spawn the exe itself with --restart (compiled only; in dev
-  // process.execPath is bun.exe, so use the boot entry instead).
+
   const isDev = process.execPath.toLowerCase().endsWith('bun.exe')
-  if (isDev) {
-    stamp('INFO', 'restart via bun dev boot.ts')
-    const child = spawn(process.execPath, ['run', '--tsconfig-override', './tsconfig.bun.json', 'server/boot.ts', '--restart'], {
+  const args = isDev ? ['run', '--tsconfig-override', './tsconfig.bun.json', 'server/boot.ts'] : []
+  let child: ReturnType<typeof spawn>
+  try {
+    child = spawn(process.execPath, args, {
+      cwd: isDev ? process.cwd() : dirname(process.execPath),
+      // Must be detached: Windows would keep a non-detached child alive, but
+      // Bun tears its own children down when the process exits. In the
+      // installed app the exe is GUI-subsystem, so no console appears; in dev
+      // bun.exe shows a single console of its own (the old flow flashed one
+      // per cmd.exe/bat/taskkill step).
       detached: true,
       stdio: 'ignore',
-      cwd: process.cwd()
+      env: {
+        ...process.env,
+        INVENTORY_RELAUNCH: '1',
+        INVENTORY_RELAUNCH_PORT: String(runningPort)
+      }
     })
-    child.on('error', (err) => stamp('ERR', `restart dev spawn failed: ${err.message}`))
-    child.unref()
-    return { restarting: true, script: null }
+  } catch (error) {
+    stamp('ERR', `restart spawn failed (exe=${process.execPath}): ${error instanceof Error ? error.message : String(error)}`)
+    return { restarting: false, script: null }
   }
-  stamp('INFO', `restart via exe=${process.execPath} --restart`)
-  const child = spawn(process.execPath, ['--restart'], { detached: true, stdio: 'ignore', cwd: dirname(process.execPath) })
-  child.on('error', (err) => stamp('ERR', `restart exe spawn failed: ${err.message}`))
+  child.on('error', (err) => stamp('ERR', `restart spawn failed: ${err.message}`))
+  if (!child.pid) {
+    stamp('ERR', 'restart spawn returned no pid')
+    return { restarting: false, script: null }
+  }
   child.unref()
+  stamp('INFO', `restart: successor pid=${child.pid} port=${runningPort}`)
+
+  // Answer the HTTP call first, then checkpoint the DB and exit.
+  requestShutdown(200)
   return { restarting: true, script: null }
 })
 
@@ -172,7 +194,7 @@ handlers.set('network:enable-firewall', async () => {
 
 // electron-updater is gone. Stubs keep the update card quiet until the
 // installer-based updater (docs/migrate-to-bun.md §6) exists.
-registerUpdaterHandlers()
+registerUpdaterHandlers(requestShutdown)
 
 // --- File handling ----------------------------------------------------------
 // The server is local, so it raises real Windows dialogs and returns absolute
@@ -491,8 +513,10 @@ export function startServer(options: ServerOptions): RunningServer {
     }
   })
 
+  const port = server.port ?? options.port
+  runningPort = port
   return {
-    port: server.port ?? options.port,
+    port,
     stop: () => server.stop()
   }
 }

@@ -21,6 +21,7 @@ type StepState = 'done' | 'current' | 'pending'
 export function RestartOverlay(): React.JSX.Element | null {
   const { t } = useTranslation()
   const active = useRestartStore((s) => s.active)
+  const reason = useRestartStore((s) => s.reason)
   const phase = useRestartStore((s) => s.phase)
   const version = useRestartStore((s) => s.version)
   const startedAt = useRestartStore((s) => s.startedAt)
@@ -38,12 +39,26 @@ export function RestartOverlay(): React.JSX.Element | null {
   if (!active) return null
 
   const currentIndex = PHASES.indexOf(phase)
-  const steps: Array<{ key: RestartPhase; label: string }> = [
-    { key: 'preparing', label: t('updates.restartSteps.preparing') },
-    { key: 'installing', label: t('updates.restartSteps.installing') },
-    { key: 'starting', label: t('updates.restartSteps.starting') },
-    { key: 'ready', label: t('updates.restartSteps.ready') }
-  ]
+  // Same four steps, different wording: an update installs files, a settings
+  // restart only stops and starts the local server.
+  const labels =
+    reason === 'server'
+      ? [
+          t('updates.serverRestartSteps.preparing'),
+          t('updates.serverRestartSteps.stopping'),
+          t('updates.serverRestartSteps.starting'),
+          t('updates.serverRestartSteps.ready')
+        ]
+      : [
+          t('updates.restartSteps.preparing'),
+          t('updates.restartSteps.installing'),
+          t('updates.restartSteps.starting'),
+          t('updates.restartSteps.ready')
+        ]
+  const steps: Array<{ key: RestartPhase; label: string }> = PHASES.map((key, index) => ({
+    key,
+    label: labels[index] ?? ''
+  }))
 
   const stepState = (index: number): StepState => {
     // The last step is "ready": everything before it is done, and the tab

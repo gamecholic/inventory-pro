@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { restartForUpdate } from './restart'
+import { restartForUpdate, restartServer } from './restart'
 import { useRestartStore } from '@/stores/restart'
 
 /**
@@ -61,12 +61,16 @@ afterEach(() => {
 
 /** Fake the browser globals the controller uses (window.api, location, fetch). */
 function stubBrowser(options: {
-  install: unknown
+  install?: unknown
+  restart?: unknown
   reload: () => void
   fetch: () => Promise<Response>
 }): void {
   globals.window = {
-    api: { updater: { install: options.install } },
+    api: {
+      updater: { install: options.install ?? (() => Promise.resolve(true)) },
+      restart: options.restart ?? (() => Promise.resolve({ restarting: true, script: null }))
+    },
     location: { reload: options.reload }
   }
   globals.fetch = options.fetch
@@ -146,5 +150,44 @@ describe('restart watch', () => {
 
     expect(reload.calls.length).toBe(1)
     expect(useRestartStore.getState().error).toBeNull()
+  })
+})
+
+describe('server restart', () => {
+  it('restarts in place and reloads the same tab', async () => {
+    const restart = recorder(() => Promise.resolve({ restarting: true, script: null }))
+    const reload = recorder(() => undefined)
+    stubBrowser({
+      restart: restart.fn,
+      reload: reload.fn,
+      fetch: fetchSequence([
+        healthResponse(OLD_HEALTH), // baseline
+        new Error('offline'), // the old server is stopping
+        new Error('offline'),
+        healthResponse({ ...OLD_HEALTH, pid: 333 }) // successor, same port
+      ])
+    })
+
+    await restartServer()
+
+    expect(restart.calls.length).toBe(1)
+    expect(reload.calls.length).toBe(1)
+    expect(useRestartStore.getState().reason).toBe('server')
+    expect(useRestartStore.getState().phase).toBe('ready')
+  })
+
+  it('reports a restart that could not be started instead of waiting forever', async () => {
+    const restart = recorder(() => Promise.resolve({ restarting: false, script: null }))
+    const reload = recorder(() => undefined)
+    stubBrowser({
+      restart: restart.fn,
+      reload: reload.fn,
+      fetch: fetchSequence([healthResponse(OLD_HEALTH)])
+    })
+
+    await restartServer()
+
+    expect(reload.calls.length).toBe(0)
+    expect(useRestartStore.getState().error).toBeTruthy()
   })
 })

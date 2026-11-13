@@ -30,6 +30,7 @@ import {
 import { useSettings, useUpdateSettings } from '@/hooks/useSettings'
 import { backupDirKey, useBackupDir } from '@/hooks/useBackupDir'
 import { dbDirKey, useDbDir } from '@/hooks/useDbDir'
+import { restartServer } from '@/lib/restart'
 import { formatDateTime } from '@shared/dates'
 
 type BackupAction = 'export-json' | 'import-json' | 'export-excel' | 'import-excel' | 'import-legacy-excel' | 'reset'
@@ -211,13 +212,7 @@ function DbLocationRow(): React.JSX.Element {
           // The pointer is only read at boot, so restart the server for the
           // user (same flow as Settings > Restart server) instead of
           // leaving a "restart required" toast for a manual restart.
-          void window.api.restart().then(
-            () => {
-              toast.success(t('settings.restartStarted'))
-              setTimeout(() => window.location.reload(), 3000)
-            },
-            () => toast.success(t('settings.db.restartRequired'))
-          )
+          void restartServer()
         },
         (error: unknown) => {
           toast.error(error instanceof Error ? error.message : t('settings.db.importFailed'))

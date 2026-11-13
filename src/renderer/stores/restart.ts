@@ -1,17 +1,25 @@
 import { create } from 'zustand'
 
 /**
+ * Why the app is restarting: installing an update replaces the exe, while a
+ * server restart re-reads settings (Network / DB folder). Both kill the local
+ * server for a moment; the overlay wording differs.
+ */
+export type RestartReason = 'update' | 'server'
+
+/**
  * Where the app is in the restart sequence.
  *
- * The update install replaces the running exe, so the server dies while the
- * browser tab stays open. The overlay keeps the user informed and a
- * background watch reloads the tab once the new server answers.
+ * The server dies while the browser tab stays open. The overlay keeps the
+ * user informed and a background watch reloads the tab once the new server
+ * answers.
  */
 export type RestartPhase = 'preparing' | 'installing' | 'starting' | 'ready'
 
 interface RestartState {
   /** True while the overlay is shown. */
   active: boolean
+  reason: RestartReason
   phase: RestartPhase
   /** Version being installed, when the restart comes from an update. */
   version: string | null
@@ -19,7 +27,7 @@ interface RestartState {
   startedAt: number
   /** Set when the restart gave up (the new server never answered). */
   error: string | null
-  begin: (phase: RestartPhase, version?: string | null) => void
+  begin: (reason: RestartReason, phase: RestartPhase, version?: string | null) => void
   setPhase: (phase: RestartPhase) => void
   fail: (message: string) => void
   end: () => void
@@ -27,14 +35,15 @@ interface RestartState {
 
 export const useRestartStore = create<RestartState>()((set) => ({
   active: false,
+  reason: 'update',
   phase: 'preparing',
   version: null,
   startedAt: 0,
   error: null,
-  begin: (phase, version = null) =>
-    set({ active: true, phase, version, startedAt: Date.now(), error: null }),
+  begin: (reason, phase, version = null) =>
+    set({ active: true, reason, phase, version, startedAt: Date.now(), error: null }),
   setPhase: (phase) => set({ phase }),
   fail: (message) => set({ error: message }),
   end: () =>
-    set({ active: false, phase: 'preparing', version: null, startedAt: 0, error: null })
+    set({ active: false, reason: 'update', phase: 'preparing', version: null, startedAt: 0, error: null })
 }))

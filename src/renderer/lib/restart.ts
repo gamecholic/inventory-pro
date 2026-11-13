@@ -2,15 +2,16 @@ import i18n from '@/i18n'
 import { useRestartStore } from '@/stores/restart'
 
 /**
- * Restart flow for the update install.
+ * Restart flows.
  *
- * Installing the update replaces the running exe: the server goes away
- * while the browser tab stays open. The page itself keeps running (only
- * the API calls fail), so the tab can show what is happening instead of
- * freezing on a dead server.
+ * An update install replaces the running exe; a settings restart (Network /
+ * database folder) just stops and starts the local server. Either way the
+ * server goes away while the browser tab stays open: the page itself keeps
+ * running (only API calls fail), so the tab can show what is happening
+ * instead of freezing on a dead server.
  *
- * The flow:
- *   1. the staged installer is launched (the server exits ~0.5 s later),
+ * Both flows:
+ *   1. ask the server to switch over (install / restart),
  *   2. a background watch polls /api/health until the server is really gone
  *      and a new instance answers,
  *   3. the tab reloads itself against the new instance.
@@ -32,6 +33,8 @@ const POLL_MS = 500
 const DOWN_STREAK_TO_CONFIRM = 2
 /** Give up after this long — a slow disk can make the installer crawl. */
 const WATCH_TIMEOUT_MS = 180_000
+/** A plain server restart is much quicker than installing an update. */
+const SERVER_RESTART_TIMEOUT_MS = 30_000
 /** How long the "ready" state stays on screen before the tab reloads. */
 const RELOAD_DELAY_MS = 700
 
@@ -73,7 +76,7 @@ export async function probeHealth(): Promise<ServerHealth | null> {
  */
 export async function restartForUpdate(version: string | null): Promise<void> {
   stopRequested = false
-  useRestartStore.getState().begin('preparing', version)
+  useRestartStore.getState().begin('update', 'preparing', version)
 
   // Remember the running instance so the watch can tell it apart from the
   // one the installer starts.
@@ -98,15 +101,49 @@ export async function restartForUpdate(version: string | null): Promise<void> {
 }
 
 /**
+ * Restart the local server for a setting that is only read at boot (Network
+ * access, database folder) and wait for it to come back. Same overlay and
+ * same in-place reload as an update — no dead tab, no second tab, no
+ * blind `setTimeout(location.reload)`.
+ */
+export async function restartServer(): Promise<void> {
+  stopRequested = false
+  useRestartStore.getState().begin('server', 'preparing')
+
+  const baseline = await probeHealth()
+
+  // The server answers before it exits, so a rejection here usually means
+  // "it went down first" — keep watching. Only `restarting: false` (could not
+  // spawn the successor) is a real failure.
+  let restartFailed = false
+  void window.api.restart().then(
+    (result) => {
+      if (result?.restarting === false) restartFailed = true
+    },
+    () => {
+      // No answer: the server exited mid-response, which is expected.
+    }
+  )
+
+  useRestartStore.getState().setPhase('installing')
+  await waitForNewInstance(baseline, () => restartFailed, {
+    timeoutMs: SERVER_RESTART_TIMEOUT_MS,
+    failure: i18n.t('updates.serverRestartFailed'),
+    timeout: i18n.t('updates.serverRestartTimeout')
+  })
+}
+
+/**
  * Poll the server until a *different* instance answers, then reload the
- * tab. A server that stays up and never changes means the install did not
- * happen; one that never comes back means the update failed.
+ * tab. A server that stays up and never changes means the switch did not
+ * happen; one that never comes back means it failed.
  */
 async function waitForNewInstance(
   baseline: ServerHealth | null,
-  isFailed: () => boolean
+  isFailed: () => boolean,
+  messages?: { timeoutMs?: number; failure?: string; timeout?: string }
 ): Promise<void> {
-  const deadline = Date.now() + WATCH_TIMEOUT_MS
+  const deadline = Date.now() + (messages?.timeoutMs ?? WATCH_TIMEOUT_MS)
   let sawDown = false
   let downStreak = 0
 
@@ -116,7 +153,7 @@ async function waitForNewInstance(
     if (stopRequested) return
 
     if (isFailed()) {
-      useRestartStore.getState().fail(i18n.t('updates.restartFailed'))
+      useRestartStore.getState().fail(messages?.failure ?? i18n.t('updates.restartFailed'))
       return
     }
 
@@ -145,5 +182,5 @@ async function waitForNewInstance(
     return
   }
 
-  useRestartStore.getState().fail(i18n.t('updates.restartTimeout'))
+  useRestartStore.getState().fail(messages?.timeout ?? i18n.t('updates.restartTimeout'))
 }

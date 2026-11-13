@@ -82,6 +82,11 @@ export function setDbDir(dir: string): DbInfo {
   if (!isAbsolute(trimmed)) throw new Error('Database folder must be an absolute path')
   if (existsSync(trimmed) && !statSync(trimmed).isDirectory()) throw new Error('Database path is not a folder')
   mkdirSync(trimmed, { recursive: true })
+  // Fail here, not on the next boot: a read-only/denied folder would
+  // otherwise leave the app dead right after the automatic restart.
+  const probe = join(trimmed, `.inventory-pro-write-${process.pid}`)
+  writeFileSync(probe, '')
+  unlinkSync(probe)
   mkdirSync(dirname(sidecar), { recursive: true })
   writeFileSync(sidecar, JSON.stringify({ dir: trimmed }), 'utf-8')
   return getDbInfo()

@@ -32,7 +32,9 @@ function readRunValue(): string | null {
   try {
     const result = spawnSync(regExe(), ['query', RUN_KEY, '/v', VALUE_NAME], {
       encoding: 'utf-8',
-      stdio: ['ignore', 'pipe', 'ignore']
+      stdio: ['ignore', 'pipe', 'ignore'],
+      // Hidden: the app has no console; without this reg.exe flashes a window.
+      windowsHide: true
     })
     if (result.status !== 0) return null
     // Output line: `    Inventory Pro    REG_SZ    "C:\...\Inventory Pro.exe"`
@@ -63,12 +65,13 @@ export function syncAutostart(enabled: boolean, exePath: string = process.execPa
     if (current === data) return
     const result = spawnSync(regExe(), ['add', RUN_KEY, '/v', VALUE_NAME, '/t', 'REG_SZ', '/d', data, '/f'], {
       encoding: 'utf-8',
-      stdio: 'ignore'
+      stdio: 'ignore',
+      windowsHide: true
     })
     if (result.status !== 0) throw new Error(`reg add failed with code ${result.status}`)
   } else {
     if (current === null) return
     // Exit code 1 when the value does not exist is fine — nothing to remove.
-    spawnSync(regExe(), ['delete', RUN_KEY, '/v', VALUE_NAME, '/f'], { stdio: 'ignore' })
+    spawnSync(regExe(), ['delete', RUN_KEY, '/v', VALUE_NAME, '/f'], { stdio: 'ignore', windowsHide: true })
   }
 }

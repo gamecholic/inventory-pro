@@ -29,6 +29,14 @@ export const tr = {
           starting: 'Yeni sürüm başlatılıyor',
           ready: 'Hazır'
         },
+        serverRestartSteps: {
+          preparing: 'Yeniden başlatma hazırlanıyor',
+          stopping: 'Sunucu durduruluyor',
+          starting: 'Sunucu başlatılıyor',
+          ready: 'Hazır'
+        },
+        serverRestartFailed: 'Sunucu yeniden başlatılamadı.',
+        serverRestartTimeout: 'Sunucu zamanında geri gelmedi.',
         restartElapsed: '{{seconds}} sn geçti',
         restartNote: 'Bu pencereyi kapatmayın.',
         restartFailed: 'Güncelleme kurulamadı.',

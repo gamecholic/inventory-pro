@@ -1,8 +1,10 @@
 @echo off
 REM Inventory Pro - restart the local server.
-REM Double-click this file (or call it from Settings).
+REM Double-click this file (or run it from a command line).
 REM It calls the same exe with --restart (see server/boot.ts):
 REM the running instance is stopped gracefully, then a fresh one starts.
+REM In-app restarts (Settings) do not use this file any more: the server
+REM starts its own successor (server/index.ts, app:restart).
 REM The new server is detached, so this window closes immediately.
 setlocal
 

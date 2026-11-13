@@ -42,6 +42,7 @@ import { formatMoney } from '@shared/money'
 import type { StoreDateFormat } from '@shared/dates'
 import { formatISO } from '@shared/dates'
 import { settingsKey, useSettings, useUpdateSettings } from '@/hooks/useSettings'
+import { restartServer } from '@/lib/restart'
 import QRCode from 'react-qr-code'
 
 const CURRENCIES = [
@@ -65,7 +66,6 @@ export function GeneralTab(): React.JSX.Element {
   const [urlCopied, setUrlCopied] = useState(false)
   const [showFirewallPrompt, setShowFirewallPrompt] = useState(false)
   const [showRestartPrompt, setShowRestartPrompt] = useState(false)
-  const [restarting, setRestarting] = useState(false)
 
   const form = useForm({
     resolver: zodResolver(generalSettings),
@@ -112,13 +112,7 @@ export function GeneralTab(): React.JSX.Element {
           // the manual Restart button below) instead of leaving a
           // "restart required" pending state to discover.
           if (prevNetwork !== undefined && prevNetwork !== values.networkAccess) {
-            void window.api.restart().then(
-              () => {
-                toast.success(t('settings.restartStarted'))
-                setTimeout(() => window.location.reload(), 3000)
-              },
-              () => toast.error(t('settings.restartFailed'))
-            )
+            void restartServer()
           }
         }
       }
@@ -136,18 +130,9 @@ export function GeneralTab(): React.JSX.Element {
 
   const confirmRestart = (): void => {
     setShowRestartPrompt(false)
-    setRestarting(true)
-    void window.api.restart().then(
-      () => {
-        toast.success(t('settings.restartStarted'))
-        // The server stops then starts again (same port); reload once it is back.
-        setTimeout(() => window.location.reload(), 3000)
-      },
-      () => {
-        setRestarting(false)
-        toast.error(t('settings.restartFailed'))
-      }
-    )
+    // Overlay + health watch: the tab reloads itself when the new server
+    // answers, instead of a blind 3 s timer that can land on a dead page.
+    void restartServer()
   }
 
   const copyNetworkUrl = (): void => {
@@ -457,17 +442,9 @@ export function GeneralTab(): React.JSX.Element {
             <Button
               type="button"
               variant="outline"
-              disabled={restarting}
               onClick={() => setShowRestartPrompt(true)}
             >
-              {restarting ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  {t('settings.restartStarted')}
-                </>
-              ) : (
-                t('settings.restartServer')
-              )}
+              {t('settings.restartServer')}
             </Button>
           </CardContent>
         </Card>

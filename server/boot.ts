@@ -256,7 +256,7 @@ async function ensureStopped(instance: HealthResult): Promise<void> {
   const taskkill = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'taskkill.exe')
   log(`graceful stop timed out, force-killing pid ${instance.pid}`)
   try {
-    spawnSync(taskkill, ['/PID', String(instance.pid), '/F'], { stdio: 'ignore' })
+    spawnSync(taskkill, ['/PID', String(instance.pid), '/F'], { stdio: 'ignore', windowsHide: true })
   } catch (error) {
     log(`taskkill failed: ${error instanceof Error ? error.message : String(error)}`)
   }
@@ -280,12 +280,14 @@ function findBrowser(): string | null {
   return null
 }
 
-function openWindow(port: number): void {
-  // After an update the browser tab that requested it is still open and
-  // reloads itself when the new server answers (see the relaunch contract
-  // in server/updater.ts). Opening a second tab would leave the old one
-  // frozen on a dead server.
-  if (RELAUNCH) {
+function openWindow(port: number, force = false): void {
+  // After an update or a settings restart the browser tab that requested it
+  // is still open and reloads itself when the new server answers (see the
+  // relaunch contract in server/updater.ts and server/index.ts). Opening a
+  // second tab would leave the old one frozen on a dead server. `force` is
+  // only used when the successor could not get the old port back: then no
+  // tab can reconnect and one must be opened.
+  if (RELAUNCH && !force) {
     log('window: relaunch — the existing tab reloads itself')
     return
   }
@@ -297,7 +299,10 @@ function openWindow(port: number): void {
     return
   }
   // No Chromium-family browser: hand the URL to the default one.
-  spawn('cmd.exe', ['/c', 'start', '', url], { detached: true, stdio: 'ignore' }).unref()
+  // `start` opens the browser as its own process, so cmd can exit at once.
+  // Not detached: on Windows DETACHED_PROCESS makes cmd.exe open a second,
+  // visible console window (and windowsHide is ignored with it).
+  spawn('cmd.exe', ['/c', 'start', '', url], { stdio: 'ignore', windowsHide: true }).unref()
   log('window: default browser (Chrome/Edge not found)')
 }
 
@@ -410,11 +415,14 @@ async function main(): Promise<void> {
   })
   startScheduledBackups()
 
+  // The old tab can only reload itself if the successor holds its port; a
+  // relaunch that fell back to another port has to open a fresh tab.
+  const reusesTab = RELAUNCH && RELAUNCH_PORT > 0 && port === RELAUNCH_PORT
   if (isHmr() && !isCompiled()) {
     startViteDev(server.port)
-    openWindow(VITE_PORT)
+    openWindow(VITE_PORT, !reusesTab)
   } else {
-    openWindow(server.port)
+    openWindow(server.port, !reusesTab)
   }
 
   const shutdown = (): void => {

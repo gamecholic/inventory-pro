@@ -29,6 +29,14 @@ export const en = {
           starting: 'Starting the new version',
           ready: 'Ready'
         },
+        serverRestartSteps: {
+          preparing: 'Preparing to restart',
+          stopping: 'Stopping the server',
+          starting: 'Starting the server',
+          ready: 'Ready'
+        },
+        serverRestartFailed: 'The server could not be restarted.',
+        serverRestartTimeout: 'The server did not come back in time.',
         restartElapsed: '{{seconds}}s elapsed',
         restartNote: 'Do not close this window.',
         restartFailed: 'The update could not be installed.',

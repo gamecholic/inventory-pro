@@ -282,9 +282,11 @@ Inventory-Pro-Setup-1.3.4.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /FORCECLO
 ```
 
 `/FORCECLOSEAPPLICATIONS` is required � without it Inno refuses to close the
-running server and exits with code 5. Silent installs do not relaunch the app
-(`skipifsilent`), so whatever triggers the update must start the exe again
-afterwards.
+running server and exits with code 5. A silent install skips the finished page,
+so the app is restarted from a separate `[Run]` entry gated on
+`GetEnv('INVENTORY_RELAUNCH') = '1'`; `server/updater.ts` sets that variable (and
+the port) before starting Setup.exe, and verifies the installer's SHA-256 from
+the release's `checksums.txt` first.
 
 **Version.** The compiled exe has no `package.json`, so `scripts/build-app.ts`
 bakes the version in with `--define INVENTORY_VERSION="x.y.z"`;
@@ -311,8 +313,9 @@ opens the window � second double-click reuses the running server (no second
 port, no second process) � closing the window and reopening works � silent
 upgrade over the running app exits 0 and the new version serves.
 
-**Not done:** the updater itself (`updater:*` still stubs), and code signing �
-without an Authenticode certificate SmartScreen warns on the first install.
+**Not done:** code signing � without an Authenticode certificate SmartScreen
+warns on the first install. (The `updater:*` handlers are implemented in
+`server/updater.ts`, described in `docs/architecture.md` §1.)
 
 ---
 

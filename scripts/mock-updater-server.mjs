@@ -3,7 +3,8 @@
  * Local updater test server — mocks GitHub Releases for the auto-updater.
  *
  * Serves the same shape as `GET /repos/<owner>/<repo>/releases/latest`
- * plus the installer file itself, from your local `dist/installer/`:
+ * plus the installer file and `checksums.txt` (sha256sum format) from your
+ * local `dist/installer/`:
  *
  *   node scripts/mock-updater-server.mjs [port] [installerPath] [version]
  *
@@ -22,6 +23,7 @@
  */
 import { createServer } from 'node:http'
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import { basename, join } from 'node:path'
 
 const port = Number(process.argv[2] ?? 8899)
@@ -48,19 +50,42 @@ if (!installerPath || !existsSync(installerPath)) {
   process.exit(1)
 }
 
+const installerName = basename(installerPath)
+// Same bytes for the download and the checksum, cached per file mtime so a
+// rebuild between runs is picked up without restarting the mock.
+let installerCache = { mtimeMs: -1, bytes: null, sha256: '' }
+function installer() {
+  const { mtimeMs } = statSync(installerPath)
+  if (!installerCache.bytes || installerCache.mtimeMs !== mtimeMs) {
+    const bytes = readFileSync(installerPath)
+    installerCache = { mtimeMs, bytes, sha256: createHash('sha256').update(bytes).digest('hex') }
+  }
+  return installerCache
+}
+
 const server = createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://127.0.0.1')
   if (url.pathname === '/releases/latest') {
     res.writeHead(200, { 'content-type': 'application/json' })
     res.end(JSON.stringify({
       tag_name: `v${version}`,
-      assets: [{ name: basename(installerPath), browser_download_url: `http://127.0.0.1:${port}/installer.exe` }]
+      assets: [
+        { name: installerName, browser_download_url: `http://127.0.0.1:${port}/installer.exe` },
+        { name: 'checksums.txt', browser_download_url: `http://127.0.0.1:${port}/checksums.txt` }
+      ]
     }))
     console.log(`[mock] GET /releases/latest -> v${version}`)
     return
   }
+  if (url.pathname === '/checksums.txt') {
+    // sha256sum format, as .github/workflows/release.yml publishes it.
+    res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' })
+    res.end(`${installer().sha256}  ${installerName}\n`)
+    console.log(`[mock] GET /checksums.txt`)
+    return
+  }
   if (url.pathname === '/installer.exe') {
-    const data = readFileSync(installerPath)
+    const data = installer().bytes
     res.writeHead(200, { 'content-type': 'application/octet-stream', 'content-length': data.length })
     if (throttleMs > 0) {
       // Slow the stream down so the UI download progress is observable.

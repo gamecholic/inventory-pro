@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { updaterCheck, updaterProgress, updaterStatus } from './updater'
+import { parseChecksum, updaterCheck, updaterProgress, updaterStatus } from './updater'
 
 describe('updater contract', () => {
   it('accepts the lifecycle states', () => {
@@ -17,5 +17,27 @@ describe('updater contract', () => {
     })
     expect(updaterProgress.parse({ percent: 42.5 })).toMatchObject({ percent: 42.5 })
     expect(() => updaterProgress.parse({ percent: 101 })).toThrow()
+  })
+})
+
+describe('release checksums', () => {
+  const installer = 'Inventory-Pro-Setup-1.4.0.exe'
+  const hash = 'a'.repeat(64)
+
+  it('finds the installer in the published listing', () => {
+    expect(parseChecksum(`${hash}  ${installer}`, installer)).toBe(hash)
+  })
+
+  it('tolerates the binary marker, paths, CRLF and uppercase hashes', () => {
+    const listing = [
+      `${'b'.repeat(64)}  other-file.exe`,
+      `${'C'.repeat(64)} *dist\\installer\\${installer}\r`
+    ].join('\n')
+    expect(parseChecksum(listing, installer)).toBe('c'.repeat(64))
+  })
+
+  it('returns null when the installer is not listed', () => {
+    expect(parseChecksum(`${hash}  something-else.exe`, installer)).toBeNull()
+    expect(parseChecksum('not a checksum file', installer)).toBeNull()
   })
 })

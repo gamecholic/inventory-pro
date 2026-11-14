@@ -49,6 +49,15 @@ jobs:
       - name: Install Inno Setup
         run: choco install innosetup -y
       - run: npm run app:installer
+      - name: Checksums for the updater
+        shell: pwsh
+        run: |
+          $lines = Get-ChildItem dist/installer/*.exe | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower()
+            "$hash  $($_.Name)"
+          }
+          $lines | Set-Content dist/installer/checksums.txt -Encoding utf8NoBOM
+          Get-Content dist/installer/checksums.txt
       - name: Push version commit and tag
         run: |
           git config user.name 'github-actions[bot]'
@@ -60,5 +69,7 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.bump.outputs.version }}
-          files: dist/installer/Inventory-Pro-Setup-*.exe
+          files: |
+            dist/installer/Inventory-Pro-Setup-*.exe
+            dist/installer/checksums.txt
           generate_release_notes: true

@@ -34,11 +34,11 @@ const LAST_PORT = FIRST_PORT + 10
 const VITE_PORT = Number(process.env.VITE_PORT ?? 5173)
 let HOST = process.env.HOST ?? '127.0.0.1'
 
-// Relaunch after an update (set by the installer's .bat wrapper): the
-// browser tab that requested the update is still open and reloads itself
-// once this instance answers. So we come back on the very same port and
-// must NOT open a second tab — that would leave the old one frozen on a
-// dead server.
+// Relaunch after an update (set by server/updater.ts, honoured by the
+// installer's [Run] entry): the browser tab that requested the update is still
+// open and reloads itself once this instance answers. So we come back on the
+// very same port and must NOT open a second tab — that would leave the old one
+// frozen on a dead server.
 const RELAUNCH = process.env.INVENTORY_RELAUNCH === '1'
 const RELAUNCH_PORT = Number(process.env.INVENTORY_RELAUNCH_PORT ?? 0)
 
@@ -333,17 +333,29 @@ if (isCompiled() && typeof INVENTORY_VERSION === 'string') {
 // --- Main -------------------------------------------------------------------
 
 async function main(): Promise<void> {
-  // Best-effort: remove installers left in the temp folder by previous updates.
+  // Best-effort: remove installers left in the temp folder by previous updates,
+  // plus the .bat wrapper the pre-1.3.13 updater wrote (nothing executes it now).
   try {
     const dir = join(tmpdir(), 'inventory-pro-update')
     if (existsSync(dir)) {
       for (const f of readdirSync(dir)) {
-        if (f.toLowerCase().endsWith('.exe')) {
+        const lower = f.toLowerCase()
+        if (lower.endsWith('.exe') || lower === 'launch-update.bat') {
           try { unlinkSync(join(dir, f)) } catch { /* file may be in use */ }
         }
       }
     }
   } catch { /* ignore */ }
+
+  // A previous update kept the old exe beside this one for rollback
+  // (`<exe>.old`, written by packaging/inventory-pro.iss). The new build is
+  // running, so the copy is no longer needed. Best effort: antivirus may still
+  // hold the file, and the next launch tries again.
+  if (isCompiled()) {
+    try {
+      unlinkSync(`${process.execPath}.old`)
+    } catch { /* still locked */ }
+  }
 
   // Outside-the-app modes: --stop exits after stopping a running instance,
   // --restart stops it and then falls through to a fresh start below.

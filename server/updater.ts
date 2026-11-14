@@ -1,10 +1,19 @@
-import { dirname, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { existsSync, mkdirSync, createWriteStream, writeFileSync, appendFileSync } from 'node:fs'
-import { spawn, spawnSync } from 'node:child_process'
+import { appendFileSync, createWriteStream, mkdirSync, unlinkSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { spawn } from 'node:child_process'
 import { app, handlers } from './electron'
+import { parseChecksum } from '../src/shared/updater'
 
 const UPDATE_REPO = 'gamecholic/inventory-pro'
+/**
+ * Every release ships this asset (sha256sum format: `<hash>  <file>`) next to
+ * the installer. The updater refuses a release without an entry for the
+ * installer: an update runs code with the user's permissions, so bytes from
+ * GitHub are verified before they are executed (docs/architecture.md §1).
+ */
+const CHECKSUMS_ASSET = 'checksums.txt'
 
 // Override for local testing: point at a mock server (see
 // scripts/mock-updater-server.mjs) instead of GitHub, e.g.
@@ -15,6 +24,8 @@ function updateApiUrl(): string {
 
 let updateVersion: string | null = null
 let updateAssetUrl: string | null = null
+let updateAssetName: string | null = null
+let checksumsUrl: string | null = null
 let downloadPath: string | null = null
 let downloadPercent = 0
 let downloaded = false
@@ -40,36 +51,12 @@ function isNewer(candidate: string, current: string): boolean {
   return false
 }
 
-/**
- * Where the silent installer puts the new exe. Running from `dist\app`
- * is NOT the install location, so `dirname(execPath)` can be the old
- * copy — launching that makes the version never change (the bug seen
- * when testing from dist). Prefer Inno's recorded InstallLocation,
- * then the default per-user install folder.
- */
-function installedExePath(): string {
-  const regPath = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'reg.exe')
-  try {
-    const result = spawnSync(regPath, ['query', 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{7E2C4B10-9A6D-4F3E-8B21-5C7D9E0A1F42}_is1', '/v', 'InstallLocation'], {
-      encoding: 'utf-8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-      // No console window: the app is a GUI-subsystem process, but reg.exe
-      // would otherwise be started in a fresh visible console.
-      windowsHide: true
-    })
-    if (result.status === 0) {
-      const line = String(result.stdout ?? '').split(/\r?\n/).find((l) => l.includes('InstallLocation'))
-      const parts = line?.trim().split(/\s+/) ?? []
-      const idx = parts.indexOf('REG_SZ')
-      if (idx !== -1 && parts[idx + 1]) {
-        const dir = parts.slice(idx + 1).join(' ').replace(/^"|"$/g, '')
-        if (dir) return join(dir, 'Inventory Pro.exe')
-      }
-    }
-  } catch { /* fall through */ }
-  const local = process.env.LOCALAPPDATA
-  if (local) return join(local, 'Programs', 'Inventory Pro', 'Inventory Pro.exe')
-  return join(dirname(process.execPath), 'Inventory Pro.exe')
+/** Download the release's checksums asset and return the installer's digest. */
+async function fetchExpectedChecksum(): Promise<string | null> {
+  if (!checksumsUrl || !updateAssetName) return null
+  const res = await fetch(checksumsUrl, { headers: { 'User-Agent': 'inventory-pro' } })
+  if (!res.ok) return null
+  return parseChecksum(await res.text(), updateAssetName)
 }
 
 export function registerUpdaterHandlers(shutdown: (delayMs?: number) => void): void {
@@ -79,7 +66,10 @@ export function registerUpdaterHandlers(shutdown: (delayMs?: number) => void): v
         headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'inventory-pro' }
       })
       if (!res.ok) return { status: 'error', message: `GitHub returned ${res.status}` }
-      const data = (await res.json()) as { tag_name?: string; assets?: Array<{ name: string; browser_download_url: string }> }
+      const data = (await res.json()) as {
+        tag_name?: string
+        assets?: Array<{ name: string; browser_download_url: string }>
+      }
       const version = (data.tag_name ?? '').replace(/^v/, '')
       if (!version || !isNewer(version, app.getVersion())) {
         updateVersion = null
@@ -87,12 +77,18 @@ export function registerUpdaterHandlers(shutdown: (delayMs?: number) => void): v
       }
       const asset = data.assets?.find((a) => /setup/i.test(a.name) && a.name.endsWith('.exe'))
       if (!asset) return { status: 'error', message: 'No installer asset found in the latest release' }
+      const checksums = data.assets?.find((a) => a.name.toLowerCase() === CHECKSUMS_ASSET)
+      if (!checksums) {
+        return { status: 'error', message: `The latest release has no ${CHECKSUMS_ASSET}; refusing to update` }
+      }
       // Keep an already staged installer for the same version: a second
       // check must not throw away the download (the About tab and the
       // update card both re-check after downloading).
       const alreadyDownloaded = updateVersion === version && downloaded
       updateVersion = version
       updateAssetUrl = asset.browser_download_url
+      updateAssetName = asset.name
+      checksumsUrl = checksums.browser_download_url
       if (!alreadyDownloaded) {
         downloaded = false
         downloadPath = null
@@ -109,29 +105,56 @@ export function registerUpdaterHandlers(shutdown: (delayMs?: number) => void): v
   handlers.set('updater:download', async () => {
     if (!updateVersion || !updateAssetUrl) return { status: 'up-to-date' }
     if (downloaded) return { status: 'downloaded', version: updateVersion }
+    const dir = join(tmpdir(), 'inventory-pro-update')
+    const filePath = join(dir, `Inventory-Pro-Setup-${updateVersion}.exe`)
     try {
+      // Fail closed: no digest, no download. The checksum asset is written by
+      // .github/workflows/release.yml in the same run that builds the installer.
+      const expected = await fetchExpectedChecksum()
+      if (!expected) {
+        const name = updateAssetName ?? 'the installer'
+        return { status: 'error', message: `No ${CHECKSUMS_ASSET} entry for ${name}; refusing to download it` }
+      }
+
       const res = await fetch(updateAssetUrl, { headers: { 'User-Agent': 'inventory-pro' } })
       if (!res.ok || !res.body) return { status: 'error', message: `Download failed: ${res.status}` }
-      const dir = join(tmpdir(), 'inventory-pro-update')
       mkdirSync(dir, { recursive: true })
-      const filePath = join(dir, `Inventory-Pro-Setup-${updateVersion}.exe`)
       const total = Number(res.headers.get('content-length') ?? 0)
       const reader = res.body.getReader()
       const writer = createWriteStream(filePath)
+      const hash = createHash('sha256')
       let received = 0
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
+        hash.update(value)
         writer.write(value)
         received += value.byteLength
         if (total > 0) downloadPercent = Math.round((received / total) * 100)
       }
       await new Promise<void>((resolve, reject) => writer.end((err?: Error | null) => (err ? reject(err) : resolve())))
+
+      const actual = hash.digest('hex')
+      if (actual !== expected) {
+        try {
+          unlinkSync(filePath)
+        } catch {
+          // best effort: a locked temp file is cleaned on the next launch
+        }
+        downloadPercent = 0
+        return { status: 'error', message: `Checksum mismatch for ${basename(filePath)}; the download was discarded` }
+      }
+
       downloadPath = filePath
       downloaded = true
       downloadPercent = 100
       return { status: 'downloaded', version: updateVersion }
     } catch (error) {
+      try {
+        unlinkSync(filePath)
+      } catch {
+        // nothing written yet, or locked
+      }
       return { status: 'error', message: error instanceof Error ? error.message : String(error) }
     }
   })
@@ -142,52 +165,45 @@ export function registerUpdaterHandlers(shutdown: (delayMs?: number) => void): v
     if (!downloaded || !downloadPath) return false
     const logFile = join(process.env.APPDATA ?? '.', 'Inventory Pro', 'launcher.log')
     const stamp = (level: string, msg: string): void => {
-      try { appendFileSync(logFile, `${new Date().toISOString()} ${level} ${msg}\n`) } catch { /* ignore */ }
+      try {
+        appendFileSync(logFile, `${new Date().toISOString()} ${level} ${msg}\n`)
+      } catch {
+        /* ignore */
+      }
     }
     try {
-      // Silent install replaces the exe, then the freshly installed copy is
-      // launched by a detached .bat wrapper (which outlives us). The installer
-      // does NOT auto-launch (/VERYSILENT skips [Run] postinstall), so
-      // without the wrapper the app would stop and never come back. Use a
-      // .bat file (not an inline `cmd /c "... && start ..."` string): Node's
-      // quoting of cmd /c made && inside the quoted string a literal, so the
-      // installer never ran at all in 1.3.7.
-      const dir = join(tmpdir(), 'inventory-pro-update')
-      mkdirSync(dir, { recursive: true })
-      const batPath = join(dir, 'launch-update.bat')
-      const newExe = installedExePath()
-      const q = (s: string): string => `"${s.replace(/"/g, '""')}"`
-      const bat = `@echo off\r\n` +
-        // Time for the graceful shutdown (DB WAL checkpoint) to finish before
-        // the installer is allowed to force-close the exe.
-        `ping -n 5 127.0.0.1 >nul\r\n` +
-        `${q(downloadPath)} /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /FORCECLOSEAPPLICATIONS\r\n` +
-        `set "INVENTORY_VERSION="\r\n` +
-        // Relaunch contract: the browser tab that asked for the update stays
-        // open and reloads itself when the new server answers, so the new
-        // instance must not open a second tab (the old one would be left
-        // frozen on a dead server). INVENTORY_RELAUNCH_PORT pins the port
-        // the tab is already using.
-        `set "INVENTORY_RELAUNCH=1"\r\n` +
-        `set "INVENTORY_RELAUNCH_PORT=${serverPort}"\r\n` +
-        `start "" ${q(newExe)}\r\n`
-      writeFileSync(batPath, bat, 'utf-8')
-      stamp('INFO', `update install via bat=${batPath} installer=${downloadPath}`)
-      const cmdPath = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'cmd.exe')
-      const child = spawn(cmdPath, ['/c', batPath], {
-        // Do NOT pass detached here: on Windows `detached: true` maps to
-        // DETACHED_PROCESS, which makes cmd.exe allocate a fresh visible
-        // console window and silently ignores windowsHide. A hidden console
-        // still outlives this process (Windows does not kill children when
-        // the parent exits).
-        stdio: 'ignore',
-        windowsHide: true,
-        cwd: dirname(process.execPath)
-      })
+      // The installer relaunches the app itself from its [Run] entry, which is
+      // gated on INVENTORY_RELAUNCH (packaging/inventory-pro.iss). That removes
+      // the old .bat wrapper: no cmd.exe, no `ping` delay, no quoting layer.
+      //
+      // detached: Setup.exe is a GUI-subsystem program, so DETACHED_PROCESS
+      // shows no console — and it guarantees the installer outlives this
+      // process while it replaces the exe.
+      //
+      // cwd is the temp folder, never the install folder: on Windows a process
+      // whose CWD is inside a folder keeps that folder from being renamed.
+      const child = spawn(
+        downloadPath,
+        ['/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/FORCECLOSEAPPLICATIONS'],
+        {
+          detached: true,
+          stdio: 'ignore',
+          windowsHide: true,
+          cwd: dirname(downloadPath),
+          env: {
+            ...process.env,
+            INVENTORY_RELAUNCH: '1',
+            INVENTORY_RELAUNCH_PORT: String(serverPort),
+            // The new exe bakes its own version; never leak the old one into it.
+            INVENTORY_VERSION: ''
+          }
+        }
+      )
       child.on('error', (err) => stamp('ERR', `update spawn failed: ${err.message}`))
       child.unref()
+      stamp('INFO', `update install: installer=${downloadPath} port=${serverPort}`)
       // Let the HTTP response flush, then shut down gracefully so the DB
-      // checkpoint runs before the installer replaces the exe.
+      // checkpoint runs before the installer closes this process.
       shutdown(400)
       return true
     } catch (error) {

@@ -68,7 +68,12 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopico
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "InventoryPro"; ValueData: """{app}\{#AppExe}"""; Flags: uninsdeletevalue; Tasks: startup
 
 [Run]
+; Interactive install: launch from the finished page.
 Filename: "{app}\{#AppExe}"; Description: "Launch {#AppName}"; Flags: nowait postinstall skipifsilent
+; Silent update (server/updater.ts sets INVENTORY_RELAUNCH): a silent install
+; skips the finished page, so the app must start from here instead — this is
+; what replaced the old launch-update.bat wrapper.
+Filename: "{app}\{#AppExe}"; Flags: nowait; Check: IsUpdateRelaunch
 
 [UninstallRun]
 ; The launcher is a server: stop it before files are removed.
@@ -79,3 +84,41 @@ Filename: "{cmd}"; Parameters: "/c taskkill /IM ""{#AppExe}"" /F"; Flags: runhid
 ; left alone: uninstalling must never delete business data.
 Type: filesandordirs; Name: "{app}\web"
 Type: filesandordirs; Name: "{app}\drizzle"
+; Update rollback copy (see BackupPreviousExe below), not installed by Inno.
+Type: files; Name: "{app}\{#AppExe}.old"
+
+[Code]
+function IsUpdateRelaunch: Boolean;
+begin
+  Result := GetEnv('INVENTORY_RELAUNCH') = '1';
+end;
+
+{ Keep the previous exe beside the new one so a bad build can be rolled back
+  by hand (rename the .old back). server/boot.ts deletes it once the new
+  version starts. Renaming a running exe is allowed on Windows; overwriting it
+  is not, so this runs after the installer has closed the app (with
+  /FORCECLOSEAPPLICATIONS) and retries for antivirus scanners that hold the
+  file for a moment. Best effort: a failure must not abort the install. }
+procedure BackupPreviousExe;
+var
+  InstalledExe, BackupExe: String;
+  Attempt: Integer;
+begin
+  InstalledExe := ExpandConstant('{app}\{#AppExe}');
+  if not FileExists(InstalledExe) then
+    Exit;
+  BackupExe := InstalledExe + '.old';
+  for Attempt := 1 to 5 do
+  begin
+    DeleteFile(BackupExe);
+    if RenameFile(InstalledExe, BackupExe) then
+      Exit;
+    Sleep(400);
+  end;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssInstall then
+    BackupPreviousExe;
+end;

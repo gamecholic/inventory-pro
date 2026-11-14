@@ -11,6 +11,42 @@ export const en = {
         settings: 'Settings'
       },
       app: { name: 'Inventory Pro', comingSoon: 'Coming soon' },
+      backup: {
+        quick: 'Back up now',
+        working: 'Backing up…',
+        saved: 'Backup saved: {{file}}',
+        failed: 'Backup failed',
+        locked: 'The backup file is open in another program. Close it and try again.',
+        detailsTitle: 'Backup',
+        folder: 'Folder',
+        file: 'File',
+        size: 'Size',
+        written: 'Written',
+        provider: 'Location',
+        openFolder: 'Open folder',
+        noFile: 'No backup file yet',
+        explorerNote: 'Sync state is the badge Windows Explorer shows on the newest backup file. This app reads that badge; it does not contact the cloud provider.',
+        state: {
+          synced: 'Synced to {{provider}}',
+          pending: 'Sending to {{provider}}…',
+          unknown: 'Sync state unavailable',
+          local: 'Saved on this PC',
+          noFile: 'No backup yet'
+        },
+        providerName: {
+          local: 'This PC',
+          'google-drive': 'Google Drive',
+          onedrive: 'OneDrive'
+        },
+        why: {
+          noFile: 'The backup folder has no backup file yet.',
+          noCloud: 'This folder is not inside a Google Drive or OneDrive folder, so there is nothing to sync. Change the folder in Settings > Database.',
+          noReference: 'Waiting for an older backup to finish uploading, so Explorer has a synced badge to compare with.',
+          noOverlay: 'Windows Explorer shows no sync badge. The cloud app may be closed, or it may not publish a badge for this folder.',
+          pending: 'The file is written. Explorer has not yet shown the synced badge for it.',
+          synced: 'Windows Explorer shows the same badge it shows on backups that already reached the cloud.'
+        }
+      },
       updates: {
         title: 'Updates Available',
         message: 'Version {{version}} is ready to download.',

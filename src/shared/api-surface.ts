@@ -47,6 +47,7 @@ import type {
 } from './expenses'
 import type { SettingsSection, SettingsValues } from './settings'
 import type { UpdaterCheck, UpdaterProgress } from './updater'
+import type { BackupStatus, QuickBackupResult } from './backup'
 
 export interface ImportResult {
   filePath: string
@@ -98,6 +99,8 @@ export function createApi(invoke: Invoke) {
       importExcel: (): Promise<ImportResult | null> => invoke<ImportResult | null>('backup:import-excel'),
       importLegacyExcel: (): Promise<ImportResult | null> =>
         invoke<ImportResult | null>('backup:import-legacy-excel'),
+      quick: (): Promise<QuickBackupResult> => invoke<QuickBackupResult>('backup:quick'),
+      status: (): Promise<BackupStatus> => invoke<BackupStatus>('backup:status'),
       dir: (): Promise<BackupDirInfo> => invoke<BackupDirInfo>('backup:dir'),
       selectDir: (): Promise<string | null> => invoke<string | null>('backup:select-dir'),
       openDir: (): Promise<boolean> => invoke<boolean>('backup:open-dir')

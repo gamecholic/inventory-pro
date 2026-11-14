@@ -11,6 +11,42 @@ export const tr = {
         settings: 'Ayarlar'
       },
       app: { name: 'Inventory Pro', comingSoon: 'Çok yakında' },
+      backup: {
+        quick: 'Şimdi yedekle',
+        working: 'Yedekleniyor…',
+        saved: 'Yedek kaydedildi: {{file}}',
+        failed: 'Yedekleme başarısız',
+        locked: 'Yedek dosyası başka bir programda açık. Kapatıp yeniden deneyin.',
+        detailsTitle: 'Yedek',
+        folder: 'Klasör',
+        file: 'Dosya',
+        size: 'Boyut',
+        written: 'Yazıldı',
+        provider: 'Konum',
+        openFolder: 'Klasörü aç',
+        noFile: 'Henüz yedek dosyası yok',
+        explorerNote: 'Eşitleme durumu, Windows Gezgini’nin en yeni yedek dosyasında gösterdiği rozettir. Uygulama bu rozeti okur; bulut sağlayıcısına bağlanmaz.',
+        state: {
+          synced: '{{provider}} ile eşitlendi',
+          pending: '{{provider}} ile eşitleniyor…',
+          unknown: 'Eşitleme durumu bilinmiyor',
+          local: 'Bu bilgisayarda kayıtlı',
+          noFile: 'Henüz yedek yok'
+        },
+        providerName: {
+          local: 'Bu bilgisayar',
+          'google-drive': 'Google Drive',
+          onedrive: 'OneDrive'
+        },
+        why: {
+          noFile: 'Yedek klasöründe henüz yedek dosyası yok.',
+          noCloud: 'Bu klasör Google Drive veya OneDrive içinde değil, eşitlenecek bir şey yok. Klasörü Ayarlar > Veritabanı bölümünden değiştirin.',
+          noReference: 'Gezginin eşitleme rozetini karşılaştırabilmesi için eski bir yedeğin yüklenmesi bekleniyor.',
+          noOverlay: 'Windows Gezgini eşitleme rozeti göstermiyor. Bulut uygulaması kapalı olabilir veya bu klasör için rozet yayınlamıyor olabilir.',
+          pending: 'Dosya yazıldı. Gezgin henüz eşitlendi rozetini göstermiyor.',
+          synced: 'Windows Gezgini, buluta ulaşmış yedeklerde gösterdiği rozetin aynısını gösteriyor.'
+        }
+      },
       updates: {
         title: 'Güncelleme Mevcut',
         message: '{{version}} sürümü indirilebilir.',

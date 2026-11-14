@@ -9,6 +9,7 @@ Exception: POS payment buttons keep the master app's fixed hues (cash emerald-50
 
 ## 2. Theme (addition to spec — features.md has no theme requirement)
 - Tailwind `darkMode: "class"` + shadcn CSS vars (`--background`, `--chart-1`…`--chart-5`).
+- `--success` is the only added semantic token, used by the sidebar backup badge; both themes define it.
 - `ThemeProvider` (next-themes works with Vite/Electron) with `attribute="class"`, persisted choice, toggle in header + Settings > General.
 - Charts reference `var(--chart-N)` / `var(--color-KEY)` only, never hex.
 

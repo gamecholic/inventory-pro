@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -11,6 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem
 } from '@/components/ui/sidebar'
+import { SidebarBackup } from '@/components/sidebar-backup'
 import type { AppRoute } from '@/routes'
 
 export function AppSidebar({ routes }: { routes: readonly AppRoute[] }): React.JSX.Element {
@@ -47,6 +49,9 @@ export function AppSidebar({ routes }: { routes: readonly AppRoute[] }): React.J
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter>
+        <SidebarBackup />
+      </SidebarFooter>
     </Sidebar>
   )
 }

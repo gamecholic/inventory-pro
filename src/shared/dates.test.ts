@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dayBounds, formatDateTime, formatISO, fromISO, presetRange, toISO, type StoreDateFormat } from './dates'
+import { dayBounds, formatDateTime, formatISO, formatTime, fromISO, presetRange, toISO, type StoreDateFormat } from './dates'
 
 describe('dates', () => {
   it('round-trips through ISO without loss', () => {
@@ -22,6 +22,12 @@ describe('dates', () => {
   it('appends local 24h time for date-time display', () => {
     const out = formatDateTime('2026-09-05T10:30:00.000Z', 'YYYY-MM-DD')
     expect(out).toMatch(/^2026-09-05 \d{2}:\d{2}$/)
+  })
+
+  it('formats ISO into local 24h time', () => {
+    const d = new Date('2026-11-14T11:05:00.000Z')
+    const expected = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+    expect(formatTime('2026-11-14T11:05:00.000Z')).toBe(expected)
   })
 
   it('converts draft dates to ISO day bounds', () => {

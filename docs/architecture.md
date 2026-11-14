@@ -40,6 +40,7 @@ Single-user offline-first, no auth/cloud. No hold/park sale (§3.12), no bulk pr
 - Expense category manager dialog (§7.1 names only Add buttons; edit/delete needs a list).
 - Sales/expenses default filter window is Last 1 Month, not last-30-days/current-month (§6.2, §7.4).
 - Tax rows omitted everywhere: no tax source exists, so `> 0` never fires (§6.3, §6.4).
+- Sidebar quick backup and sync badge (features §1.9): writes one `inventory-quick-YYYY-MM-DD.xlsx` per local day into the backup folder with no dialog, and reports the newest backup's cloud state from the Windows shell overlay index (`SHGetFileInfoW` + `SHGFI_OVERLAYINDEX`, through PowerShell from the Bun server) compared with a file that has not changed for 10 minutes. No cloud API or account is contacted, and an absent badge is reported as unavailable rather than guessed. File badges are painted by provider shell extensions, not a queryable cloud API, so the state is only as current as Explorer's.
 
 ## 6. Legacy import mapping (old-app Excel → current DB)
 - Source sheets use lowercase names (`categories`, `products`, `sales`, `sale_items`, `expense_categories`, `expenses`, `stock_adjustments`, `product_price_history`, `settings`); required: categories, products, sales, sale_items, settings.

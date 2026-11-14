@@ -100,6 +100,26 @@ Global behaviors apply across pages and are described first.
 - When the option is disabled (the default), no automatic backups are written
   and the app closes directly with no prompt.
 
+### 1.9 Quick Backup (sidebar)
+
+- The bottom of the left sidebar has a `Back up now` button. One click writes
+  an Excel snapshot of all data into the backup folder with no dialog, named
+  `inventory-quick-YYYY-MM-DD.xlsx` (local date). Clicking again the same day
+  rewrites that day's file. Success shows a toast naming the file; failure
+  shows the reason.
+- A status line under the button shows the newest backup file's cloud state
+  the way Windows Explorer shows it: `Synced to Google Drive` with the write
+  time, `Sending to Google Drive…` while Explorer does not yet show the synced
+  badge, `Saved on this PC` when the folder is not inside Google Drive or
+  OneDrive, and `Sync state unavailable` when Explorer reports no badge for
+  the folder.
+- Clicking the status line opens a dialog with the file name, size, write
+  time, backup folder, and the reason for the state, plus `Back up now` and
+  `Open folder`.
+- The state comes from the Windows shell badge on the newest backup file,
+  compared with a backup file that has not changed for 10 minutes. The app
+  does not sign in to or contact a cloud provider.
+
 ---
 
 ## 2. Dashboard

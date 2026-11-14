@@ -11,6 +11,7 @@ import {
   writeTextFile,
   type BackupDirInfo
 } from '../db/backup'
+import { getBackupStatus, writeQuickBackup } from '../db/backupStatus'
 
 export function registerBackupIpc(): void {
   ipcMain.handle('backup:export-json', async () => {
@@ -94,6 +95,12 @@ export function registerBackupIpc(): void {
     const error = await shell.openPath(custom !== '' ? custom : app.getPath('userData'))
     return error === ''
   })
+
+  // Sidebar quick backup: no dialog, writes today's snapshot into the backup
+  // folder. The status mirrors the badge Windows Explorer draws on the newest
+  // file, so a cloud client's own state is never guessed.
+  ipcMain.handle('backup:quick', () => writeQuickBackup())
+  ipcMain.handle('backup:status', () => getBackupStatus())
 
   ipcMain.handle('backup:dir', (): BackupDirInfo => getBackupDirInfo())
 

@@ -29,6 +29,12 @@ export function formatDateTime(iso: string, fmt: StoreDateFormat): string {
   return `${format(d, FNS_FORMAT[fmt])} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
+/** ISO8601 → local 24h time (backup status badge). */
+export function formatTime(iso: string): string {
+  const d = fromISO(iso)
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
 /** Draft {from,to} Dates → applied ISO day bounds (§6.2, §7.4, §8). */
 export function dayBounds(range: { from: Date; to: Date }): { from: string; to: string } {
   return { from: toISO(startOfDay(range.from)), to: toISO(endOfDay(range.to)) }

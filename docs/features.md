@@ -103,11 +103,12 @@ Global behaviors apply across pages and are described first.
 ### 1.9 Quick Backup (sidebar)
 
 - The bottom of the left sidebar has a `Back up now` button. One click writes
-  an Excel snapshot of all data into the backup folder with no dialog, named
-  `inventory-quick-YYYY-MM-DD.xlsx` (local date). Clicking again the same day
-  rewrites that day's file. Success shows a toast naming the file; failure
-  shows the reason.
-- A status line under the button shows the newest backup file's cloud state
+  an Excel snapshot of all data into the backup folder with no dialog, using
+  the scheduled-backup format `inventory-YYYY-MM-DD-HHMM.xlsx` (local date and
+  time). Quick and scheduled backups share the same one-file-per-day retention;
+  a quick backup replaces that day's earlier backup. Success shows a toast
+  naming the file; failure shows the reason.
+- A status line under the button shows the newest Excel backup's file name and cloud state
   the way Windows Explorer shows it: `Synced to Google Drive` with the write
   time, `Sending to Google Drive…` while Explorer does not yet show the synced
   badge, `Saved on this PC` when the folder is not inside Google Drive or

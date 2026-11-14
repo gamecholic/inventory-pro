@@ -96,9 +96,8 @@ export function registerBackupIpc(): void {
     return error === ''
   })
 
-  // Sidebar quick backup: no dialog, writes today's snapshot into the backup
-  // folder. The status mirrors the badge Windows Explorer draws on the newest
-  // file, so a cloud client's own state is never guessed.
+  // Sidebar quick backup: no dialog; shares the scheduled filename and
+  // retention so the status always describes the newest backup in the folder.
   ipcMain.handle('backup:quick', () => writeQuickBackup())
   ipcMain.handle('backup:status', () => getBackupStatus())
 

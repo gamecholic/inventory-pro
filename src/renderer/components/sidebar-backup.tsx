@@ -146,11 +146,16 @@ export function SidebarBackup(): React.JSX.Element {
       <button
         type="button"
         aria-live="polite"
+        aria-label={`${data?.fileName ?? t('backup.noFile')}: ${statusView.label}`}
+        title={data?.fileName ?? t('backup.noFile')}
         onClick={() => setOpen(true)}
         className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-muted-foreground hover:bg-sidebar-accent group-data-[collapsible=icon]:hidden"
       >
         {statusView.icon}
-        <span className="truncate">{statusView.label}</span>
+        <span className="flex min-w-0 flex-col">
+          <span className="truncate">{statusView.label}</span>
+          <span className="truncate text-[10px]">{data?.fileName ?? t('backup.noFile')}</span>
+        </span>
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

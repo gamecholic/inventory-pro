@@ -7,8 +7,7 @@ import {
   detectProvider,
   listBackupFiles,
   pickNewestBackup,
-  pickReferenceFile,
-  quickBackupFileName
+  pickReferenceFile
 } from './backupStatus'
 
 const MINUTE = 60 * 1000
@@ -75,36 +74,28 @@ describe('classifySync', () => {
   })
 })
 
-describe('quick backup file', () => {
-  it('is one per local day so repeated clicks rewrite the same file', () => {
-    expect(quickBackupFileName(new Date(2026, 10, 14, 9, 5))).toBe('inventory-quick-2026-11-14.xlsx')
-    expect(quickBackupFileName(new Date(2026, 10, 14, 18, 40))).toBe('inventory-quick-2026-11-14.xlsx')
-    expect(quickBackupFileName(new Date(2026, 10, 15, 0, 1))).toBe('inventory-quick-2026-11-15.xlsx')
-  })
-})
-
 describe('backup file selection', () => {
-  it('reads only files the app writes and picks the newest', () => {
+  it('picks the newest scheduled-format file regardless of how it was generated', () => {
     withTempDir((dir) => {
       const now = Date.now()
-      touch(dir, 'inventory-quick-2026-11-14.xlsx', MINUTE, now)
+      touch(dir, 'inventory-2026-11-14-1800.xlsx', MINUTE, now)
       touch(dir, 'inventory-2026-11-13-1400.xlsx', 25 * 60 * MINUTE, now)
       touch(dir, 'notes.xlsx', 2 * MINUTE, now)
-      touch(dir, 'inventory-quick-2026-11-14.xlsx.tmp', 0, now)
+      touch(dir, 'inventory-2026-11-14-1800.xlsx.tmp', 0, now)
 
       const files = listBackupFiles(dir)
       expect(files.map((file) => file.name).sort()).toEqual([
         'inventory-2026-11-13-1400.xlsx',
-        'inventory-quick-2026-11-14.xlsx'
+        'inventory-2026-11-14-1800.xlsx'
       ])
-      expect(pickNewestBackup(files)?.name).toBe('inventory-quick-2026-11-14.xlsx')
+      expect(pickNewestBackup(files)?.name).toBe('inventory-2026-11-14-1800.xlsx')
     })
   })
 
   it('uses an aged file, never the newest one, as the settled reference', () => {
     withTempDir((dir) => {
       const now = Date.now()
-      const newest = touch(dir, 'inventory-quick-2026-11-14.xlsx', MINUTE, now)
+      const newest = touch(dir, 'inventory-2026-11-14-1800.xlsx', MINUTE, now)
       touch(dir, 'inventory-2026-11-12-0900.xlsx', 2 * 24 * 60 * MINUTE, now)
       touch(dir, 'inventory-2026-11-13-0900.xlsx', 24 * 60 * MINUTE, now)
 
@@ -116,7 +107,7 @@ describe('backup file selection', () => {
   it('has no reference while the only files are fresh', () => {
     withTempDir((dir) => {
       const now = Date.now()
-      const newest = touch(dir, 'inventory-quick-2026-11-14.xlsx', MINUTE, now)
+      const newest = touch(dir, 'inventory-2026-11-14-1800.xlsx', MINUTE, now)
       touch(dir, 'inventory-2026-11-14-0900.xlsx', 5 * MINUTE, now)
 
       expect(pickReferenceFile(listBackupFiles(dir), newest, now)).toBeNull()

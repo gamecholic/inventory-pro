@@ -2,7 +2,8 @@ import { readdirSync, renameSync, rmSync, statSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import { toISO } from '../../shared/dates'
 import type { BackupProvider, BackupStatus, BackupSyncState, QuickBackupResult } from '../../shared/backup'
-import { backupDir } from './backup'
+import { backupDir, pruneSameDayScheduledFiles, scheduledBackupPath } from './backup'
+import { updateSettings } from './settingsStore'
 
 /** Every file the app itself writes into the backup folder (scheduled and manual exports share this shape). */
 const BACKUP_FILE = /^inventory-[\w.-]*\.xlsx$/i
@@ -20,14 +21,6 @@ interface BackupFile {
   path: string
   mtimeMs: number
   sizeBytes: number
-}
-
-/** One quick backup per local day; a second click rewrites today's file. */
-export function quickBackupFileName(now: Date = new Date()): string {
-  const yyyy = now.getFullYear()
-  const mm = String(now.getMonth() + 1).padStart(2, '0')
-  const dd = String(now.getDate()).padStart(2, '0')
-  return `inventory-quick-${yyyy}-${mm}-${dd}.xlsx`
 }
 
 /**
@@ -179,10 +172,16 @@ Write-Output ('{"i":[' + ($result -join ',') + ']}')`
   }
 }
 
-/** Write the Excel snapshot without a dialog. Same folder as the scheduled backups. */
+/**
+ * Write the Excel snapshot without a dialog, into the same file the hourly
+ * backup would write at this minute (inventory-YYYY-MM-DD-HHMM.xlsx), with the
+ * same one-file-per-day retention (§1.8). Clicking twice in the same minute
+ * rewrites that file; a later minute replaces the day's earlier file.
+ */
 export async function writeQuickBackup(now: Date = new Date()): Promise<QuickBackupResult> {
-  const filePath = join(backupDir(), quickBackupFileName(now))
-  const tmpPath = `${filePath}.tmp`
+  const filePath = scheduledBackupPath(now)
+  // The hourly run may write the same minute; never share a temp file with it.
+  const tmpPath = `${filePath}.${process.pid}-${now.getTime()}.tmp`
   try {
     const { writeExcelBackup } = await import('./excel')
     await writeExcelBackup(tmpPath)
@@ -194,6 +193,13 @@ export async function writeQuickBackup(now: Date = new Date()): Promise<QuickBac
       // best effort cleanup
     }
     throw error
+  }
+  pruneSameDayScheduledFiles(now, filePath)
+  // Settings > Database shows "Last backup", so a quick backup is a backup too.
+  try {
+    updateSettings('general', { scheduledBackupLastAt: toISO(now) })
+  } catch (error) {
+    console.error(`[quick-backup] could not record last-backup time: ${error instanceof Error ? error.message : String(error)}`)
   }
   const stat = statSync(filePath)
   return {

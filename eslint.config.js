@@ -5,6 +5,20 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    // Plain JS served as the service worker, not a module with DOM typings.
+    files: ['src/renderer/pwa/sw.js'],
+    languageOptions: {
+      globals: {
+        self: 'readonly',
+        caches: 'readonly',
+        fetch: 'readonly',
+        Response: 'readonly',
+        URL: 'readonly',
+        Promise: 'readonly'
+      }
+    }
+  },
+  {
     files: ['src/renderer/**/*'],
     rules: {
       'no-restricted-imports': [

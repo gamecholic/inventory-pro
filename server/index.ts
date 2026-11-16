@@ -411,7 +411,22 @@ const STATIC_CONTENT_TYPES: Record<string, string> = {
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
   '.ico': 'image/x-icon',
-  '.woff2': 'font/woff2'
+  '.woff2': 'font/woff2',
+  '.webmanifest': 'application/manifest+json'
+}
+
+/**
+ * Caching by file kind. The HTML shell stays fresh, the service worker and
+ * manifest must revalidate so updates are noticed, and hashed build assets
+ * are immutable for a year.
+ */
+function staticCacheControl(relative: string): string {
+  const slashRelative = relative.replace(/\\/g, '/')
+  if (relative.endsWith('.html')) return 'no-store'
+  if (slashRelative === 'sw.js' || slashRelative.endsWith('/sw.js')) return 'no-cache'
+  if (slashRelative.endsWith('.webmanifest')) return 'no-cache'
+  if (slashRelative.startsWith('assets/')) return 'public, max-age=31536000, immutable'
+  return 'public, max-age=86400'
 }
 
 async function serveFile(
@@ -432,15 +447,8 @@ async function serveFile(
       }
       const type = STATIC_CONTENT_TYPES[extname(relative)]
       if (type) headers['content-type'] = type
-      const slashRelative = relative.replace(/\\/g, '/')
-      if (relative.endsWith('.html')) {
-        // HashRouter means every route is "/", so only the shell must stay fresh.
-        headers['cache-control'] = 'no-store'
-      } else if (slashRelative.startsWith('assets/')) {
-        headers['cache-control'] = 'public, max-age=31536000, immutable'
-      } else {
-        headers['cache-control'] = 'public, max-age=86400'
-      }
+      // HashRouter means every route is "/", so only the shell must stay fresh.
+      headers['cache-control'] = staticCacheControl(relative)
       return new Response(compressed, { headers })
     }
   }
@@ -448,14 +456,7 @@ async function serveFile(
   const file = Bun.file(join(webRoot, relative))
   if (!(await file.exists())) return null
   const headers: Record<string, string> = {}
-  const slashRelative = relative.replace(/\\/g, '/')
-  if (relative.endsWith('.html')) {
-    headers['cache-control'] = 'no-store'
-  } else if (slashRelative.startsWith('assets/')) {
-    headers['cache-control'] = 'public, max-age=31536000, immutable'
-  } else if (relative.includes('.')) {
-    headers['cache-control'] = 'public, max-age=86400'
-  }
+  if (relative.includes('.')) headers['cache-control'] = staticCacheControl(relative)
   return new Response(file, { headers })
 }
 

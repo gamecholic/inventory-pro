@@ -38,6 +38,17 @@ Status: [DECIDED] = agreed, not locked. [OPEN] = needs decision.
   analytics are computed server-side. Migration `0008` adds the reporting
   indexes (expenses date, products archived_at, sale_items product,
   sales status+created_at, stock_adjustments created_at).
+- [DECIDED] PWA: `renderer/public/manifest.webmanifest` + generated `web/sw.js`
+  (from `renderer/pwa/sw.js`, cache id = package version, written by
+  `vite.web.config.ts`). The worker caches the app shell and hashed
+  `assets/`, never `/api/*`; navigation is network-first so renderer rebuilds
+  are picked up even without a version bump. `registerServiceWorker()` runs in
+  production builds only and only in a secure context — true for
+  `127.0.0.1`, false for plain-HTTP LAN access, so LAN devices get the app
+  without the offline shell. iOS still honours the manifest for Add to Home
+  Screen (standalone over HTTP); Android falls back to a browser shortcut.
+  The window talks to the same local server: no shop data is cached, and the
+  Bun process must be running.
 - [DECIDED] Validation: Zod schemas in `shared/` for forms + API payloads, both
   sides. A handler that throws `ZodError` answers 400 with the first issue;
   unknown channels 404; other failures 500 with the message.
@@ -71,8 +82,10 @@ main/db/{client,schema,settingsStore,analytics,movements,backup,backupStatus,
 main/ipc/{settings,backup,catalog,sales,expenses,analytics}.ts
                                                   register*Ipc() -> POST /api/<channel>
 renderer/{main.tsx,App.tsx}                       React mount, shell, providers
-renderer/lib/{http-api,restart}.ts                window.api over fetch, restart watch
+renderer/lib/{http-api,restart,pwa}.ts            window.api over fetch, restart watch, SW registration
 renderer/{pages,hooks,stores,components,i18n}     UI (8 pages, 5 settings tabs)
+renderer/public/{manifest.webmanifest,icons/}     PWA manifest + install icons
+renderer/pwa/sw.js                                service-worker template -> web/sw.js
 shared/{api,api-surface,settings,products,sale,stock,normalizeTR,money,dates,
         units,analytics,backup,updater}.ts (+ *.test.ts)
 scripts/{build-app,build-installer,mock-updater-server.mjs,enable-lan.*,
@@ -105,8 +118,10 @@ pointer is only read at boot.
   idle timeout disabled in `Bun.serve`).
 - Static serving: `out/web` in dev, `web/` beside the exe when packaged.
   Precompressed `.br`/`.gz` twins are content-negotiated; hashed `assets/` are
-  immutable for a year, the HTML shell is `no-store`, and unknown extension-less
-  paths fall back to the SPA shell (`HashRouter`).
+  immutable for a year, the HTML shell is `no-store`, `sw.js` and the manifest
+  are `no-cache` (updates must be noticed), and unknown extension-less paths
+  fall back to the SPA shell (`HashRouter`). The manifest is served as
+  `application/manifest+json`.
 - Settings live in a `settings` key-value table (one JSON row per section),
   merged over `shared/settings.ts` defaults. Stored legacy flags are migrated on
   read (`backupOnClose` / `autoBackup` → `scheduledBackup`, `startMaximized`
@@ -131,6 +146,12 @@ the address. It is documented to the user and must stay opt-in.
 
 - Theme toggle in Settings > General (`Light` / `Dark` / `System`). The spec has
   no theme requirement; the choice is stored by next-themes, not the DB.
+- Installable PWA (features §1.12): manifest, icons and an app-shell service
+  worker so the app can open as a standalone window from Chrome/Edge. This is
+  a packaging surface, not a second deployment: it serves the same local
+  server and caches no data. A Chrome/Edge install is limited to
+  `127.0.0.1`; iOS Add to Home Screen still works over the plain-HTTP LAN
+  address, without the offline shell.
 - Update restart overlay: installing an update stops the local server, so the
   browser tab would look frozen (the page still runs, every request fails). The
   renderer shows a full-screen overlay (indeterminate progress, restart steps,

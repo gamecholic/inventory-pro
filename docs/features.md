@@ -173,6 +173,25 @@ Global behaviors apply across pages and are described first.
   also no login, so any device on the network that knows the address can read
   and change the shop data. Enable it only on a trusted network.
 
+### 1.12 Installable App (PWA)
+
+- The app can be installed from Chrome or Edge on the host PC (the install
+  icon in the address bar, or browser menu > Install) and then opens in its
+  own standalone window, with the Inventory Pro name and icon, on the same
+  server and data as the browser tab. It opens on the Dashboard; where the
+  browser supports manifest shortcuts, the icon also offers Point of Sale and
+  Products.
+- On iPhone/iPad, the app can be added to the Home Screen from Safari and opens
+  standalone, even over the plain-HTTP LAN address (§1.11). It has no offline
+  shell there, because service workers require a secure context.
+- On Android, Chrome only creates a browser-shortcut for a plain-HTTP LAN
+  address; a real standalone/WebAPK install requires HTTPS. On the host PC
+  (`127.0.0.1`) the app is a fully installable PWA.
+- Only the app shell (HTML, icons, built assets) is cached. Shop data is never
+  stored offline; the installed window reads live data from the running
+  server. If the server is restarting or stopped, the window still opens and
+  shows the normal loading / `Retry` states until the server answers again.
+
 ---
 
 ## 2. Dashboard

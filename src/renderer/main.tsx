@@ -6,6 +6,9 @@ import './i18n'
 // No-op under Electron (preload already exposed window.api); installs the
 // fetch transport when the renderer is served by the Bun build.
 import './lib/http-api'
+import { registerServiceWorker } from './lib/pwa'
+
+registerServiceWorker()
 
 const root = document.getElementById('root')
 if (!root) throw new Error('Missing #root element')

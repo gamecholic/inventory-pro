@@ -5,7 +5,25 @@ import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-const COMPRESSIBLE_EXTS = new Set(['.js', '.css', '.html', '.json', '.svg', '.mjs'])
+const COMPRESSIBLE_EXTS = new Set(['.js', '.css', '.html', '.json', '.svg', '.mjs', '.webmanifest'])
+
+/** Emit web/sw.js from the renderer template with the release id baked in, so
+ *  each release installs a fresh cache and drops the previous one. */
+function pwaServiceWorker(): Plugin {
+  let outDir = ''
+  return {
+    name: 'pwa-service-worker',
+    apply: 'build',
+    configResolved(config) {
+      outDir = resolve(config.root, config.build.outDir)
+    },
+    closeBundle() {
+      const pkg = JSON.parse(readFileSync(resolve('package.json'), 'utf-8')) as { version: string }
+      const template = readFileSync(resolve('src/renderer/pwa/sw.js'), 'utf-8')
+      writeFileSync(join(outDir, 'sw.js'), template.replaceAll('__BUILD_ID__', pkg.version))
+    }
+  }
+}
 
 /** Emit .br/.gz twins of every compressible asset so server/index.ts can
  *  content-negotiate without re-compressing per request (low-end CPU win). */
@@ -49,7 +67,7 @@ export default defineConfig({
       '@shared': resolve('src/shared')
     }
   },
-  plugins: [react(), tailwindcss(), compressAssets()],
+  plugins: [react(), tailwindcss(), pwaServiceWorker(), compressAssets()],
   build: {
     chunkSizeWarningLimit: 900,
     outDir: resolve('out/web'),

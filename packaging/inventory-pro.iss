@@ -64,8 +64,14 @@ Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopicon
 
 [Registry]
-; Autostart lives in HKCU so it needs no elevation.
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "InventoryPro"; ValueData: """{app}\{#AppExe}"""; Flags: uninsdeletevalue; Tasks: startup
+; Autostart lives in HKCU so it needs no elevation. The value name must stay
+; identical to VALUE_NAME in src/main/autostart.ts: the app owns this entry
+; and the Settings > General switch deletes it by that exact name.
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "Inventory Pro"; ValueData: """{app}\{#AppExe}"""; Flags: uninsdeletevalue; Tasks: startup
+; Installers up to 1.3.13 wrote "InventoryPro". Delete that alias on every
+; install, whatever the task selection, so it cannot start the app behind the
+; back of the switch (ValueType none = only delete, create nothing).
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "InventoryPro"; Flags: deletevalue
 
 [Run]
 ; Interactive install: launch from the finished page.

@@ -10,14 +10,14 @@ Exception: POS payment buttons keep the master app's fixed hues (cash emerald-50
 ## 2. Theme (addition to spec — features.md has no theme requirement)
 - Tailwind `darkMode: "class"` + shadcn CSS vars (`--background`, `--chart-1`…`--chart-5`).
 - `--success` is the only added semantic token, used by the sidebar backup badge; both themes define it.
-- `ThemeProvider` (next-themes works with Vite/Electron) with `attribute="class"`, persisted choice, toggle in header + Settings > General.
+- `ThemeProvider` (next-themes with Vite) with `attribute="class"`, persisted choice, select in Settings > General (no header toggle).
 - Charts reference `var(--chart-N)` / `var(--color-KEY)` only, never hex.
 
 ## 3. Forms
-React Hook Form + `@hookform/resolvers/zod` + shadcn `Form/Input/Select/Dialog/Table/Toast`. One Zod schema per form in `shared/*.ts`, shared by renderer validation and main IPC validation. Product (§4.1), stock adjust (§5.2), expense (§7.2), settings (§9) all follow this. Card action rows go in `CardFooter`, never loose in content.
+React Hook Form + `@hookform/resolvers/zod` + shadcn `Form/Input/Select/Dialog/Table/Toast`. One Zod schema per form in `shared/*.ts`, shared by renderer validation and server API validation. Product (§4.1), stock adjust (§5.2), expense (§7.2), settings (§9) all follow this. Card action rows go in `CardFooter`, never loose in content.
 
 ## 4. Charts
-Recharts v3 via shadcn `chart` block only: `ChartContainer`, `ChartTooltipContent`, `ChartLegendContent`, `ChartConfig`. Covers all 10 dashboard panels (§2) + 5 reports (§8): bars, grouped bars, dual-axis, doughnut/pie with pie/bar toggle.
+Recharts v3 via shadcn `chart` block only: `ChartContainer`, `ChartTooltipContent`, `ChartLegendContent`, `ChartConfig`. Covers all 10 dashboard panels (§2) and every report (§8): bars, grouped bars, dual-axis, doughnut/pie, pie/bar toggle where offered, composed bar+line (basket size).
 
 ### Query input stability
 Keep TanStack Query inputs stable between renders. Date-range builders that use

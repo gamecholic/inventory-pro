@@ -14,14 +14,20 @@ Global behaviors apply across pages and are described first.
 
 ### 1.1 Navigation
 
-- A persistent sidebar lists all 8 pages with icons and labels.
-- A header shows the current page title.
+- A persistent sidebar lists all 8 pages with icons and labels; its bottom
+  footer holds the quick backup control (§1.9).
+- A header shows the sidebar trigger and the current page title.
 - The main content area shows one page at a time.
+- The app opens in a Chrome/Edge tab (default browser as fallback). Launching
+  the app again opens a tab on the running server instead of starting a second
+  copy.
 
-### 1.2 Languages
+### 1.2 Languages & Theme
 
 - The whole user interface is available in English and Turkish.
 - The user can switch language in Settings > General. It applies immediately.
+- The user can switch theme in Settings > General: `Light`, `Dark` or `System`.
+  It applies immediately and is remembered for the next launch.
 - Product search is tolerant of Turkish characters (e.g. `ı/I/İ/i`, `ğ/Ğ`,
   `ü/Ü`, `ö/Ö`, `ş/Ş`, `ç/Ç` match their Latin equivalents).
 
@@ -57,21 +63,29 @@ Global behaviors apply across pages and are described first.
 
 ### 1.6 Update Notification
 
-- When a new app version is detected, a small card appears top-right:
+- On launch the app checks the latest published release once. When a newer
+  version exists, a small card appears top-right:
   - Title: `Updates Available`.
-  - Message: new updates are available and the update utility can be used.
+  - Message: `Version X is ready to download.`
+  - `Download & Install` button. Downloading shows a progress bar with the
+    percent complete. A failed download shows `Update failed` with the reason.
   - Close (X) button to dismiss.
-  - Auto-dismisses after 60 seconds if not closed.
+  - Auto-dismisses after 60 seconds if not closed (not while downloading).
+- After a successful download the card says `Update downloaded. Restart the
+  app to apply it.` and offers `Restart Now`.
 - `Restart Now` (update card, or Settings > About) installs the update and
   restarts the app. The local server stops while the new version is
   installed, so a full-screen overlay covers the app until it is back:
   - Title: `Restarting Inventory Pro`, with the version being installed.
   - An indeterminate progress bar, the restart steps (preparing, installing,
     starting the new version, ready) and the elapsed seconds.
-  - The window reloads itself when the new version is up. No second window
-    is opened.
+  - The window reloads itself when the new version is up. No second tab or
+    window is opened.
   - If the new version does not start, the overlay says so and offers a
     `Reload` button.
+- Settings > About (§9.5) offers a manual `Check for updates` with the same
+  states: up to date, update available (with the same download and restart
+  steps), or the reason the check failed.
 
 ### 1.7 Common List Behaviors
 
@@ -90,7 +104,8 @@ Global behaviors apply across pages and are described first.
   running. No prompt appears and closing is never blocked. The first backup
   after launch is the next hour, not immediately.
 - Each day gets one file, `inventory-YYYY-MM-DD-HHMM.xlsx` (local date + time),
-  in the backup folder. Each hourly run writes the file for its hour and
+  in the backup folder (default `%APPDATA%\Inventory Pro\backups`, changeable
+  in Settings > Database). Each hourly run writes the file for its hour and
   deletes same-day files from earlier hours (and legacy date-only /
   `inventory-auto-` files), so only the latest hour's file per day is kept.
   Previous days' files are kept.
@@ -120,6 +135,43 @@ Global behaviors apply across pages and are described first.
 - The state comes from the Windows shell badge on the newest backup file,
   compared with a backup file that has not changed for 10 minutes. The app
   does not sign in to or contact a cloud provider.
+
+### 1.10 Server Restart
+
+- Some settings are only read when the local server starts: `Network access
+  (LAN)` (§1.11) and the database folder (§9.4). Saving one of them (or
+  pressing `Restart server`, §9.1) stops and starts the server automatically.
+- While it restarts, a full-screen overlay covers the app:
+  - Title: `Restarting Inventory Pro`, with a line saying the app is restarting
+    and the page reloads itself.
+  - An indeterminate progress bar, the restart steps (preparing, stopping the
+    server, starting the server, ready) and the elapsed seconds.
+  - The page reloads itself when the server answers again. No second browser
+    tab is opened.
+  - If the server does not come back in time, the overlay says so and offers a
+    `Reload` button.
+- No data is lost or moved by a restart; it is not a reinstall.
+
+### 1.11 Network Access (LAN)
+
+- Off by default. The app listens on this PC only (loopback, default port
+  5178) and other devices cannot reach it.
+- When enabled in Settings > General > Network, the app listens on all network
+  interfaces instead, on the same port. Other devices on the same network open
+  the LAN address in a browser and get the same app and data.
+- Settings shows that LAN address with a `Copy` button and a QR code that can
+  be scanned from a phone or tablet. When no private LAN address exists, it
+  says so instead of showing a QR code.
+- Turning it on asks for confirmation, then starts the Windows Firewall helper.
+  Windows asks for Administrator approval and adds an inbound rule for TCP
+  5178 on all profiles. Without that rule other devices are blocked even on a
+  private network.
+- The setting is read at start-up, so saving a change restarts the server
+  automatically (§1.10). If the setting is on but the server has not rebound
+  yet, the page says a restart is needed.
+- The host PC must be running the app; there is no cloud or relay. There is
+  also no login, so any device on the network that knows the address can read
+  and change the shop data. Enable it only on a trusted network.
 
 ---
 
@@ -724,11 +776,24 @@ badge) | Payment Method | Amount | Actions.
 
 ## 8. Reports
 
-Left sidebar with grouped report navigation (Performance, Payments,
-Breakdowns, Stock Actions); main panel with a date-range picker. Changing
-the range applies instantly.
-Default range: start to end of the current month. Every report has loading,
-error-with-retry, and `no data for the selected period` states.
+Left sidebar with grouped report navigation; the main panel shows the selected
+report. Groups:
+
+- **Performance**: Financial Summary, Top Products, Year-over-Year, Basket
+  Size, Discounts.
+- **Payments**: Payment Breakdown, Card Fees.
+- **Breakdowns**: Supplier Performance, Category Profitability, Stock Value by
+  Category, Stock Value by Supplier.
+- **Stock Actions**: Reorder Alerts, Unsold Stock, Low-Margin Products,
+  Frequently Bought Together.
+
+Most reports show a date-range picker and changing the range applies
+instantly. Default range: start to end of the current month. Five reports are
+snapshots or use their own window and show no range picker: Year-over-Year
+(own year picker), Reorder Alerts (trailing 30 days), Unsold Stock (30/60/90
+day window), Stock Value by Category and Stock Value by Supplier (current
+snapshot). Every report has loading, error-with-retry, and
+`no data for the selected period` states.
 
 ### 8.1 Financial Summary Report
 
@@ -781,7 +846,100 @@ products.
   with overall margin %.
 - Same muted discount warning as the supplier report.
 
-### 8.6 Export / Print in Reports
+### 8.6 Year-over-Year Report
+
+No range picker. Controls: `Year` (current year and the five before it) and
+`Metric` (Revenue / Profit).
+
+- Two summary cards: `Revenue · <year>` and `Profit · <year>`, each with the
+  change against the same total last year: green `↑` when up, red `↓` when
+  down, as a percentage, or as money when last year had nothing to divide by.
+- Grouped bar chart, one pair per month January–December: the selected metric
+  for this year beside the same month last year. Legend labels both years;
+  hover shows month + metric with both values.
+- Table: Month | Revenue this year | Revenue last year | Change | Profit this
+  year | Profit last year | Change, with a Total footer row. Months without
+  sales show 0.
+
+### 8.7 Basket Size Report
+
+- Three cards: `Sales` (completed sales in the range), `Avg Items` (items per
+  sale, 1 decimal), `Avg Value` (revenue per sale in shop currency).
+- Daily chart over the range: bars = daily revenue, line = average basket
+  value that day (dual axes). Hover shows money values.
+
+### 8.8 Discounts Report
+
+- Four cards: `Gross` (subtotal before discounts), `Discount Total` (red),
+  `Share` (discount ÷ gross × 100, 1 decimal), `Discounted Sales` (number of
+  sales with a discount).
+- Daily bar chart of discount amount over the range.
+- Shows the empty state when the range has no gross sales and no discounts.
+
+### 8.9 Card Fees Report
+
+- Three cards: `Card Revenue`, `Fee` (using the Credit Card Vendor Fee % from
+  Settings > General, default 0.68), `Net` (card revenue minus fee).
+- Daily bar chart of fee amount over the range.
+- Shows the empty state when the range has no card revenue.
+
+### 8.10 Frequently Bought Together Report
+
+- Control: `Show` 5 / 10 / 15 pairs (default 10) plus the date range.
+- Rows are product pairs that appear in the same completed sale.
+- Table: Pair (`Product A + Product B`) | Sold Together (number of completed
+  sales containing both) | Frequency (share of completed sales in the range,
+  1 decimal %).
+- Sorted by Sold Together, highest first.
+
+### 8.11 Reorder Alerts Report
+
+No range picker; it always looks at the trailing 30 days of completed sales.
+
+- Table: Product | Stock (quantity + unit) | Avg Daily Sales (1 decimal) |
+  Days of Cover (stock ÷ average daily sales). Cover is a red badge under 7
+  days, a normal badge under 30 days, muted otherwise, and `Never sold` when
+  the product had no sales in the window.
+- Sorted most urgent first; never-sold products come last.
+
+### 8.12 Unsold Stock Report
+
+No range picker. Control: window of `30`, `60` or `90` days (default 60).
+
+- Lists active products with stock > 0 that had no completed sale in the
+  window (never sold counts).
+- `Total Tied Up` card: sum of stock × cost price for those products.
+- Table: Product | Stock | Tied Value (at cost) | Last Sold (store date
+  format, or `Never`). Sorted by tied value, highest first.
+
+### 8.13 Low-Margin Products Report
+
+- Control: `Margin Threshold` 10% / 20% / 30% (default 20%) plus the date
+  range. Shows up to 20 products whose net margin is below the threshold,
+  worst first. Sale-level discounts are prorated to each line by its share of
+  the sale subtotal.
+- Two cards: `At-Risk Product` (rows listed) and `Loss-Making Product` (rows
+  with margin below 0, red).
+- Table: Product | Quantity | Net Revenue | Profit | Margin (red badge when
+  negative), plus a Total footer with overall margin.
+
+### 8.14 Stock Value by Category Report
+
+Snapshot, no date range.
+
+- Horizontal bar chart of current stock value per category.
+- Table: Category | Items (product count) | Value | Share, plus a Total row
+  (total items, total value, 100%). Products without a category show `—`.
+
+### 8.15 Stock Value by Supplier Report
+
+Snapshot, no date range.
+
+- Horizontal bar chart of current stock value per supplier.
+- Table: Supplier | Value | Items | Share, plus a Total row. Products without
+  a supplier show `—`.
+
+### 8.16 Export / Print in Reports
 
 - The current Reports page has no export-to-CSV or print buttons in any of
   the report views. Printing of sales documents is done from Sales History
@@ -792,20 +950,55 @@ products.
 ## 9. Settings
 
 Left tab navigation with 5 sections: General, Business Information, Receipt
-Customization, Database Management, About.
+Customization, Database, About.
 
 ### 9.1 General Tab
 
+Cards, top to bottom: Appearance, Regional, Inventory, Network, Restart
+server, Danger zone. Form cards each have their own `Save Changes` button and
+show `Unsaved changes` while dirty.
+
+**Appearance**
+
 - Language dropdown (English, Turkish), applies immediately on change.
+- Theme dropdown: `Light`, `Dark`, `System`. Applies immediately.
+- `Start with Windows` switch — when on, Inventory Pro launches automatically
+  at Windows log-in (per-user Run entry pointing at the installed exe). The
+  entry is reconciled at every launch, so an update that installs to a new
+  folder keeps working. No Administrator rights are needed.
+
+**Regional**
+
 - Currency dropdown: USD ($), EUR (€), GBP (£), TRY (₺).
 - Date Format dropdown: `MM/DD/YYYY`, `DD/MM/YYYY`, `YYYY-MM-DD`.
-- `Enable Low Stock Notifications` checkbox.
-- `Start with Windows` switch — when on, Inventory Pro launches automatically
-  at Windows log-in (per-user Run entry pointing at the installed exe).
+- Live preview of the selected currency and date format.
+
+**Inventory**
+
+- `Enable Low Stock Notifications` switch (description under the label).
 - `Credit Card Vendor Fee (%)` number input (0.01 steps, default 0.68). Used
   to compute net card amounts shown on Dashboard and Reports.
-- Buttons: `Save Changes` + `Reset Settings` (danger: resets all settings to
-  defaults, does not delete data, asks for confirmation).
+
+**Network**
+
+- `Network access (LAN)` switch. Turning it on asks for confirmation, then
+  starts the Windows Firewall helper with Administrator approval (inbound TCP
+  5178, all profiles). Saving a change restarts the server automatically.
+- While it is on, the card shows the LAN address for other devices with a
+  `Copy` button and a QR code. It shows a "restart the app to share" note when
+  the server has not rebound yet, and a "no LAN address" note when the PC has
+  no private network address. See §1.11.
+
+**Restart server**
+
+- `Restart server` button with a confirmation dialog. Stops and starts the
+  local server so Network and database-folder changes apply, without losing
+  data. Uses the restart overlay (§1.10).
+
+**Danger zone**
+
+- `Reset Settings` (danger): restores all settings to defaults, does not
+  delete data, asks for confirmation.
 - The read-only app version lives in the About tab (§9.5).
 
 Note: tax-setting labels (enable tax calculation, default tax rate %, tax
@@ -830,15 +1023,18 @@ shown on the current Settings page.
 - `Show Business Logo on Receipt` checkbox.
 - `Save Changes` button.
 
-### 9.4 Database Management Tab
+### 9.4 Database Tab
 
-Every option the user sees:
+Cards: Backup (database file, JSON and Excel export/import), Migration (old
+app Excel), Danger zone (reset), Scheduled backup. Every option the user sees:
 
-- **Database location**: shows the database file currently in use.
+- **Database file**: shows the database file currently in use.
   `Change…` picks another folder via folder picker (an existing
   `inventory.db` there will be used, otherwise a fresh one is created);
-  `Use default` points back at the app folder. A change applies on the
-  next restart; the current file is never moved or copied.
+  `Use default` points back at `%APPDATA%\Inventory Pro`. Saving restarts
+  the server automatically (§1.10); the current file is never moved or
+  copied. The chosen folder is remembered in `db-location.json` beside the
+  app's exe.
 - **Export Data to JSON**: creates a JSON backup file of all data, useful for
   transferring to another device. Button `Export to JSON`.
 - **Import Data from JSON**: imports from a JSON backup file via file picker.
@@ -859,22 +1055,29 @@ Every option the user sees:
   `Reset Database`.
 - **Scheduled backup (optional)**: when enabled, the app silently writes an
   Excel backup once an hour (one file per day, `inventory-YYYY-MM-DD-HHMM.xlsx`,
-  latest hour kept; last backup time shown, failures show a toast). See `1.8
-  Scheduled Backup`. The target folder is shown below the toggle and can be
-  changed via a folder picker (empty = app default, reversible via `Use
+  latest hour kept; same retention as the sidebar quick backup). The last
+  backup time is shown under the toggle, and failures show a toast. See `1.8
+  Scheduled Backup`. The target folder is shown while the schedule is on and
+  can be changed via a folder picker (empty = app default, reversible via `Use
   default`).
 - Loading messages during operations: exporting/importing JSON/Excel,
   resetting database.
 
 ### 9.5 About Tab
 
-- App icon, app name, one-line description and the read-only app version.
+- App icon, app name, a one-line summary, a short paragraph on what the app
+  does (offline, data stays on this PC, optional LAN access) and the read-only
+  app version.
 - `Check for updates` button: checks the latest release.
   - Up to date: confirms the app is on the latest version.
   - Update available: shows the new version and a `Download & Install`
-    button; the top-right update card appears as well.
+    button with a progress bar while downloading; the top-right update card
+    appears as well.
+  - Downloaded: shows `Update downloaded` and a `Restart Now` button that
+    installs the update behind the restart overlay (§1.6).
   - Check failed: shows the reason.
-- The update card (top-right, §1.6) appears on launch when a newer release
-  exists; it stays visible for 60 seconds unless dismissed.
+- The automatic launch check (§1.6) is separate: the card appears on launch
+  when a newer release exists and stays visible for 60 seconds unless
+  dismissed.
 
 ---

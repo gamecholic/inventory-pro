@@ -591,14 +591,16 @@ export const tr = {
         restartServer: 'Sunucuyu yeniden başlat',
         restartServerDesc: 'Uygulama sunucusunu durdurup yeniden başlatır; kaydedilen Ağ ve veritabanı değişiklikleri uygulanır. Verileriniz korunur.',
         restartTitle: 'Sunucu yeniden başlatılsın mı?',
-        restartDesc: 'Uygulama kısa süreliğine bağlantıyı kesip yeniden başlayacak. Otomatik olarak yeniden oturum açılır.',
+        restartDesc: 'Uygulama kısa süreliğine bağlantıyı kesip yeniden başlayacak. Sunucu geri geldiğinde bu sayfa kendini yeniler.',
         restartStarted: 'Yeniden başlatılıyor…',
         restartFailed: 'Sunucu yeniden başlatılamadı.',
         about: {
           title: 'Hakkında',
-          desc: 'Uygulama bilgileri ve güncellemeler.',
+          desc: 'Inventory Pro’nun neler yaptığı, çalıştırdığınız sürüm ve güncellemeler.',
           appName: 'Inventory Pro',
           tagline: 'Stok, satış noktası, gider ve raporlar — çevrimdışı çalışır.',
+          description:
+            'Inventory Pro bir mağazayı tek bir bilgisayardan yönetir: ürünler ve stok, satış noktası, giderler ve bunlardan üretilen raporlar. Her şey çevrimdışı çalışır ve bu bilgisayarda kalır — hesap yok, bulut yok. Ağ paylaşımı açıksa ağınızdaki diğer cihazlar da aynı uygulamayı açabilir.',
           version: 'Sürüm {{version}}',
           checkUpdates: 'Güncellemeleri denetle',
           checking: 'Denetleniyor…',

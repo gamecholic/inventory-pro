@@ -18,6 +18,12 @@ import { basename, join } from 'node:path'
 
 const RUN_KEY = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run'
 const VALUE_NAME = 'Inventory Pro'
+/**
+ * Value names older installers wrote for this same login item. Only
+ * VALUE_NAME is managed here, so a leftover alias would keep starting the
+ * app after the user turns the switch off. Cleared on every launch.
+ */
+const LEGACY_VALUE_NAMES = ['InventoryPro']
 
 function regExe(): string {
   return join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'reg.exe')
@@ -49,6 +55,17 @@ function readRunValue(): string | null {
   }
 }
 
+/** Best effort: drop entries written by installers with a different value name. */
+function removeLegacyValues(): void {
+  for (const name of LEGACY_VALUE_NAMES) {
+    // Exit code 1 means "no such value" — nothing to remove.
+    spawnSync(regExe(), ['delete', RUN_KEY, '/v', name, '/f'], {
+      stdio: 'ignore',
+      windowsHide: true
+    })
+  }
+}
+
 /**
  * Make the Run entry match `enabled`. Idempotent; safe to call on every
  * launch. Non-fatal: registry failures are logged by the caller, never
@@ -58,6 +75,8 @@ function readRunValue(): string | null {
 export function syncAutostart(enabled: boolean, exePath: string = process.execPath): void {
   if (process.platform !== 'win32') return
   if (!isCompiledExe()) return
+
+  removeLegacyValues()
 
   const current = readRunValue()
   if (enabled) {

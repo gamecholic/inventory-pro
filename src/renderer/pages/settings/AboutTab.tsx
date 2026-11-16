@@ -69,6 +69,8 @@ export function AboutTab(): React.JSX.Element {
             </div>
           </div>
 
+          <p className="text-sm text-muted-foreground">{t('settings.about.description')}</p>
+
           <div className="flex flex-col gap-3 border-t border-border pt-4">
             <p className="text-sm font-medium">{t('settings.about.checkUpdates')}</p>
             <Button

@@ -184,6 +184,10 @@ Global behaviors apply across pages and are described first.
 - On iPhone/iPad, the app can be added to the Home Screen from Safari and opens
   standalone, even over the plain-HTTP LAN address (§1.11). It has no offline
   shell there, because service workers require a secure context.
+- The first time iPhone/iPad Safari opens the app in a normal tab, a one-time
+  dismissible hint shows the Share → Add to Home Screen steps. It is not shown
+  on later visits, in other browsers, or when the app is already running from
+  the Home Screen.
 - On Android, Chrome only creates a browser-shortcut for a plain-HTTP LAN
   address; a real standalone/WebAPK install requires HTTPS. On the host PC
   (`127.0.0.1`) the app is a fully installable PWA.

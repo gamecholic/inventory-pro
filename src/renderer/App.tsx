@@ -12,6 +12,7 @@ import { AppSidebar } from '@/components/app-sidebar'
 import { SiteHeader } from '@/components/site-header'
 import { UpdateCard } from '@/components/update-card'
 import { RestartOverlay } from '@/components/restart-overlay'
+import { InstallHint } from '@/components/install-hint'
 import { useSettings } from '@/hooks/useSettings'
 import { routes, type AppRoute } from '@/routes'
 
@@ -151,6 +152,8 @@ export default function App(): React.JSX.Element {
             <Shell />
           </HashRouter>
           <Toaster richColors />
+          {/* One-time Home Screen hint on iPhone/iPad Safari (PWA, §1.12). */}
+          <InstallHint />
           {/* Covers the app while it restarts itself (update install). */}
           <RestartOverlay />
         </TooltipProvider>

@@ -24,3 +24,21 @@ export function registerServiceWorker(): void {
   if (document.readyState === 'complete') register()
   else window.addEventListener('load', register, { once: true })
 }
+
+/**
+ * Safari on iPhone/iPad is the only browser that can add this app to the Home
+ * Screen without an install prompt. iPadOS reports a desktop Mac UA, so the
+ * touch-point check is part of the test.
+ */
+export function isIosSafari(userAgent: string, platform: string, maxTouchPoints: number): boolean {
+  const isIos = /iPad|iPhone|iPod/.test(userAgent) || (platform === 'MacIntel' && maxTouchPoints > 1)
+  if (!isIos) return false
+  // Other iOS browsers put their own token in the UA (CriOS, FxiOS, ...).
+  if (/CriOS|FxiOS|EdgiOS|OPiOS|GSA\/|DuckDuckGo|Brave/.test(userAgent)) return false
+  return /Safari\//.test(userAgent)
+}
+
+/** The app is already running from the Home Screen / installed window. */
+export function isStandalone(displayModeMatches: boolean, navigatorStandalone?: boolean): boolean {
+  return displayModeMatches || navigatorStandalone === true
+}

@@ -47,8 +47,10 @@ Status: [DECIDED] = agreed, not locked. [OPEN] = needs decision.
   `127.0.0.1`, false for plain-HTTP LAN access, so LAN devices get the app
   without the offline shell. iOS still honours the manifest for Add to Home
   Screen (standalone over HTTP); Android falls back to a browser shortcut.
-  The window talks to the same local server: no shop data is cached, and the
-  Bun process must be running.
+  `components/install-hint.tsx` shows a one-time iOS Safari hint (Share → Add
+  to Home Screen), stored in localStorage and hidden in standalone mode. The
+  window talks to the same local server: no shop data is cached, and the Bun
+  process must be running.
 - [DECIDED] Validation: Zod schemas in `shared/` for forms + API payloads, both
   sides. A handler that throws `ZodError` answers 400 with the first issue;
   unknown channels 404; other failures 500 with the message.

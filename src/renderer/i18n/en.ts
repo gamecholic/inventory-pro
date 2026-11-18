@@ -11,6 +11,14 @@ export const en = {
         settings: 'Settings'
       },
       app: { name: 'Inventory Pro', comingSoon: 'Coming soon' },
+      installHint: {
+        title: 'Install Inventory Pro',
+        description: 'Add the app to your Home Screen to open it in its own full-screen window.',
+        shareStep: 'Tap the Share button in Safari.',
+        addStep: 'Choose Add to Home Screen.',
+        openStep: 'If Safari shows Open as Web App, turn it on, then tap Add.',
+        gotIt: 'Got it'
+      },
       backup: {
         quick: 'Back up now',
         working: 'Backing up…',

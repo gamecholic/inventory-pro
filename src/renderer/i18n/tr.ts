@@ -11,6 +11,14 @@ export const tr = {
         settings: 'Ayarlar'
       },
       app: { name: 'Inventory Pro', comingSoon: 'Çok yakında' },
+      installHint: {
+        title: 'Inventory Pro’yu yükleyin',
+        description: 'Uygulamayı kendi tam ekran penceresinde açmak için Ana Ekran’a ekleyin.',
+        shareStep: 'Safari’de Paylaş düğmesine dokunun.',
+        addStep: '“Ana Ekrana Ekle”yi seçin.',
+        openStep: '“Web Uygulaması Olarak Aç” görürseniz açın, ardından “Ekle”ye dokunun.',
+        gotIt: 'Anladım'
+      },
       backup: {
         quick: 'Şimdi yedekle',
         working: 'Yedekleniyor…',

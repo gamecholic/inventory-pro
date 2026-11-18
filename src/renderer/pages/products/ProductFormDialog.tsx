@@ -96,7 +96,7 @@ export function ProductFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{editing ? t('products.editProduct') : t('products.addProduct')}</DialogTitle>
         </DialogHeader>
@@ -110,7 +110,7 @@ export function ProductFormDialog({
             <Label htmlFor="pBarcode">{t('products.barcode')}</Label>
             <Input id="pBarcode" {...form.register('barcode')} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="pCategory">{t('products.category')} *</Label>
               <Controller
@@ -121,7 +121,7 @@ export function ProductFormDialog({
                     value={field.value > 0 ? String(field.value) : ''}
                     onValueChange={(v) => field.onChange(Number(v))}
                   >
-                    <SelectTrigger id="pCategory">
+                    <SelectTrigger id="pCategory" className="w-full">
                       <SelectValue placeholder={t('products.category')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -143,7 +143,7 @@ export function ProductFormDialog({
                 control={form.control}
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id="pUnit">
+                    <SelectTrigger id="pUnit" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -158,7 +158,7 @@ export function ProductFormDialog({
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="pSell">{t('products.sellingPrice')} *</Label>
               <Controller
@@ -196,7 +196,7 @@ export function ProductFormDialog({
               {err('costPrice') && <p className="text-sm text-destructive">{err('costPrice')}</p>}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="pStock">{t('products.stockQty')} *</Label>
               <Controller
@@ -242,7 +242,7 @@ export function ProductFormDialog({
                   value={field.value === null ? 'none' : String(field.value)}
                   onValueChange={(v) => field.onChange(v === 'none' ? null : Number(v))}
                 >
-                  <SelectTrigger id="pSupplier">
+                  <SelectTrigger id="pSupplier" className="w-full">
                     <SelectValue placeholder={t('products.noSupplier')} />
                   </SelectTrigger>
                   <SelectContent>

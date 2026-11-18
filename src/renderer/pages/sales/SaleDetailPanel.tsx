@@ -86,7 +86,7 @@ export function SaleDetailPanel({
           if (!o) onClose()
         }}
       >
-        <SheetContent className="m-4 h-[calc(100vh-2rem)] rounded-2xl sm:max-w-md">
+        <SheetContent className="m-4 h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] rounded-2xl sm:max-w-md">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
               {t('sales.saleDetails')}

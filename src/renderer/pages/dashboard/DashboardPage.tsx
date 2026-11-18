@@ -18,7 +18,7 @@ export function DashboardPage(): React.JSX.Element {
         {businessName !== '' ? `, ${businessName}` : ''}
       </h2>
       <MetricCards />
-      <div className="grid items-start gap-4 md:grid-cols-2">
+      <div className="grid items-start gap-4 [&>*]:min-w-0 md:grid-cols-2">
         <RevProfitTrendPanel />
         <ExpensesTrendPanel />
         <div className="md:col-span-2">

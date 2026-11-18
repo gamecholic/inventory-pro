@@ -28,7 +28,7 @@ export function DiscountReport({ range }: { range: RangeInput }): React.JSX.Elem
         <p className="text-sm text-muted-foreground">{t('reportPage.discountsDesc')}</p>
         <PeriodLabel range={range} />
       </div>
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">{t('reportPage.gross')}</p>

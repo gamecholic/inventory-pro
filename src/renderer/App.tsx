@@ -101,7 +101,7 @@ function Shell(): React.JSX.Element {
 
   return (
     <SidebarProvider
-      className="flex h-screen w-screen overflow-hidden flex-col md:flex-row"
+      className="flex h-dvh w-screen overflow-hidden flex-col md:flex-row"
       style={
         {
           '--sidebar-width': 'calc(var(--spacing) * 64)',

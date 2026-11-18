@@ -20,6 +20,7 @@ import {
   type LucideIcon
 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { DateRange } from 'react-day-picker'
 import { DateRangePicker } from '@/components/date-range-picker'
 import { dayBounds, toISO } from '@shared/dates'
@@ -136,7 +137,21 @@ export function ReportsPage(): React.JSX.Element {
         onValueChange={(value) => setReport(value as ReportKey)}
         className="flex-col gap-6 md:flex-row"
       >
-        <TabsList className="h-fit w-full shrink-0 flex-col items-stretch gap-1 p-1.5 md:w-60">
+        <div className="md:hidden">
+          <Select value={report} onValueChange={(v) => setReport(v as ReportKey)}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {REPORT_GROUPS.flatMap((g) => g.items).map(({ key }) => (
+                <SelectItem key={key} value={key}>
+                  {t(`reportPage.${key}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <TabsList className="hidden h-fit w-full shrink-0 flex-col items-stretch gap-1 p-1.5 md:flex md:w-60">
           {REPORT_GROUPS.map((group, i) => (
             <Fragment key={group.labelKey}>
               <p

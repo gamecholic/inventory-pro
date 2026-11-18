@@ -84,15 +84,15 @@ export function DateRangePicker({
   return (
     <Popover open={open} onOpenChange={reopen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="h-10 w-[240px] justify-start px-2.5 text-left font-normal">
+        <Button variant="outline" className="h-10 w-[240px] max-w-full justify-start px-2.5 text-left font-normal">
           <CalendarIcon className="h-4 w-4 shrink-0" />
           <span className="ml-1.5 truncate">{label}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto max-w-[calc(100vw-1rem)] p-0" align="start">
         <div className="flex gap-2 p-2">
           <Calendar {...calendarProps} month={startMonth} onMonthChange={setStartMonth} />
-          <Calendar {...calendarProps} month={endMonth} onMonthChange={setEndMonth} />
+          <Calendar {...calendarProps} month={endMonth} onMonthChange={setEndMonth} className="hidden md:block" />
         </div>
         <div className="flex flex-wrap gap-1.5 border-t border-border p-3">
           {PRESETS.map((p) => (

@@ -1,4 +1,5 @@
 import { Store } from 'lucide-react'
+import { useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import {
@@ -10,7 +11,8 @@ import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem
+  SidebarMenuItem,
+  useSidebar
 } from '@/components/ui/sidebar'
 import { SidebarBackup } from '@/components/sidebar-backup'
 import type { AppRoute } from '@/routes'
@@ -18,6 +20,13 @@ import type { AppRoute } from '@/routes'
 export function AppSidebar({ routes }: { routes: readonly AppRoute[] }): React.JSX.Element {
   const { t } = useTranslation()
   const location = useLocation()
+  const { isMobile, setOpenMobile } = useSidebar()
+
+  // On phones the sidebar is an overlay; a chosen destination should reveal the
+  // page instead of leaving the drawer covering it.
+  useEffect(() => {
+    if (isMobile) setOpenMobile(false)
+  }, [location.pathname, isMobile, setOpenMobile])
 
   return (
     <Sidebar collapsible="icon" variant="inset">

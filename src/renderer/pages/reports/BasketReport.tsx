@@ -41,7 +41,7 @@ export function BasketReport({ range }: { range: RangeInput }): React.JSX.Elemen
         <p className="text-sm text-muted-foreground">{t('reportPage.basketDesc')}</p>
         <PeriodLabel range={range} />
       </div>
-      <div className="grid gap-2 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">{t('reportPage.sales')}</p>

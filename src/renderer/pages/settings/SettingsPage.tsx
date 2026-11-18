@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Building2, Database, Info, Receipt, SlidersHorizontal } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AboutTab } from './AboutTab'
@@ -10,10 +12,25 @@ import { ReceiptTab } from './ReceiptTab'
 /** Features §9 — five sections, left-aligned tab navigation. */
 export function SettingsPage(): React.JSX.Element {
   const { t } = useTranslation()
+  const [tab, setTab] = useState('general')
   return (
     <div className="px-4 lg:px-6">
-      <Tabs orientation="vertical" defaultValue="general" className="flex-col gap-6 md:flex-row">
-        <TabsList className="h-fit w-full shrink-0 flex-col items-stretch gap-1 p-1.5 md:w-56">
+      <Tabs orientation="vertical" value={tab} onValueChange={setTab} className="flex-col gap-6 md:flex-row">
+        <div className="md:hidden">
+          <Select value={tab} onValueChange={setTab}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(['general', 'business', 'receipt', 'database', 'about'] as const).map((key) => (
+                <SelectItem key={key} value={key}>
+                  {t(`settings.tabs.${key}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <TabsList className="hidden h-fit w-full shrink-0 flex-col items-stretch gap-1 p-1.5 md:flex md:w-56">
           <TabsTrigger value="general" className="justify-start gap-2 px-3">
             <SlidersHorizontal />
             {t('settings.tabs.general')}

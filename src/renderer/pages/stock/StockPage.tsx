@@ -59,6 +59,7 @@ export function StockPage(): React.JSX.Element {
         <div className="flex min-h-0 flex-col gap-2 lg:h-full">
           <div className="relative">
             <Input
+              aria-label={t('stock.search')}
               placeholder={t('stock.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -68,7 +69,7 @@ export function StockPage(): React.JSX.Element {
               <Button
                 type="button"
                 variant="ghost"
-                size="icon-xs"
+                size="icon"
                 className="absolute top-1/2 right-1 -translate-y-1/2"
                 onClick={() => setSearch('')}
                 aria-label={t('stock.clearSearch')}
@@ -84,7 +85,7 @@ export function StockPage(): React.JSX.Element {
                   key={level}
                   type="button"
                   variant={filter === level ? 'secondary' : 'outline'}
-                  size="xs"
+                  size="xs" className="h-9"
                   onClick={() => setFilter(level)}
                 >
                   {level === 'all'
@@ -112,7 +113,7 @@ export function StockPage(): React.JSX.Element {
           ) : filtered.length === 0 ? (
             <p className="p-4 text-center text-sm text-muted-foreground">{t('stock.noResults')}</p>
           ) : (
-            <div data-testid="stock-list" className="native-scroll min-h-0 overflow-y-auto lg:flex-1">
+            <div data-testid="stock-list" className="native-scroll max-h-[45vh] min-h-0 overflow-y-auto lg:max-h-none lg:flex-1">
               <div className="flex flex-col gap-2 pr-3">
                 {filtered.map((p) => (
                 <Button

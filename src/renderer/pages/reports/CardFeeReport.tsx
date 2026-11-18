@@ -28,7 +28,7 @@ export function CardFeeReport({ range }: { range: RangeInput }): React.JSX.Eleme
         <p className="text-sm text-muted-foreground">{t('reportPage.cardFeesDesc')}</p>
         <PeriodLabel range={range} />
       </div>
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">{t('reportPage.cardRevenue')}</p>

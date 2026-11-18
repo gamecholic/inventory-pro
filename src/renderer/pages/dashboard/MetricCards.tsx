@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { formatMoney } from '@shared/money'
 import { currentMonthRange, useFinancialMetrics, useInventoryOverview } from '@/hooks/useReports'
 import { useSettings } from '@/hooks/useSettings'
@@ -28,18 +28,18 @@ function MetricCard({
 }): React.JSX.Element {
   const { t } = useTranslation()
   return (
-    <Card className="gap-0 py-3">
-      <CardContent className="flex min-h-[92px] flex-col justify-center gap-0.5 px-4">
-        <p className="flex items-center gap-1 text-xs font-medium tracking-wide text-muted-foreground">
+    <Card className="gap-0 py-2 sm:py-3">
+      <CardContent className="flex min-h-[76px] flex-col justify-center gap-0.5 px-3 sm:min-h-[92px] sm:px-4">
+        <p className="flex min-w-0 flex-wrap items-center gap-1 text-xs font-medium tracking-wide text-muted-foreground">
           {label}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button type="button" aria-label={label} className="-m-1 p-1">
+          <Popover>
+            <PopoverTrigger asChild>
+              <button type="button" aria-label={label} className="-m-1.5 flex size-9 shrink-0 items-center justify-center rounded-md">
                 <CircleHelp className="size-4" />
               </button>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-60">{help}</TooltipContent>
-          </Tooltip>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-60 max-w-[calc(100vw-2rem)] text-sm">{help}</PopoverContent>
+          </Popover>
         </p>
         {error ? (
           <span className="flex items-center gap-2 text-sm">
@@ -56,7 +56,7 @@ function MetricCard({
         ) : (
           <span className="flex flex-col gap-1">
             <span className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold">{value}</span>
+              <span className="text-xl font-bold break-words tabular-nums sm:text-2xl">{value}</span>
               {trend && (
                 <span className={trend === 'up' ? 'text-sm text-green-600 dark:text-green-500' : 'text-sm text-destructive'}>
                   {trend === 'up' ? '↑' : '↓'} {t(`dashboard.metrics.${trend === 'up' ? 'positive' : 'negative'}`)}
@@ -112,7 +112,7 @@ export function MetricCards(): React.JSX.Element {
           <TrendingUp className="size-4" aria-hidden />
           {t('dashboard.sections.sales')}
         </h3>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-1">
           <MetricCard label={m('todaySales')} help={t('dashboard.metrics.todaySalesHelp')} value={inv.data ? formatMoney(inv.data.todaySales, currency) : null} error={inv.isError} onRetry={retryInv} />
           <MetricCard
             label={m('monthlyRevenue')}
@@ -135,7 +135,7 @@ export function MetricCards(): React.JSX.Element {
           <Package className="size-4" aria-hidden />
           {t('dashboard.sections.inventory')}
         </h3>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-1">
           <MetricCard
             label={m('lowStock')}
             help={
@@ -169,7 +169,7 @@ export function MetricCards(): React.JSX.Element {
           <Wallet className="size-4" aria-hidden />
           {t('dashboard.sections.cash')}
         </h3>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-1">
           <MetricCard label={m('monthlyExpenses')} help={t('dashboard.metrics.monthlyExpensesHelp')} value={fin.data ? formatMoney(fin.data.expenses, currency) : null} error={fin.isError} onRetry={retryFin} />
           <MetricCard
             label={m('totalCash')}

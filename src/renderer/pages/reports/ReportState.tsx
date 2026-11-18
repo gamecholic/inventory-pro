@@ -21,7 +21,7 @@ export function ReportLoading(): React.JSX.Element {
   const { t } = useTranslation()
   return (
     <div className="flex flex-col gap-4" aria-label={t('reportPage.loading')} role="status">
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-3">
         <Skeleton className="h-24 w-full" />
         <Skeleton className="h-24 w-full" />
         <Skeleton className="h-24 w-full" />

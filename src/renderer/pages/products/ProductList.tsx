@@ -85,9 +85,9 @@ export function ProductList({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         <Input
-          className="max-w-xs"
+          className="col-span-2 w-full max-w-none sm:max-w-xs"
           placeholder={t('products.search')}
           value={filter.search}
           onChange={(e) => patch({ search: e.target.value })}
@@ -96,7 +96,7 @@ export function ProductList({
           value={filter.categoryId === null ? 'all' : String(filter.categoryId)}
           onValueChange={(v) => patch({ categoryId: v === 'all' ? null : Number(v) })}
         >
-          <SelectTrigger id="fCategory" className="w-44">
+          <SelectTrigger id="fCategory" className="w-full sm:w-44">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -109,7 +109,7 @@ export function ProductList({
           </SelectContent>
         </Select>
         <Select value={filter.stockLevel} onValueChange={(v) => patch({ stockLevel: v as ProductListFilter['stockLevel'] })}>
-          <SelectTrigger id="fStock" className="w-44">
+          <SelectTrigger id="fStock" className="w-full sm:w-44">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -122,7 +122,7 @@ export function ProductList({
           </SelectContent>
         </Select>
         <Select value={filter.status} onValueChange={(v) => patch({ status: v as ProductListFilter['status'] })}>
-          <SelectTrigger id="fStatus" className="w-44">
+          <SelectTrigger id="fStatus" className="w-full sm:w-44">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -157,11 +157,69 @@ export function ProductList({
         </div>
       ) : (
         <>
+          <div className="flex flex-col gap-2 md:hidden">
+            {data.items.map((p) => (
+              <div key={p.id} className="rounded-lg border border-border p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <p
+                    className={
+                      p.archivedAt
+                        ? 'min-w-0 truncate text-muted-foreground line-through'
+                        : 'min-w-0 truncate font-medium'
+                    }
+                  >
+                    {p.name}
+                  </p>
+                  <div className="flex shrink-0">
+                    {p.archivedAt ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title={t('products.restoreTitle')}
+                        onClick={() => setRestoreId(p.id)}
+                      >
+                        <RotateCcw className="size-4" />
+                      </Button>
+                    ) : (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title={t('products.editProduct')}
+                          onClick={() => openEdit(p)}
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title={t('products.archiveTitle')}
+                          onClick={() => setConfirmId(p.id)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-sm">
+                  <span className="font-medium tabular-nums">
+                    {formatMoney(p.sellingPrice, settings?.general.currency ?? 'USD')}
+                  </span>
+                  <StockBadge qty={p.stockQty} unit={p.unit} threshold={p.minStock} />
+                </div>
+                {p.categoryName && (
+                  <p className="mt-1 truncate text-xs text-muted-foreground">{p.categoryName}</p>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="hidden md:block">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>{t('products.colName')}</TableHead>
-                <TableHead>{t('products.colCategory')}</TableHead>
+                <TableHead className="hidden md:table-cell">{t('products.colCategory')}</TableHead>
                 <TableHead>{t('products.colPrice')}</TableHead>
                 <TableHead>{t('products.colStock')}</TableHead>
                 <TableHead className="text-right">{t('products.colActions')}</TableHead>
@@ -179,7 +237,7 @@ export function ProductList({
                       p.name
                     )}
                   </TableCell>
-                  <TableCell>{p.categoryName ?? '—'}</TableCell>
+                  <TableCell className="hidden md:table-cell">{p.categoryName ?? '—'}</TableCell>
                   <TableCell>{formatMoney(p.sellingPrice, settings?.general.currency ?? 'USD')}</TableCell>
                   <TableCell>
                     <StockBadge qty={p.stockQty} unit={p.unit} threshold={p.minStock} />
@@ -204,6 +262,7 @@ export function ProductList({
               ))}
             </TableBody>
           </Table>
+          </div>
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>
               {t('products.pageOf', { page: data.page, pages: data.totalPages })} ·{' '}

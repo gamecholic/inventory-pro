@@ -88,7 +88,7 @@ const ProductCard = memo(function ProductCard({
       onClick={() => onPick(product)}
       className={`h-auto flex-col items-stretch gap-0.5 p-2 text-left font-normal ${out ? 'opacity-50' : ''}`}
     >
-      <span className="truncate text-sm font-medium">{product.name}</span>
+      <span className="line-clamp-2 text-sm leading-tight font-medium">{product.name}</span>
       <span className="flex items-baseline justify-between gap-1">
         <span className="text-sm font-semibold">{formatMoney(product.sellingPrice, currency)}</span>
         <span className={`truncate text-[11px] ${out ? 'text-destructive' : 'text-muted-foreground'}`}>
@@ -157,6 +157,7 @@ export function ProductGrid({
       <div className="flex gap-2">
         <Input
           ref={searchRef}
+          aria-label={t('pos.searchPlaceholder')}
           placeholder={t('pos.searchPlaceholder')}
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}

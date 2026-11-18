@@ -84,6 +84,7 @@ export function SalesPage(): React.JSX.Element {
         </Select>
         <Input
           className="max-w-xs"
+          aria-label={t('sales.search')}
           placeholder={t('sales.search')}
           value={search}
           onChange={(e) => {

@@ -176,6 +176,7 @@ export function ExpensesPage(): React.JSX.Element {
             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               className="pl-8"
+              aria-label={t('expenses.search')}
               placeholder={t('expenses.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -356,7 +357,34 @@ export function ExpensesPage(): React.JSX.Element {
             </CardContent>
           ) : (
             <>
-              <div className="overflow-x-auto">
+              <div className="flex flex-col gap-2 p-4 md:hidden">
+                {pageItems.map((e) => (
+                  <div key={e.id} className="rounded-lg border border-border p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{e.description}</p>
+                        <p className="truncate text-xs text-muted-foreground">{formatISO(e.date, dateFormat)} - {t(`expenses.payments.${e.paymentMethod}`)}</p>
+                      </div>
+                      <span className="shrink-0 font-medium tabular-nums">{formatMoney(e.amount, currency)}</span>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <Badge variant="outline" className="font-normal">
+                        <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: categoryColor(e.categoryId) }} />
+                        <span className="max-w-32 truncate">{e.categoryName ?? t('expenses.other')}</span>
+                      </Badge>
+                      <div className="flex">
+                        <Button variant="ghost" size="icon" onClick={() => { setEditing(e); setExpenseOpen(true) }}>
+                          <Pencil className="size-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => setDeleteId(e.id)}>
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="hidden overflow-x-auto md:block">
                 <Table>
                   <TableHeader>
                     <TableRow>

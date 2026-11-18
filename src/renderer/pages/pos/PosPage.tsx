@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ShoppingCart } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -10,7 +11,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from '@/components/ui/alert-dialog'
-import { formatMoney } from '@shared/money'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { formatMoney, round2 } from '@shared/money'
+import { cartSubtotal, computeDiscount } from '@shared/sale'
 import type { LowStockAlert, PaymentMethod, Receipt } from '@shared/sale'
 import type { ProductRow } from '@shared/products'
 import { useCartStore } from '@/stores/cart'
@@ -30,13 +35,20 @@ export function PosPage(): React.JSX.Element {
   const { data: categories } = useCategories()
   const add = useCartStore((s) => s.add)
   const clear = useCartStore((s) => s.clear)
+  const items = useCartStore((s) => s.items)
+  const discountType = useCartStore((s) => s.discountType)
+  const discountValue = useCartStore((s) => s.discountValue)
   const [search, setSearch] = useState('')
   const [categoryId, setCategoryId] = useState<number | null>(null)
   const [payMethod, setPayMethod] = useState<PaymentMethod | null>(null)
   const [receipt, setReceipt] = useState<Receipt | null>(null)
   const [lowQueue, setLowQueue] = useState<LowStockAlert[]>([])
+  const [cartOpen, setCartOpen] = useState(false)
   const searchRef = useRef<HTMLInputElement | null>(null)
   const currency = settings?.general.currency ?? 'USD'
+  const totalQty = items.reduce((sum, i) => sum + i.qty, 0)
+  const subtotal = round2(cartSubtotal(items.map((i) => ({ qty: i.qty, unitPrice: i.product.sellingPrice }))))
+  const cartTotal = round2(subtotal - computeDiscount(subtotal, { type: discountType, value: discountValue }))
 
   // Search box is auto-focused on page open and re-focused after each sale (§3.1).
   useEffect(() => {
@@ -103,8 +115,37 @@ export function PosPage(): React.JSX.Element {
             searchRef={searchRef}
           />
         </form>
-        <CartPanel onPay={setPayMethod} />
+        <div className="hidden lg:block">
+          <CartPanel onPay={setPayMethod} />
+        </div>
       </div>
+
+      <div data-testid="pos-cart-bar" className="sticky bottom-0 z-30 -mx-4 mt-auto border-t border-border bg-background/95 px-4 py-2 backdrop-blur lg:hidden">
+        <Button className="w-full justify-between gap-2" onClick={() => setCartOpen(true)} aria-label={t('pos.currentSale')}>
+          <span className="flex items-center gap-2">
+            <ShoppingCart className="size-4" />
+            {t('pos.currentSale')}
+            {totalQty > 0 && <Badge variant="secondary">{totalQty}</Badge>}
+          </span>
+          <span className="tabular-nums">{formatMoney(cartTotal, currency)}</span>
+        </Button>
+      </div>
+
+      <Sheet open={cartOpen} onOpenChange={setCartOpen}>
+        <SheetContent side="bottom" className="flex h-[85dvh] flex-col gap-0 p-0">
+          <SheetHeader className="border-b px-4 py-3">
+            <SheetTitle>{t('pos.currentSale')}</SheetTitle>
+          </SheetHeader>
+          <div className="flex min-h-0 flex-1 flex-col p-3 [&>div]:min-h-0 [&>div]:flex-1">
+            <CartPanel
+              onPay={(m) => {
+                setCartOpen(false)
+                setPayMethod(m)
+              }}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {payMethod && (
         <PaymentDialog method={payMethod} onClose={() => setPayMethod(null)} onComplete={paid} />

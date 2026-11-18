@@ -89,12 +89,12 @@ export function ExpenseFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{editing ? t('expenses.editExpense') : t('expenses.addExpense')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="expDate">{t('expenses.date')} *</Label>
               <Controller
@@ -135,7 +135,7 @@ export function ExpenseFormDialog({
             <Input id="expDesc" {...form.register('description')} />
             {descError && <p className="text-sm text-destructive">{t('settings.required')}</p>}
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="expCategory">{t('expenses.category')}</Label>
               <Controller
@@ -146,7 +146,7 @@ export function ExpenseFormDialog({
                     value={field.value === null ? 'none' : String(field.value)}
                     onValueChange={(v) => field.onChange(v === 'none' ? null : Number(v))}
                   >
-                    <SelectTrigger id="expCategory">
+                    <SelectTrigger id="expCategory" className="w-full">
                       <SelectValue placeholder={t('expenses.other')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -168,7 +168,7 @@ export function ExpenseFormDialog({
                 control={form.control}
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id="expPayment">
+                    <SelectTrigger id="expPayment" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -183,7 +183,7 @@ export function ExpenseFormDialog({
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="expRecipient">{t('expenses.recipient')}</Label>
               <Input id="expRecipient" {...form.register('recipient')} />

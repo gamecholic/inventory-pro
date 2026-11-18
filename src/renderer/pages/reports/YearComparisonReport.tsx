@@ -213,7 +213,7 @@ export function YearComparisonReport(): React.JSX.Element {
         <ReportEmpty />
       ) : (
         <>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-2">
             {summary.map((s) => {
               const up = s.pct === null ? s.delta > 0 : s.pct > 0
               const down = s.pct === null ? s.delta < 0 : s.pct < 0

@@ -21,19 +21,19 @@ export function ProductsPage(): React.JSX.Element {
     <div className="px-4 lg:px-6">
 
       <Tabs value={tab} onValueChange={setTab} className="flex flex-col gap-4">
-        <div className="mb-4 flex items-center justify-between">
-          <TabsList className="w-fit gap-1 px-1.5">
-            <TabsTrigger value="list" className="px-4">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <TabsList className="w-full max-w-full overflow-x-auto gap-1 px-1.5 sm:w-fit">
+            <TabsTrigger value="list" className="h-9 px-4">
               {t('products.tabs.list')}
             </TabsTrigger>
-            <TabsTrigger value="categories" className="px-4">
+            <TabsTrigger value="categories" className="h-9 px-4">
               {t('products.tabs.categories')}
             </TabsTrigger>
-            <TabsTrigger value="suppliers" className="px-4">
+            <TabsTrigger value="suppliers" className="h-9 px-4">
               {t('products.tabs.suppliers')}
             </TabsTrigger>
           </TabsList>
-          <Button onClick={() => addRef.current?.()}>{t(ADD_LABELS[tab as keyof typeof ADD_LABELS])}</Button>
+          <Button className="w-full sm:w-auto" onClick={() => addRef.current?.()}>{t(ADD_LABELS[tab as keyof typeof ADD_LABELS])}</Button>
         </div>
         <TabsContent value="list">
           <ProductList registerAdd={registerAdd} />

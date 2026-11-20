@@ -97,13 +97,13 @@ export function PosPage(): React.JSX.Element {
 
   const currentLow = lowQueue[0] ?? null
 
-  // Below lg the panels stack in one scrollable column: the grid keeps its own
-  // bounded scroller (the virtualizer needs it) and the cart sits below it.
-  // At lg+ the row is height-constrained again and each panel scrolls internally.
+  // Below lg the panels stack in one column: the grid takes the remaining
+  // height and keeps its own bounded scroller (the virtualizer needs it), with
+  // the cart bar pinned underneath. At lg+ each panel scrolls internally.
   return (
-    <div className="absolute inset-0 top-16 flex flex-col gap-4 overflow-y-auto px-4 pb-4 lg:overflow-hidden lg:px-6 lg:pb-0">
-      <div className="flex min-h-0 shrink-0 flex-col gap-4 lg:grid lg:flex-1 lg:items-start lg:grid-cols-[minmax(0,1fr)_24rem] xl:grid-cols-[minmax(0,1fr)_27rem]">
-        <form onSubmit={submitSearch} className="min-h-0 lg:h-full">
+    <div className="absolute inset-0 top-16 flex flex-col gap-4 overflow-hidden px-4 pb-4 lg:px-6 lg:pb-0">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 lg:grid lg:items-start lg:grid-cols-[minmax(0,1fr)_24rem] xl:grid-cols-[minmax(0,1fr)_27rem]">
+        <form onSubmit={submitSearch} className="flex min-h-0 flex-1 flex-col lg:h-full">
           <ProductGrid
             catalog={catalog ?? []}
             categories={categories ?? []}
@@ -120,10 +120,10 @@ export function PosPage(): React.JSX.Element {
         </div>
       </div>
 
-      <div data-testid="pos-cart-bar" className="sticky bottom-0 z-30 -mx-4 mt-auto border-t border-border bg-background/95 px-4 py-2 backdrop-blur lg:hidden">
-        <Button className="w-full justify-between gap-2" onClick={() => setCartOpen(true)} aria-label={t('pos.currentSale')}>
+      <div data-testid="pos-cart-bar" className="sticky bottom-0 z-30 -mx-4 shrink-0 border-t border-border bg-background/95 px-4 py-2 backdrop-blur lg:hidden">
+        <Button className="h-11 w-full justify-between gap-2 lg:h-9" onClick={() => setCartOpen(true)} aria-label={t('pos.currentSale')}>
           <span className="flex items-center gap-2">
-            <ShoppingCart className="size-4" />
+            <ShoppingCart className="size-5 lg:size-4" />
             {t('pos.currentSale')}
             {totalQty > 0 && <Badge variant="secondary">{totalQty}</Badge>}
           </span>

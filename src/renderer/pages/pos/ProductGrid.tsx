@@ -153,7 +153,7 @@ export function ProductGrid({
   }, [columns, virtualizer])
 
   return (
-    <div className="flex min-h-0 flex-col gap-3 lg:h-full">
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
       <div className="flex gap-2">
         <Input
           ref={searchRef}
@@ -203,7 +203,7 @@ export function ProductGrid({
         <div
           ref={scrollRootRef}
           data-testid="product-grid"
-          className="native-scroll min-h-0 h-[65vh] overflow-y-auto pr-3 lg:h-auto lg:flex-1"
+          className="native-scroll min-h-0 flex-1 overflow-y-auto pr-3"
         >
           <div style={{ height: `${virtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
             {virtualizer.getVirtualItems().map((virtualRow) => {

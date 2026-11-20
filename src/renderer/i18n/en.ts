@@ -338,6 +338,7 @@ export const en = {
         outOfStock: 'Out of Stock',
         inStock: 'In Stock',
         currentSale: 'Current Sale',
+        close: 'Close',
         clear: 'Clear',
         itemsCount: '{{count}} items',
         decreaseQty: 'Decrease quantity',

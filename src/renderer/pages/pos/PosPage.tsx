@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ShoppingCart } from 'lucide-react'
+import { ShoppingCart, X } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { formatMoney, round2 } from '@shared/money'
 import { cartSubtotal, computeDiscount } from '@shared/sale'
 import type { LowStockAlert, PaymentMethod, Receipt } from '@shared/sale'
@@ -132,9 +132,15 @@ export function PosPage(): React.JSX.Element {
       </div>
 
       <Sheet open={cartOpen} onOpenChange={setCartOpen}>
-        <SheetContent side="bottom" className="flex h-[85dvh] flex-col gap-0 p-0">
-          <SheetHeader className="border-b px-4 py-3">
+        <SheetContent side="bottom" showCloseButton={false} className="flex h-[85dvh] flex-col gap-0 p-0">
+          <SheetHeader className="flex-row items-center justify-between border-b px-4 py-3">
             <SheetTitle>{t('pos.currentSale')}</SheetTitle>
+            {/* In-flow close button: the default absolute one overlaps this compact header on mobile. */}
+            <SheetClose asChild>
+              <Button variant="ghost" size="icon" className="-mr-2 size-11" aria-label={t('pos.close')}>
+                <X className="size-5" />
+              </Button>
+            </SheetClose>
           </SheetHeader>
           <div className="flex min-h-0 flex-1 flex-col p-3 [&>div]:min-h-0 [&>div]:flex-1">
             <CartPanel

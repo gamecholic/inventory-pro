@@ -338,6 +338,7 @@ export const tr = {
         outOfStock: 'Tükendi',
         inStock: 'Stokta',
         currentSale: 'Mevcut Satış',
+        close: 'Kapat',
         clear: 'Temizle',
         itemsCount: '{{count}} ürün',
         decreaseQty: 'Miktarı azalt',

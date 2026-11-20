@@ -33,7 +33,7 @@ export function AppSidebar({ routes }: { routes: readonly AppRoute[] }): React.J
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton className="data-[slot=sidebar-menu-button]:p-1.5!">
+            <SidebarMenuButton className="data-[slot=sidebar-menu-button]:p-1.5! h-11 md:h-8">
               <Store className="size-5!" />
               <span className="text-base font-semibold">{t('app.name')}</span>
             </SidebarMenuButton>
@@ -46,7 +46,11 @@ export function AppSidebar({ routes }: { routes: readonly AppRoute[] }): React.J
             <SidebarMenu>
               {routes.map((r) => (
                 <SidebarMenuItem key={r.key}>
-                  <SidebarMenuButton asChild isActive={location.pathname === r.path}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname === r.path}
+                    className="h-11 md:h-8 [&>svg]:size-5 md:[&>svg]:size-4"
+                  >
                     <NavLink to={r.path}>
                       <r.icon />
                       <span>{t(`nav.${r.key}`)}</span>

@@ -133,6 +133,7 @@ export function SidebarBackup(): React.JSX.Element {
             onClick={() => quick.mutate()}
             disabled={quick.isPending}
             tooltip={t('backup.quick')}
+            className="h-11 md:h-8 [&>svg]:size-5 md:[&>svg]:size-4"
           >
             {quick.isPending ? (
               <Loader2 className="animate-spin" />
@@ -149,7 +150,7 @@ export function SidebarBackup(): React.JSX.Element {
         aria-label={`${data?.fileName ?? t('backup.noFile')}: ${statusView.label}`}
         title={data?.fileName ?? t('backup.noFile')}
         onClick={() => setOpen(true)}
-        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-muted-foreground hover:bg-sidebar-accent group-data-[collapsible=icon]:hidden"
+        className="flex min-h-11 w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs text-muted-foreground hover:bg-sidebar-accent group-data-[collapsible=icon]:hidden md:min-h-0 [&>svg]:size-4 md:[&>svg]:size-3.5"
       >
         {statusView.icon}
         <span className="flex min-w-0 flex-col">

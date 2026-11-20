@@ -269,6 +269,14 @@ if ($result -ne '') { [Console]::Out.Write($result) }
  * instead of looking like a button that does nothing.
  */
 export async function showNativeDialog(request: NativeDialogRequest): Promise<string | null> {
+  // Headless test hook: return a canned path instead of spawning a blocking
+  // PowerShell/WinForms dialog. Set INVENTORY_TEST_DIALOG_RESPONSE='' to
+  // simulate Cancel, or a path to simulate a selection. Never set by the app.
+  const testResponse = process.env.INVENTORY_TEST_DIALOG_RESPONSE
+  if (testResponse !== undefined) {
+    return testResponse === '' ? null : testResponse
+  }
+
   if (process.platform !== 'win32') {
     throw new Error('Native dialogs are only implemented for Windows')
   }

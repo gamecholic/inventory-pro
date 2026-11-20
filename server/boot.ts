@@ -430,7 +430,9 @@ async function main(): Promise<void> {
   // The old tab can only reload itself if the successor holds its port; a
   // relaunch that fell back to another port has to open a fresh tab.
   const reusesTab = RELAUNCH && RELAUNCH_PORT > 0 && port === RELAUNCH_PORT
-  if (isHmr() && !isCompiled()) {
+  if (process.env.INVENTORY_NO_OPEN === '1') {
+    log('window: skipped (INVENTORY_NO_OPEN=1)')
+  } else if (isHmr() && !isCompiled()) {
     startViteDev(server.port)
     openWindow(VITE_PORT, !reusesTab)
   } else {

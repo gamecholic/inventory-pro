@@ -5,6 +5,13 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    // Underscore-prefixed params are intentional unused placeholders (shim
+    // signatures, worker fixtures) across server/, src/ and e2e/.
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }]
+    }
+  },
+  {
     // Plain JS served as the service worker, not a module with DOM typings.
     files: ['src/renderer/pwa/sw.js'],
     languageOptions: {

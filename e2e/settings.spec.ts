@@ -1,26 +1,6 @@
-import { mkdtempSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { expect, test, type ElectronApplication, type Page } from '@playwright/test'
-import { _electron as electron } from 'playwright'
+import { expect, test } from './fixtures'
 
-let app: ElectronApplication
-let page: Page
-
-test.beforeAll(async () => {
-  const userDataDir = mkdtempSync(join(tmpdir(), 'inventory-pro-e2e-'))
-  app = await electron.launch({
-    args: [join(process.cwd(), 'out', 'main', 'index.js'), `--user-data-dir=${userDataDir}`]
-  })
-  page = await app.firstWindow()
-  await page.waitForLoadState('domcontentloaded')
-})
-
-test.afterAll(async () => {
-  await app.close()
-})
-
-test('settings language switch persists across reload (SQLite)', async () => {
+test('settings language switch persists across reload (SQLite)', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.getByRole('link', { name: 'Settings' }).click()
   await expect(page.getByRole('tab', { name: 'General' })).toBeVisible()

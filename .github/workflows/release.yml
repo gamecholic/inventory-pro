@@ -38,8 +38,8 @@ jobs:
         with:
           bun-version: latest
       - run: npm ci
-      - run: npm run typecheck
-      - run: npm run test:bun
+      - name: Verify (typecheck, lint, unit tests)
+        run: npm run verify:fast
       - name: Bump version
         id: bump
         run: |

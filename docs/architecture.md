@@ -64,9 +64,16 @@ Status: [DECIDED] = agreed, not locked. [OPEN] = needs decision.
   History (§6.4) → `window.print()` in the browser tab; print CSS lives in
   `index.css`. No thermal printing.
 - [DECIDED] Tests: `vitest` for `src/shared` + renderer libs (`npm test`);
-  `bun test` for DB/server (`npm run test:bun`) against `:memory:` SQLite with
-  the `electron` module aliased to `server/electron.ts` (`tsconfig.bun.json`);
-  Playwright for E2E (POS sale flow first).
+  `bun test` for DB, server and the `POST /api/<channel>` contract
+  (`npm run test:bun`) against `:memory:`/temp SQLite with the `electron` module
+  aliased to `server/electron.ts` (`tsconfig.bun.json`); Playwright for E2E
+  (`npm run test:e2e`) against a real Bun server. `e2e/fixtures.ts` spawns one
+  isolated server + temp `INVENTORY_DATA_DIR` per spec file on a random port
+  (`INVENTORY_NO_OPEN=1`, `HMR=0`), navigates `page` to it, and fails the test
+  on uncaught `pageerror`/React `console.error`. It never reuses a running app.
+  `npm run verify:fast` = typecheck + lint + both unit suites; `npm run verify`
+  adds the web build + Playwright. `.husky/pre-push` runs it on every
+  `git push`; the release workflow re-checks with `verify:fast` (no browser).
 - [DECIDED] Dates at API boundary: every request/response carries dates as
   ISO8601 UTC strings (`z.string().datetime()`). Renderer converts Date/preset →
   ISO at the edge via `shared/dates.toISO()`; server parses/stores/filters in
@@ -245,6 +252,8 @@ Environment variables (development/testing; the installed app needs none):
 | `INVENTORY_DATA_DIR` | `%APPDATA%\Inventory Pro` | DB, backups, logs |
 | `INVENTORY_DRIZZLE_DIR` | `drizzle/` beside the exe | Migrations |
 | `INVENTORY_UPDATE_API_URL` | GitHub `releases/latest` | Local updater mock |
+| `INVENTORY_NO_OPEN` | unset | `1` skips opening a browser (headless E2E) |
+| `INVENTORY_TEST_DIALOG_RESPONSE` | unset | Test hook: canned path for `showNativeDialog()` (empty string = Cancel) — never set by the app |
 | `INVENTORY_RELAUNCH`, `INVENTORY_RELAUNCH_PORT` | unset | Internal restart/install handover |
 
 Logs go to `%APPDATA%\Inventory Pro\launcher.log` (the exe has no console);

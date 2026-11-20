@@ -1,55 +1,35 @@
-import { mkdtempSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { expect, test, type ElectronApplication, type Page } from '@playwright/test'
-import { _electron as electron } from 'playwright'
+import { expect, test, api } from './fixtures'
 
-let app: ElectronApplication
-let page: Page
 let productId = 0
 
-test.beforeAll(async () => {
-  const userDataDir = mkdtempSync(join(tmpdir(), 'inventory-pro-e2e-sales-'))
-  app = await electron.launch({
-    args: [join(process.cwd(), 'out', 'main', 'index.js'), `--user-data-dir=${userDataDir}`]
+test.beforeAll(async ({ appUrl }) => {
+  const category = await api<{ id: number }>(appUrl, 'categories:create', {
+    name: 'E2E Sales',
+    description: ''
   })
-  page = await app.firstWindow()
-  await page.waitForLoadState('domcontentloaded')
-  productId = await page.evaluate(() =>
-    window.api.categories.create({ name: 'E2E Sales', description: '' }).then((c) =>
-      window.api.products
-        .create({
-          name: 'E2E Widget',
-          barcode: '',
-          categoryId: (c as { id: number }).id,
-          unit: 'pcs',
-          sellingPrice: 40,
-          costPrice: 15,
-          stockQty: 10,
-          minStock: 5,
-          supplierId: null,
-          description: ''
-        })
-        .then((p) =>
-          window.api.sales
-            .complete({
-              lines: [{ productId: (p as { id: number }).id, qty: 2 }],
-              discount: { type: 'fixed', value: 0 },
-              paymentMethod: 'card',
-              cashAmount: null,
-              cardAmount: null
-            })
-            .then(() => (p as { id: number }).id)
-        )
-    )
-  )
+  const product = await api<{ id: number }>(appUrl, 'products:create', {
+    name: 'E2E Widget',
+    barcode: '',
+    categoryId: category.id,
+    unit: 'pcs',
+    sellingPrice: 40,
+    costPrice: 15,
+    stockQty: 10,
+    minStock: 5,
+    supplierId: null,
+    description: ''
+  })
+  productId = product.id
+  await api(appUrl, 'sales:complete', {
+    lines: [{ productId: product.id, qty: 2 }],
+    discount: { type: 'fixed', value: 0 },
+    paymentMethod: 'card',
+    cashAmount: null,
+    cardAmount: null
+  })
 })
 
-test.afterAll(async () => {
-  await app.close()
-})
-
-test('sales list → details → cancel restores stock', async () => {
+test('sales list → details → cancel restores stock', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.getByRole('link', { name: 'Sales History' }).click()
   await expect(page.getByText('$80.00').first()).toBeVisible()
@@ -77,9 +57,10 @@ test('sales list → details → cancel restores stock', async () => {
   await page.getByRole('button', { name: 'Confirm', exact: true }).click()
   await expect(page.getByText('Canceled').first()).toBeVisible()
 
-  const stock = await page.evaluate((id) =>
-    window.api.products.search('E2E Widget', 10).then((rows) => rows.find((r) => r.id === id)?.stockQty)
-  , productId)
+  const stock = await page.evaluate(
+    (id) => window.api.products.search('E2E Widget', 10).then((rows) => rows.find((r) => r.id === id)?.stockQty),
+    productId
+  )
   expect(stock).toBe(10)
 
   // Return button is present but disabled (features §6.5).

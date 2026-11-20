@@ -6,5 +6,12 @@
       "electron": ["./server/electron.ts"]
     }
   },
-  "include": ["src/main/**/*", "src/shared/**/*", "vitest.config.ts", "drizzle.config.ts"]
+  "include": [
+    "server/**/*",
+    "src/main/**/*",
+    "src/server/**/*",
+    "src/shared/**/*",
+    "vitest.config.ts",
+    "drizzle.config.ts"
+  ]
 }

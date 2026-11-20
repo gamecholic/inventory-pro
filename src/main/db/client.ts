@@ -46,6 +46,10 @@ function locationPath(): string {
  * the database. Corrupt/missing sidecar falls back to the default.
  */
 export function getCustomDbDir(): string {
+  // INVENTORY_DATA_DIR is an explicit data-dir override (dev/tests). When set,
+  // it wins over the on-disk sidecar so an isolated test run never inherits a
+  // developer's custom shop folder from db-location.json in the repo root.
+  if (process.env.INVENTORY_DATA_DIR) return ''
   try {
     const raw = readFileSync(locationPath(), 'utf-8')
     const parsed = JSON.parse(raw) as unknown

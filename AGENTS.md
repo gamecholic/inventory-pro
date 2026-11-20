@@ -3,7 +3,7 @@
 Always-loaded. Keep tight.
 
 ## Stack
-Electron (Windows) + Vite + React + TypeScript + Tailwind + shadcn/ui + Recharts + react-i18next + Zustand + Drizzle + better-sqlite3 (main only) + React Hook Form + Zod + Vitest + Playwright. Details in `docs/architecture.md`.
+Bun (Windows single-process server) + Vite + React + TypeScript + Tailwind + shadcn/ui + Recharts + react-i18next + Zustand + Drizzle + bun:sqlite (server only) + React Hook Form + Zod + Vitest + Playwright. Details in `docs/architecture.md`.
 
 ## Sources of truth
 - `docs/features.md` — what the app does. Never contradict it. Theme toggle is the only addition (not in spec).
@@ -11,11 +11,17 @@ Electron (Windows) + Vite + React + TypeScript + Tailwind + shadcn/ui + Recharts
 - `docs/ui.md` — shadcn-only UI rules, theme, forms, charts. Read before touching renderer.
 
 ## Boundaries
-- Renderer never imports `main/*`, `fs`, DB, ExcelJS. All data via `window.api.*` (preload), validated with Zod in `shared/`.
+- Renderer never imports `main/*`, `fs`, DB, ExcelJS. All data via `window.api.*` (fetch-based `renderer/lib/http-api.ts`), validated with Zod in `shared/`.
 - UI uses shadcn components + CSS vars only. No custom colors that break dark/light.
 - Turkish `normalizeTR()` on every product search path. Money/dates via `shared/` helpers.
+
+## Test layers
+- `npm run test` (Vitest): pure `src/shared/*` + renderer libs on Node.
+- `npm run test:bun`: DB + `POST /api/<channel>` contract tests (`src/server/api.integration.test.ts`) on temp SQLite.
+- `npm run test:e2e`: builds web, spawns an isolated Bun server + temp DB per spec file (`e2e/fixtures.ts`), fails on uncaught browser errors. Never reuse a running app instance.
+- `.husky/pre-push` runs `npm run verify` on every `git push` (escape hatch: `git push --no-verify`); the release workflow re-checks with `verify:fast`.
 
 ## Workflow
 1. Use `package.json` scripts; don't invent. 2. Smallest diff per `docs/features.md`.
 3. Install libs via the package-manager CLI (`npm i -S/-D <pkg>`, `npx shadcn@latest add <component>`) — never hand-write version numbers into `package.json`.
-4. Verify: `npm run typecheck`, `npm run test` if present; else state what was skipped.
+4. Verify: `npm run verify:fast` while iterating; `npm run verify` before declaring done (adds web build + isolated Playwright E2E). Never claim success on a red suite.

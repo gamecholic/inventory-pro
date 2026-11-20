@@ -1,44 +1,26 @@
-import { mkdtempSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { expect, test, type ElectronApplication, type Page } from '@playwright/test'
-import { _electron as electron } from 'playwright'
+import { expect, test, api } from './fixtures'
 
-let app: ElectronApplication
-let page: Page
-
-test.beforeAll(async () => {
-  const userDataDir = mkdtempSync(join(tmpdir(), 'inventory-pro-e2e-stock-'))
-  app = await electron.launch({
-    args: [join(process.cwd(), 'out', 'main', 'index.js'), `--user-data-dir=${userDataDir}`]
+test.beforeAll(async ({ appUrl }) => {
+  const category = await api<{ id: number }>(appUrl, 'categories:create', {
+    name: 'E2E Stock',
+    description: ''
   })
-  page = await app.firstWindow()
-  await page.waitForLoadState('domcontentloaded')
+  await api(appUrl, 'products:create', {
+    name: 'E2E Flour',
+    barcode: '',
+    categoryId: category.id,
+    unit: 'kg',
+    sellingPrice: 20,
+    costPrice: 10,
+    stockQty: 3,
+    minStock: 5,
+    supplierId: null,
+    description: ''
+  })
 })
 
-test.afterAll(async () => {
-  await app.close()
-})
-
-test('stock search → select → add with cost averaging', async () => {
+test('stock search → select → add with cost averaging', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.evaluate(() =>
-    window.api.categories.create({ name: 'E2E Stock', description: '' }).then((c) =>
-      window.api.products.create({
-        name: 'E2E Flour',
-        barcode: '',
-        categoryId: (c as { id: number }).id,
-        unit: 'kg',
-        sellingPrice: 20,
-        costPrice: 10,
-        stockQty: 3,
-        minStock: 5,
-        supplierId: null,
-        description: ''
-      })
-    )
-  )
-
   await page.getByRole('link', { name: 'Stock Update' }).click()
   await page.getByPlaceholder('Search name, barcode or SKU...').fill('flour')
   await page.getByRole('button', { name: /E2E Flour/ }).click()

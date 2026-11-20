@@ -505,7 +505,7 @@ export function startServer(options: ServerOptions): RunningServer {
     // idle timeout would kill it before the 15s heartbeat, so the browser
     // would reconnect every ~10s and churn Network entries. Disable it.
     idleTimeout: 0,
-    async fetch(request) {
+    async fetch(request): Promise<Response> {
       const url = new URL(request.url)
       if (url.pathname.startsWith('/api/')) {
         return handleApi(request, url.pathname, { port: server.port ?? options.port, host })

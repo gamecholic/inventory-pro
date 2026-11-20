@@ -1,44 +1,27 @@
-import { mkdtempSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { expect, test, type ElectronApplication, type Page } from '@playwright/test'
-import { _electron as electron } from 'playwright'
+import { expect, test, api } from './fixtures'
+import type { Page } from '@playwright/test'
 
-let app: ElectronApplication
-let page: Page
-
-test.beforeAll(async () => {
-  const userDataDir = mkdtempSync(join(tmpdir(), 'inventory-pro-e2e-pos-'))
-  app = await electron.launch({
-    args: [join(process.cwd(), 'out', 'main', 'index.js'), `--user-data-dir=${userDataDir}`]
+test.beforeAll(async ({ appUrl }) => {
+  const category = await api<{ id: number }>(appUrl, 'categories:create', {
+    name: 'E2E Drinks',
+    description: ''
   })
-  page = await app.firstWindow()
-  await page.waitForLoadState('domcontentloaded')
+  await api(appUrl, 'products:create', {
+    name: 'E2E Cola',
+    barcode: '111222',
+    categoryId: category.id,
+    unit: 'pcs',
+    sellingPrice: 25,
+    costPrice: 10,
+    stockQty: 10,
+    minStock: 5,
+    supplierId: null,
+    description: ''
+  })
 })
 
-test.afterAll(async () => {
-  await app.close()
-})
-
-test('cash sale: search → add → pay exact → receipt → stock decremented', async () => {
+test('cash sale: search → add → pay exact → receipt → stock decremented', async ({ page }: { page: Page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.evaluate(() =>
-    window.api.categories.create({ name: 'E2E Drinks', description: '' }).then((c) =>
-      window.api.products.create({
-        name: 'E2E Cola',
-        barcode: '111222',
-        categoryId: (c as { id: number }).id,
-        unit: 'pcs',
-        sellingPrice: 25,
-        costPrice: 10,
-        stockQty: 10,
-        minStock: 5,
-        supplierId: null,
-        description: ''
-      })
-    )
-  )
-
   await page.getByRole('link', { name: 'Point of Sale' }).click()
   await page.getByPlaceholder('Scan barcode or search products...').fill('cola')
   await page.getByRole('button', { name: /E2E Cola/ }).click()
@@ -63,18 +46,22 @@ test('cash sale: search → add → pay exact → receipt → stock decremented'
   await expect(page.getByText('8 pcs')).toBeVisible()
 })
 
-test('narrow window: cart stacks below the product grid instead of overlapping it', async () => {
+test('narrow window: cart stacks below the product grid instead of overlapping it', async ({ page }: { page: Page }) => {
   await page.setViewportSize({ width: 800, height: 800 })
   await page.getByRole('link', { name: 'Point of Sale' }).click()
+  await page.getByPlaceholder('Scan barcode or search products...').fill('cola')
+  await page.getByRole('button', { name: /E2E Cola/ }).click()
 
   const grid = await page.getByTestId('product-grid').boundingBox()
-  const cartTitle = await page.getByRole('heading', { name: 'Current Sale' }).boundingBox()
+  const cartTitle = await page.getByRole('button', { name: /Current Sale/ }).boundingBox()
   expect(grid).not.toBeNull()
   expect(cartTitle).not.toBeNull()
   // The cart header must start below the grid, never underneath it.
   expect(cartTitle!.y).toBeGreaterThanOrEqual(grid!.y + grid!.height!)
 
-  // The page scrolls as one column, so the pay buttons stay reachable.
+  // On a narrow viewport the cart is a collapsed bar; expand it before
+  // checking that the pay buttons are reachable in the single-column layout.
+  await page.getByRole('button', { name: /Current Sale/ }).click()
   const pay = page.getByRole('button', { name: 'Cash Payment' })
   await pay.scrollIntoViewIfNeeded()
   await expect(pay).toBeInViewport()

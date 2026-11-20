@@ -22,14 +22,14 @@ export function ProductsPage(): React.JSX.Element {
 
       <Tabs value={tab} onValueChange={setTab} className="flex flex-col gap-4">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <TabsList className="w-full max-w-full overflow-x-auto gap-1 px-1.5 py-0 group-data-[orientation=horizontal]/tabs:h-11 sm:p-[3px] sm:group-data-[orientation=horizontal]/tabs:h-9 sm:w-fit">
-            <TabsTrigger value="list" className="h-11 px-4 sm:h-[calc(100%-1px)]">
+          <TabsList className="w-full max-w-full gap-1 overflow-x-auto overflow-y-hidden px-1.5 py-0 group-data-[orientation=horizontal]/tabs:h-11 sm:p-[3px] sm:group-data-[orientation=horizontal]/tabs:h-9 sm:w-fit">
+            <TabsTrigger value="list" className="h-11 px-3 sm:h-[calc(100%-1px)] sm:px-4">
               {t('products.tabs.list')}
             </TabsTrigger>
-            <TabsTrigger value="categories" className="h-11 px-4 sm:h-[calc(100%-1px)]">
+            <TabsTrigger value="categories" className="h-11 px-3 sm:h-[calc(100%-1px)] sm:px-4">
               {t('products.tabs.categories')}
             </TabsTrigger>
-            <TabsTrigger value="suppliers" className="h-11 px-4 sm:h-[calc(100%-1px)]">
+            <TabsTrigger value="suppliers" className="h-11 px-3 sm:h-[calc(100%-1px)] sm:px-4">
               {t('products.tabs.suppliers')}
             </TabsTrigger>
           </TabsList>

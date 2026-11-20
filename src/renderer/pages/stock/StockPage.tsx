@@ -140,7 +140,7 @@ export function StockPage(): React.JSX.Element {
             </div>
           )}
         </div>
-        <div className="native-scroll min-h-0 overflow-y-auto lg:h-full">
+        <div className="native-scroll min-h-0 overflow-y-auto border-t border-border pt-4 lg:border-0 lg:pt-0 lg:h-full">
           <div className="flex flex-col gap-4 pr-3">
             {selected ? (
               <>

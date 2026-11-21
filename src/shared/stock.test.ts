@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { computeAdjustment, normalizeReason, stockAdjustInput } from './stock'
+import {
+  computeAdjustment,
+  marginPct,
+  normalizeReason,
+  priceForMargin,
+  stockAdjustInput
+} from './stock'
 
 describe('stockAdjustInput', () => {
   it('requires a positive whole quantity', () => {
@@ -31,6 +37,37 @@ describe('computeAdjustment', () => {
     expect(p.newQty).toBe(0)
     expect(p.newCost).toBe(7)
     expect(p.newValue).toBe(0)
+  })
+})
+
+describe('marginPct', () => {
+  it('measures margin against the selling price', () => {
+    expect(marginPct(15, 10)).toBeCloseTo(33.333, 3)
+    expect(marginPct(10, 10)).toBe(0)
+  })
+
+  it('returns null without a selling price', () => {
+    expect(marginPct(0, 10)).toBeNull()
+    expect(marginPct(Number.NaN, 10)).toBeNull()
+  })
+})
+
+describe('priceForMargin', () => {
+  it('prices back to the old margin after a cost rise', () => {
+    // 10.9375 at a 33.33% margin → 16.41
+    const price = priceForMargin(10.9375, marginPct(15, 10))
+    expect(price).toBeCloseTo(16.40625, 5)
+  })
+
+  it('round-trips: the price it returns yields the requested margin', () => {
+    const price = priceForMargin(12, 25) as number
+    expect(price).toBeCloseTo(16, 10)
+    expect(marginPct(price, 12)).toBeCloseTo(25, 10)
+  })
+
+  it('refuses margins it cannot price', () => {
+    expect(priceForMargin(10, null)).toBeNull()
+    expect(priceForMargin(10, 100)).toBeNull()
   })
 })
 

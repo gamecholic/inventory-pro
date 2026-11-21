@@ -1,7 +1,12 @@
 import { useTranslation } from 'react-i18next'
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, type ChartConfig } from '@/components/ui/chart'
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  type ChartConfig
+} from '@/components/ui/chart'
 import { formatMoney, type StoreCurrency } from '@shared/money'
 import { formatDateTime } from '@shared/dates'
 import { usePriceHistory } from '@/hooks/useStock'
@@ -11,6 +16,8 @@ interface HistoryDatum {
   at: string
   cost: number | null
   selling: number | null
+  costProj: number | null
+  sellingProj: number | null
   note: string | null
 }
 
@@ -34,50 +41,51 @@ function HistoryTooltip({
 }: HistoryTooltipProps): React.JSX.Element | null {
   const datum = payload?.[0]?.payload
   if (!active || !datum) return null
+  // The projection row carries its value on the Proj keys; history rows on cost/selling.
+  const cost = datum.cost ?? datum.costProj
+  const selling = datum.selling ?? datum.sellingProj
   return (
-    <div className="grid min-w-[10rem] max-w-[16rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
+    <div className="grid max-w-[16rem] min-w-[10rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
       <div className="font-medium">{label}</div>
       <div className="grid gap-1.5">
-        {datum.cost !== null && (
+        {cost !== null && (
           <div className="flex items-center justify-between gap-4">
             <span className="flex items-center gap-1.5 text-muted-foreground">
-              <span
-                className="h-2 w-2 shrink-0 rounded-[2px]"
-                style={{ backgroundColor: 'var(--chart-1)' }}
-              />
+              <span className="h-2 w-2 shrink-0 rounded-[2px]" style={{ backgroundColor: 'var(--chart-1)' }} />
               {costLabel}
             </span>
-            <span className="font-mono font-medium tabular-nums">
-              {formatMoney(datum.cost, currency)}
-            </span>
+            <span className="font-mono font-medium tabular-nums">{formatMoney(cost, currency)}</span>
           </div>
         )}
-        {datum.selling !== null && (
+        {selling !== null && (
           <div className="flex items-center justify-between gap-4">
             <span className="flex items-center gap-1.5 text-muted-foreground">
-              <span
-                className="h-2 w-2 shrink-0 rounded-[2px]"
-                style={{ backgroundColor: 'var(--chart-2)' }}
-              />
+              <span className="h-2 w-2 shrink-0 rounded-[2px]" style={{ backgroundColor: 'var(--chart-2)' }} />
               {sellingLabel}
             </span>
-            <span className="font-mono font-medium tabular-nums">
-              {formatMoney(datum.selling, currency)}
-            </span>
+            <span className="font-mono font-medium tabular-nums">{formatMoney(selling, currency)}</span>
           </div>
         )}
       </div>
       {datum.note && (
-        <p className="border-t border-border/50 pt-1.5 break-words text-muted-foreground">
-          {datum.note}
-        </p>
+        <p className="border-t border-border/50 pt-1.5 break-words text-muted-foreground">{datum.note}</p>
       )}
     </div>
   )
 }
 
-/** Cost vs selling trail from the movement log (user-requested addition to §5). */
-export function PriceHistoryChart({ productId }: { productId: number }): React.JSX.Element | null {
+/**
+ * Cost vs selling trail from the movement log. `projected` adds one dashed
+ * segment ending at the average cost this purchase would produce, so the
+ * history answers "where does this land me" (features §5.4).
+ */
+export function PriceHistoryChart({
+  productId,
+  projected = null
+}: {
+  productId: number
+  projected?: { cost: number; selling: number } | null
+}): React.JSX.Element | null {
   const { t } = useTranslation()
   const { data: settings } = useSettings()
   const { data } = usePriceHistory(productId)
@@ -88,47 +96,94 @@ export function PriceHistoryChart({ productId }: { productId: number }): React.J
     at: formatDateTime(p.createdAt, dateFormat),
     cost: p.costPrice,
     selling: p.sellingPrice,
+    costProj: null,
+    sellingProj: null,
     // The empty-note filler carries no information, so hide it.
     note: p.reason && p.reason !== 'Stock adjustment' ? p.reason : null
   }))
   if (points.length === 0) return null
 
+  if (projected) {
+    const last = points[points.length - 1]
+    last.costProj = last.cost
+    last.sellingProj = last.selling
+    points.push({
+      at: t('stock.historyNow'),
+      cost: null,
+      selling: null,
+      costProj: projected.cost,
+      sellingProj: projected.selling,
+      note: null
+    })
+  }
+
   const config = {
     cost: { label: t('stock.historyCost'), color: 'var(--chart-1)' },
-    selling: { label: t('stock.historySelling'), color: 'var(--chart-2)' }
+    selling: { label: t('stock.historySelling'), color: 'var(--chart-2)' },
+    costProj: { label: t('stock.historyCost'), color: 'var(--chart-1)' },
+    sellingProj: { label: t('stock.historySelling'), color: 'var(--chart-2)' }
   } satisfies ChartConfig
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('stock.historyTitle')}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer config={config} className="h-56 w-full">
-          <LineChart data={points} margin={{ left: 0, right: 8 }}>
-            <CartesianGrid vertical={false} />
-            <XAxis dataKey="at" tickLine={false} axisLine={false} tickMargin={8} minTickGap={48} />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              width={56}
-              tickFormatter={(v: number) => formatMoney(v, currency)}
-            />
-            <ChartTooltip
-              content={
-                <HistoryTooltip
-                  currency={currency}
-                  costLabel={t('stock.historyCost')}
-                  sellingLabel={t('stock.historySelling')}
-                />
-              }
-            />
-            <ChartLegend content={<ChartLegendContent />} />
-            <Line type="monotone" dataKey="cost" stroke="var(--color-cost)" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey="selling" stroke="var(--color-selling)" strokeWidth={2} dot={false} />
-          </LineChart>
-        </ChartContainer>
-      </CardContent>
-    </Card>
+    <div className="flex flex-col gap-1">
+      <h3 className="text-sm font-medium">{t('stock.historyTitle')}</h3>
+      <ChartContainer config={config} className="h-52 w-full">
+        <LineChart data={points} margin={{ left: 0, right: 8 }}>
+          <CartesianGrid vertical={false} />
+          <XAxis dataKey="at" tickLine={false} axisLine={false} tickMargin={8} minTickGap={48} />
+          <YAxis
+            tickLine={false}
+            axisLine={false}
+            width={56}
+            tickFormatter={(v: number) => formatMoney(v, currency)}
+          />
+          <ChartTooltip
+            content={
+              <HistoryTooltip
+                currency={currency}
+                costLabel={t('stock.historyCost')}
+                sellingLabel={t('stock.historySelling')}
+              />
+            }
+          />
+          <ChartLegend content={<ChartLegendContent />} />
+          <Line
+            type="monotone"
+            dataKey="cost"
+            stroke="var(--color-cost)"
+            strokeWidth={2}
+            dot={points.length <= 2 ? { r: 3 } : false}
+          />
+          <Line
+            type="monotone"
+            dataKey="selling"
+            stroke="var(--color-selling)"
+            strokeWidth={2}
+            dot={points.length <= 2 ? { r: 3 } : false}
+          />
+          <Line
+            type="monotone"
+            dataKey="costProj"
+            stroke="var(--color-costProj)"
+            strokeWidth={2}
+            strokeDasharray="4 3"
+            dot={{ r: 3, fill: 'var(--background)', stroke: 'var(--color-costProj)', strokeWidth: 2 }}
+            legendType="none"
+            isAnimationActive={false}
+          />
+          <Line
+            type="monotone"
+            dataKey="sellingProj"
+            stroke="var(--color-sellingProj)"
+            strokeWidth={2}
+            strokeDasharray="4 3"
+            dot={{ r: 3, fill: 'var(--background)', stroke: 'var(--color-sellingProj)', strokeWidth: 2 }}
+            legendType="none"
+            isAnimationActive={false}
+          />
+        </LineChart>
+      </ChartContainer>
+      {projected && <p className="text-xs text-muted-foreground">{t('stock.historyCaption')}</p>}
+    </div>
   )
 }

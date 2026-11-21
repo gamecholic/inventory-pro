@@ -59,6 +59,26 @@ export function normalizeReason(reason: string): string {
   return reason.trim() === '' ? 'Stock adjustment' : reason.trim()
 }
 
+/**
+ * Margin as a share of the selling price (features §5.3). Null when there is no
+ * selling price to measure against, so the UI can print an em dash.
+ */
+export function marginPct(selling: number, cost: number): number | null {
+  if (!Number.isFinite(selling) || selling <= 0) return null
+  return ((selling - cost) / selling) * 100
+}
+
+/**
+ * Selling price that keeps `margin` percent on `cost` — the "keep my margin"
+ * action. Null when the margin cannot be kept (no margin, or 100% and above).
+ * Unrounded: the caller decides how many decimals the shop trades in.
+ */
+export function priceForMargin(cost: number, margin: number | null): number | null {
+  if (margin === null || margin >= 100) return null
+  const price = cost / (1 - margin / 100)
+  return Number.isFinite(price) && price >= 0 ? price : null
+}
+
 export const priceHistoryInput = z.object({ productId: z.number().int().positive() })
 
 /** One priced movement for the stock-page chart. Rows without prices are excluded. */

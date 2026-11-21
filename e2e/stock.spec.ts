@@ -19,24 +19,44 @@ test.beforeAll(async ({ appUrl }) => {
   })
 })
 
-test('stock search → select → add with cost averaging', async ({ page }) => {
+test('stock in: enter a purchase and read the new average cost', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.getByRole('link', { name: 'Stock Update' }).click()
-  await page.getByPlaceholder('Search name, barcode or SKU...').fill('flour')
+
+  // 5.1 — the page opens on the scan/search field; picking replaces it.
+  await page.getByPlaceholder(/Scan a barcode or type a product name/).fill('flour')
   await page.getByRole('button', { name: /E2E Flour/ }).click()
-  await page.getByRole('button', { name: 'Receive stock', exact: true }).click()
-  await expect(page.getByText('Receive Stock: E2E Flour')).toBeVisible()
 
+  // 5.2 — the invoice total is the input; the unit cost is derived.
   // 3 @ 10.00 + 10 @ 15.00 → 13 @ 13.85
-  const dialog = page.getByRole('dialog')
-  await dialog.locator('#adjQty').fill('10')
-  await dialog.locator('#adjCost').fill('15')
-  await dialog.getByRole('button', { name: 'Receive stock', exact: true }).click()
-  await expect(dialog).toBeHidden()
+  await page.locator('#stock-qty').fill('10')
+  await page.locator('#stock-amount').fill('150')
+  await expect(page.getByText('= $15.00 per kg')).toBeVisible()
 
-  // Selection stays: summary + chart show the updated stock and averaged cost.
+  // 5.3/5.4 — the answer and the projected chart point update live.
+  await expect(page.getByText('$13.85').first()).toBeVisible()
+  await expect(page.getByText('3 → 13 kg')).toBeVisible()
+  await expect(page.getByText('Dashed line: where this purchase puts your cost.')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Save purchase' }).click()
+
+  // Selection stays: chip, answer and history show the saved state.
   await expect(page.getByText('13 kg').first()).toBeVisible()
-
-  // Movement log feeds the price history chart (create + adjustment points).
+  await expect(page.getByText('$13.85').first()).toBeVisible()
   await expect(page.getByText('Price History')).toBeVisible()
+})
+
+test('correction sheet removes units without touching cost', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.getByRole('link', { name: 'Stock Update' }).click()
+  await page.getByPlaceholder(/Scan a barcode or type a product name/).fill('flour')
+  await page.getByRole('button', { name: /E2E Flour/ }).click()
+
+  await page.getByRole('button', { name: 'Correct stock', exact: true }).click()
+  await page.getByRole('button', { name: 'Damaged' }).click()
+  await page.locator('#correct-qty').fill('2')
+  await page.getByRole('button', { name: 'Remove stock' }).click()
+
+  // 13 → 11 kg; the average cost is untouched.
+  await expect(page.getByText('11 kg').first()).toBeVisible()
 })

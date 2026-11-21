@@ -594,69 +594,70 @@ Left form + right list:
 
 ## 5. Stock Update
 
-Two-pane page: left = search + product cards; right = adjustment form.
+One page, one job: the owner bought more of something, so they enter the count
+and what the invoice said, and read the new average cost. Two states only —
+find the product, then enter the purchase. No dialog.
 
 ### 5.1 Product Selection
 
-- Search box on top matches name, barcode and SKU.
-- Each card shows: name (bold), barcode if present, `Stock: X units`,
-  `Cost Price` formatted.
-- Click to select; selected card is highlighted.
-- If nothing is selected the right pane shows: select a product from the list.
-- Loading and no-results messages are shown as needed.
+- The first state is a scan/search field over the whole catalog, autofocused.
+- Matches name, barcode and SKU (Turkish-tolerant `normalizeTR`).
+- An exact barcode match selects the product without pressing Enter (scanner
+  fast-path); Enter selects the first result of the current query.
+- Filters: `All / Low Stock / Out of Stock`, with the matching count.
+- Each row: name (bold), barcode if present, current cost, and the stock badge
+  (`<qty> <unit> (status)`).
+- Picking a product replaces the list with the purchase form. `Change` returns
+  to it with an empty query.
+- Loading, error + `Retry` and no-results states as in §1.7.
 
-### 5.2 Adjustment Form
+### 5.2 Purchase Form
 
-When a product is selected, a read-only header shows:
+Read-only header: name, barcode, current stock badge, and `Change`.
 
-- `Stock Update: <Product Name>`.
-- Current stock (quantity + unit).
-- Current cost price.
-- Current selling price.
+- **Quantity**: whole units, min 1, default 1, unit suffix.
+- **Total paid**: the amount the invoice says, default = current cost × 1. A
+  `Enter unit cost instead` toggle swaps this field to a unit cost and back; the
+  other number is shown underneath as a derived hint (`= $11.50 per pc`). Neither
+  field is ever recomputed against itself, so decimals type cleanly.
+- **Note**: optional single line, revealed by `Add note`. Saved as the reason
+  (`Stock adjustment` when empty).
+- `Ctrl+Enter` saves. The save bar shows `qty · total` and the save button.
+- Saving keeps the product selected, resets the form to 1 unit at the new cost,
+  and refreshes the product list, POS grid, dashboard and reports.
 
-Editable fields:
+### 5.3 The Answer (cost averaging)
 
-- **Adjustment Type**: dropdown `Add` / `Remove`, default `Add`.
-- **Quantity**: numeric, min 0, whole units, required. Must be > 0 on submit.
-- **New Cost Price**: numeric, min 0, 2-decimal steps, pre-filled with current
-  cost. Editable only when type = Add; disabled when type = Remove.
-- **New Selling Price**: numeric, min 0, 2-decimal steps, pre-filled with
-  current selling price. Always editable.
-- **Reason**: multi-line free text, optional. If left empty it is saved as
-  `Stock adjustment`.
+The right column is the answer, not a preview table. It updates live:
 
-Actions:
+- **New average cost** as the largest number on the page, with its change from
+  the current cost (`+$0.94 · +9.4%`, or `unchanged`) and `was <cost> per <unit>`.
+- Stock: `12 → 32 pcs`.
+- Stock value: `$120.00 → $350.00`.
+- Selling price: current, editable in place; margin `33.3% → 27.1%`.
+- `Keep 33.3% → sell at $16.41` sets the selling price that restores the old
+  margin (`priceForMargin` in `shared/stock.ts`).
+- Loss warning when the selling price is below the new average cost.
 
-- `Update` submits → success message → list refreshed, selection cleared,
-  form reset.
-- `Reset` restores the form to quantity 0, current cost/selling, type Add,
-  empty reason for the same product.
-- Validation: must select a product; quantity must be a valid positive
-  number.
-
-### 5.3 Cost Averaging Preview
-
-Visible only when type = Add and quantity > 0. Updates live as quantity or
-new cost is typed. Shows:
-
-- Current stock quantity.
-- Current cost price.
-- Current inventory value (current stock × current cost).
-- Total inventory quantity after the addition.
-- New average cost: (old value + new quantity × new cost) ÷ new total.
-- New inventory value: new total × new average.
-
-Save behavior:
-
-- Add: cost becomes the weighted average shown.
-- Remove: cost unchanged, stock reduced (floor 0). Total value = remaining ×
-  current cost.
-- Selling price is updated only if the new value differs.
+Formula unchanged: add = weighted average `(old value + qty × unit cost) ÷ new
+qty`; remove = cost unchanged, stock floored at 0. Prices round to 2 decimals at
+the save boundary.
 
 ### 5.4 Price History
 
-- No history list, log or chart is shown here. Only current prices, the
-  ability to enter new prices, and the live average-cost preview.
+- Cost and selling price over the movement log, one point per priced movement.
+- While a quantity is entered, the chart adds one dashed segment ending at the
+  new average cost (and the selling price in force), labelled `Now`, captioned
+  "Dashed line: where this purchase puts your cost."
+- Hidden when the product has no priced movement yet.
+
+### 5.5 Corrections
+
+- `Correct stock` in the page header opens a side sheet for the selected
+  product: units to remove, a note with `Damaged / Recount / Customer return`
+  chips, and the resulting quantity and value.
+- Cost never changes on a correction, and stock never goes below 0.
+- Buying more is not part of this sheet: that is §5.2.
 
 ---
 
